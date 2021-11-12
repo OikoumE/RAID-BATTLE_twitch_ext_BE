@@ -26,6 +26,10 @@
 // TODO PLACEHOLDER
 // TODO PLACEHOLDER
 
+
+
+//TODO if viewer reqest non-exsisting channel, add channel...............
+
 const fs = require("fs");
 const Hapi = require("hapi");
 const path = require("path");
