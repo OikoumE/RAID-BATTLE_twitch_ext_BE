@@ -148,6 +148,11 @@ function onLaunch() {
         path: "/ongoingRaidGame/",
         handler: ongoingRaidGameQueryHandler,
     });
+    server.route({
+        method: "GET",
+        path: "/",
+        handler: return404,
+    });
     // Start the server.
     await server.start();
     console.log(STRINGS.serverStarted, server.info.uri);
@@ -158,6 +163,10 @@ function onLaunch() {
     }, userCooldownClearIntervalMs);
     onLaunch();
 })();
+
+function return404(req) {
+    return "404";
+}
 
 function usingValue(name) {
     return `Using environment variable for ${name}`;
