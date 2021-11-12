@@ -312,11 +312,11 @@ function ongoingRaidGameQueryHandler(req) {
     return channelRaiders[channelId];
 }
 
-function addNewStreamerHandler(req) {
+async function addNewStreamerHandler(req) {
     // Verify all requests.
     const payload = verifyAndDecode(req.headers.authorization);
     const { channel_id: channelId, opaque_user_id: opaqueUserId } = payload;
-    const channelName = getUserById(channelId);
+    const channelName = await getUserById(channelId);
     const result = addStreamerAndWriteFile(channelName, channelId);
     if (result) {
         const newChannelList = result;
