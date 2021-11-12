@@ -60,7 +60,8 @@ var tmiClient;
 var healthModifier = 1;
 //! -------------------- my vars -------------------- //
 function printTimeout() {
-    console.log("[backend:62]: Date.now()", Date.now());
+    var date = new Date();
+    console.log(date.toLocaleDateString());
     setTimeout(() => {
         printTimeout();
     }, 60000);
@@ -328,8 +329,7 @@ function addNewStreamerHandler(req) {
         });
     }
 }
-
-// TODO not timer
+// TODO a class
 // TODO PLACEHOLDER
 // TODO PLACEHOLDER
 // TODO PLACEHOLDER
