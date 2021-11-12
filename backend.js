@@ -146,7 +146,7 @@ function onLaunch() {
     server.route({
         method: "POST",
         path: "/addStreamerToChannels/",
-        handler: addNewStreamerHandler, //
+        handler: addStreamerToChannelsHandler, //
     });
     // Handle a viewer request to support the raider.
     server.route({
@@ -309,24 +309,20 @@ function ongoingRaidGameQueryHandler(req) {
     // Verify all requests.
     const payload = verifyAndDecode(req.headers.authorization);
     const { channel_id: channelId, opaque_user_id: opaqueUserId } = payload;
+
+    //! ----------------
+    if (channelNames[channelId] == null) {
+        addNewStreamer(channelId);
+    }
+    //! ----------------
+
     console.log(
         "[backend:311]: channelNames[channelId]",
         channelNames[channelId]
     );
-    console.log(
-        "[backend:312]: typeof channelNames[channelId]",
-        typeof channelNames[channelId]
-    );
-    console.log(
-        "[backend:319]: channelNames[channelId] == null",
-        channelNames[channelId] == null
-    );
+
+
     console.log(channelId);
-    console.log(
-        "[backend:316]: channelRaiders[channelId]",
-        channelRaiders[channelId]
-    );
-    console.log("[backend:319]: channelRaiders", channelRaiders);
     if (
         !Array.isArray(channelRaiders[channelId]) //|| channelRaiders[channelId].length == 0
     ) {
@@ -336,10 +332,14 @@ function ongoingRaidGameQueryHandler(req) {
     return channelRaiders[channelId];
 }
 
-async function addNewStreamerHandler(req) {
+function addStreamerToChannelsHandler(req) {
     // Verify all requests.
     const payload = verifyAndDecode(req.headers.authorization);
     const { channel_id: channelId, opaque_user_id: opaqueUserId } = payload;
+    return addNewStreamer(channelId);
+}
+
+async function addNewStreamer(channelId) {
     const channelName = await getUserById(channelId);
     const result = addStreamerAndWriteFile(channelName, channelId);
     console.log(result);
@@ -359,9 +359,10 @@ async function addNewStreamerHandler(req) {
         return "Already in the list of channels to monitor for raid";
     }
 }
+
 // TODO a class
-// TODO PLACEHOLDER
-// TODO PLACEHOLDER
+// TODO timethingy
+// TODO broadcast 1sec interval
 // TODO PLACEHOLDER
 // TODO PLACEHOLDER
 
