@@ -284,7 +284,7 @@ function readJsonFile(path) {
         const data = fs.readFileSync(path, "utf8");
         return JSON.parse(data);
     } catch (err) {
-        console.log("[backend:291]: err", err);
+        console.log("[backend:291]: err:", err);
         writeJsonFile(path, {});
     }
 }
