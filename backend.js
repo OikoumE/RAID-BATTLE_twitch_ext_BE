@@ -252,7 +252,7 @@ function addStreamerAndWriteFile(streamer, channelId) {
     channelsToJoin = dataFromFile.channels;
     channelIds = dataFromFile.channelIds;
     channelNames = dataFromFile.channelNames;
-    if (!channelsToAdd.some((item) => item === streamer)) {
+    if (!channelsToJoin.some((item) => item === streamer)) {
         channelsToJoin.push(streamer);
         channelIds[channelId] = streamer;
         channelNames[streamer] = `${channelId}`;
