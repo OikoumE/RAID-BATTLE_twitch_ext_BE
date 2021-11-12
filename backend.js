@@ -59,13 +59,13 @@ var channelsToJoin = [],
 var tmiClient;
 var healthModifier = 1;
 //! -------------------- my vars -------------------- //
-
 function printTimeout() {
     setTimeout(() => {
         Date.now();
         printTimeout();
     }, 60000);
 }
+printTimeout();
 
 const STRINGS = {
     secretEnv: usingValue("secret"),
