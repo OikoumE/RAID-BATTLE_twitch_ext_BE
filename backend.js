@@ -253,6 +253,7 @@ function addStreamerAndWriteFile(streamer, channelId) {
     channelIds = dataFromFile.channelIds;
     channelNames = dataFromFile.channelNames;
     if (!channelsToJoin.some((item) => item === streamer)) {
+        console.log(`adding ${streamer} to channels and list`);
         channelsToJoin.push(streamer);
         channelIds[channelId] = streamer;
         channelNames[streamer] = `${channelId}`;
@@ -273,6 +274,7 @@ function readJsonFile(path) {
     try {
         const data = fs.readFileSync(path, "utf8");
         // console.log(JSON.parse(data));
+        console.error(`read file returning data: ${data}`);
         return JSON.parse(data);
     } catch (err) {
         console.error(err);
