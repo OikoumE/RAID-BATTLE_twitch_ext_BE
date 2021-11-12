@@ -1,0 +1,15 @@
+{
+    "channels": ["itsoik", "developerrig", "matissetec", "oik_does_python"],
+    "channelIds": {
+        "itsoik": "93645775",
+        "developerrig": "265737932",
+        "matissetec": "10101",
+        "oik_does_python": "661035495"
+    },
+    "channelNames": {
+        "93645775": "itsoik",
+        "265737932": "developerrig",
+        "10101": "matissetec",
+        "661035495": "oik_does_python"
+    }
+}
