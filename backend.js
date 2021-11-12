@@ -75,7 +75,7 @@ const STRINGS = {
     invalidJwt: "Invalid JWT",
 };
 
-ext.version(require("../package.json").version)
+ext.version(require("./package.json").version)
     .option("-s, --secret <secret>", "Extension secret")
     .option("-c, --client-id <client_id>", "Extension client ID")
     .option("-o, --owner-id <owner_id>", "Extension owner ID")
@@ -87,7 +87,7 @@ const clientId = getOption("clientId", "EXT_CLIENT_ID");
 
 const serverOptions = {
     host: "localhost",
-    port: 8081,
+    port: process.env.PORT || 80,
     routes: {
         cors: {
             origin: ["*"],
