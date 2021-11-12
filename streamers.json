@@ -1,0 +1,11 @@
+{
+    "channels": ["developerrig", "oik_does_python"],
+    "channelIds": {
+        "developerrig": "265737932",
+        "oik_does_python": "661035495"
+    },
+    "channelNames": {
+        "265737932": "developerrig",
+        "661035495": "oik_does_python"
+    }
+}
