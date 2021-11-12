@@ -252,7 +252,11 @@ function addStreamerAndWriteFile(streamer, channelId) {
     channelsToJoin = dataFromFile.channels;
     channelIds = dataFromFile.channelIds;
     channelNames = dataFromFile.channelNames;
-    if (!channelsToJoin.some((item) => item === streamer)) {
+    if (
+        !channelsToJoin.some(
+            (item) => item.toLowerCase() === streamer.toLowerCase()
+        )
+    ) {
         console.log(`adding ${streamer} to channels and list`);
         channelsToJoin.push(streamer);
         channelIds[channelId] = streamer;
@@ -318,6 +322,7 @@ async function addNewStreamerHandler(req) {
     const { channel_id: channelId, opaque_user_id: opaqueUserId } = payload;
     const channelName = await getUserById(channelId);
     const result = addStreamerAndWriteFile(channelName, channelId);
+    console.log(result);
     if (result) {
         const newChannelList = result;
         if (tmiClient) {
