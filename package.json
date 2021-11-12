@@ -1,0 +1,27 @@
+{
+    "name": "raid_battle",
+    "version": "0.0.4",
+    "description": "Itsoik's RAID BATTLE twitch extension",
+    "main": "backend.js",
+    "scripts": {
+        "start": "node backend"
+    },
+    "keywords": [
+        "twitch",
+        "extension"
+    ],
+    "author": "itsOik",
+    "license": "Apache-2.0",
+    "dependencies": {
+        "boom": "^7.2.0",
+        "color": "^3.0.0",
+        "commander": "^2.15.0",
+        "hapi": "^17.8.4",
+        "inert": "^5.1.0",
+        "jsonwebtoken": "^8.2.0",
+        "node-fetch": "^2.6.6",
+        "request": "^2.85.0",
+        "selfsigned": "^1.10.2",
+        "tmi.js": "^1.8.5"
+    }
+}
