@@ -20,6 +20,12 @@
 // TODO timer, add to timer if new raid during game
 // TODO sending gameOverState: win/defeated raiderX/loose
 
+// TODO clientId, clientSecret, APP_TOKEN
+// TODO check every 24hrs who has EXT installed
+// TODO keep users who have installed still, remove users who dont
+// TODO PLACEHOLDER
+// TODO PLACEHOLDER
+
 const fs = require("fs");
 const Hapi = require("hapi");
 const path = require("path");
@@ -51,8 +57,9 @@ const { get } = require("https");
 const tmi = require("tmi.js");
 const fetch = require("node-fetch");
 
-const initialHealth = 100;
-const channelRaiders = {};
+const initialHealth = 100,
+    channelRaiders = {},
+    KEEP_HEROKU_ALIVE_INTERVAL = 5;
 var channelsToJoin = [],
     channelIds = {},
     channelNames = {};
@@ -64,7 +71,7 @@ function printTimeout() {
     console.log(`${date.toDateString()} ${date.toTimeString()}`);
     setTimeout(() => {
         printTimeout();
-    }, 60000);
+    }, KEEP_HEROKU_ALIVE_INTERVAL * 60 * 1000);
 }
 printTimeout();
 
@@ -278,7 +285,6 @@ function readJsonFile(path) {
     try {
         const data = fs.readFileSync(path, "utf8");
         // console.log(JSON.parse(data));
-        console.error(`read file returning data: ${data}`);
         return JSON.parse(data);
     } catch (err) {
         console.error(err);
