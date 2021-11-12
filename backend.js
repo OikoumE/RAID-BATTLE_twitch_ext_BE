@@ -60,7 +60,7 @@ var tmiClient;
 var healthModifier = 1;
 //! -------------------- my vars -------------------- //
 function printTimeout() {
-    console.log(Date.now());
+    console.log("[backend:62]: Date.now()", Date.now());
     setTimeout(() => {
         printTimeout();
     }, 60000);
