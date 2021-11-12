@@ -172,7 +172,7 @@ function onLaunch() {
 })();
 
 function return404(req) {
-    return "404";
+    return "<img src='https://http.cat/404' />";
 }
 
 function usingValue(name) {
@@ -334,7 +334,6 @@ function addNewStreamerHandler(req) {
 // TODO PLACEHOLDER
 // TODO PLACEHOLDER
 // TODO PLACEHOLDER
-
 
 function raiderSupportHandler(req) {
     // Verify all requests.
