@@ -4,7 +4,7 @@
     "description": "Itsoik's RAID BATTLE twitch extension",
     "main": "backend.js",
     "scripts": {
-        "start": "node main"
+        "start": "node backend"
     },
     "keywords": [
         "twitch",
