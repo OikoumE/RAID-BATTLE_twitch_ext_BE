@@ -17,16 +17,12 @@
 // TODO reset health after X time
 // TODO end game state
 // TODO when all raiders are dead
-// TODO timer, add to timer if new raid during game
+// TODO timer, add to timer if new raid during game (part of class)
 // TODO sending gameOverState: win/defeated raiderX/loose
 
 // TODO clientId, clientSecret, APP_TOKEN
 // TODO check every 24hrs who has EXT installed
 // TODO keep users who have installed still, remove users who dont
-// TODO PLACEHOLDER
-// TODO PLACEHOLDER
-
-//TODO if viewer reqest non-exsisting channel, add channel...............
 
 const fs = require("fs");
 const Hapi = require("hapi");
@@ -266,7 +262,7 @@ function addStreamerAndWriteFile(streamer, channelId) {
             (item) => item.toLowerCase() === streamer.toLowerCase()
         )
     ) {
-        console.log("[backend:268]: `adding ${streamer} to channels and list`");
+        console.log("[backend:265]: `adding ${streamer} to channels and list`");
         channelsToJoin.push(streamer);
         channelIds[channelId] = streamer;
         channelNames[streamer] = `${channelId}`;
@@ -352,12 +348,6 @@ async function addNewStreamer(channelId) {
         return "Already in the list of channels to monitor for raid";
     }
 }
-
-// TODO a class
-// TODO timethingy
-// TODO broadcast 1sec interval
-// TODO PLACEHOLDER
-// TODO PLACEHOLDER
 
 function raiderSupportHandler(req) {
     // Verify all requests.
@@ -487,7 +477,7 @@ async function getUserById(id) {
     if (response.ok) {
         let data = await response.json();
         console.log(
-            `[backend:488]: User for id ${id} found:  ${data.display_name}`
+            `[backend:483]: User for id ${id} found:  ${data.display_name}`
         );
         return data.display_name;
     }
@@ -631,7 +621,11 @@ function sendRaidBroadcast(channelId) {
         }
     );
 }
-
+// TODO a class
+// TODO timethingy
+// TODO broadcast 1sec interval
+// TODO PLACEHOLDER
+// TODO PLACEHOLDER
 function broadcastTimeleft() {
     // TODO start counting down when game start
     // TODO attempt broadcast every second with updated TIMELEFT if game is still running
