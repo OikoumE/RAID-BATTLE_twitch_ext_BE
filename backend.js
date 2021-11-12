@@ -70,7 +70,7 @@ var tmiClient;
 //! -------------------- my vars -------------------- //
 function printTimeout() {
     var date = new Date();
-    console.log(`${date.toDateString()} ${date.toTimeString()}`);
+    console.log(`ALIVE CHECKER: ${date.toDateString()} ${date.toTimeString()}`);
     setTimeout(() => {
         printTimeout();
     }, KEEP_HEROKU_ALIVE_INTERVAL * 60 * 1000);
@@ -128,7 +128,7 @@ const server = new Hapi.Server(serverOptions);
 //! ------------------------------------------------------- //
 function onLaunch() {
     //this is ran when server starts up
-    console.log("Server starting");
+    console.log("[backend:130]: Server starting");
     const data = readJsonFile(streamersFilePath);
     channelsToJoin = data.channels;
     channelIds = data.channelIds;
@@ -172,7 +172,7 @@ function onLaunch() {
     });
     // Start the server.
     await server.start();
-    console.log(STRINGS.serverStarted, server.info.uri);
+    console.log(`[backend:174]: ${STRINGS.serverStarted}${server.info.uri}`);
     // Periodically clear cool-down tracking to prevent unbounded growth due to
     // per-session logged-out user tokens.
     setInterval(() => {
@@ -266,7 +266,7 @@ function addStreamerAndWriteFile(streamer, channelId) {
             (item) => item.toLowerCase() === streamer.toLowerCase()
         )
     ) {
-        console.log(`adding ${streamer} to channels and list`);
+        console.log("[backend:268]: `adding ${streamer} to channels and list`");
         channelsToJoin.push(streamer);
         channelIds[channelId] = streamer;
         channelNames[streamer] = `${channelId}`;
@@ -278,7 +278,7 @@ function addStreamerAndWriteFile(streamer, channelId) {
         writeJsonFile(streamersFilePath, dataToWrite);
         return dataToWrite.channels;
     } else {
-        console.error("streamer already in list");
+        console.error("[backend:280]: streamer already in list");
         return false;
     }
 }
@@ -286,19 +286,20 @@ function addStreamerAndWriteFile(streamer, channelId) {
 function readJsonFile(path) {
     try {
         const data = fs.readFileSync(path, "utf8");
-        // console.log(JSON.parse(data));
         return JSON.parse(data);
     } catch (err) {
-        console.error(err);
+        console.log("[backend:291]: err", err);
     }
 }
 
 function writeJsonFile(path, payload) {
     let data = JSON.stringify(payload);
-    fs.writeFile(path, data, (err) => {
-        if (err) throw err;
-        console.log("Data written to file");
-    });
+    try {
+        fs.writeFile(path, data);
+        console.log("[backend:298]: Data written to file");
+    } catch (err) {
+        console.log("[backend:301]: err", err);
+    }
 }
 
 //! --------------------------------------------------------- //
@@ -315,18 +316,10 @@ function ongoingRaidGameQueryHandler(req) {
         addNewStreamer(channelId);
     }
     //! ----------------
-
-    console.log(
-        "[backend:311]: channelNames[channelId]",
-        channelNames[channelId]
-    );
-
-
-    console.log(channelId);
     if (
         !Array.isArray(channelRaiders[channelId]) //|| channelRaiders[channelId].length == 0
     ) {
-        console.log("No active games");
+        console.log("[backend:321]: No active games");
         return null;
     }
     return channelRaiders[channelId];
@@ -342,7 +335,7 @@ function addStreamerToChannelsHandler(req) {
 async function addNewStreamer(channelId) {
     const channelName = await getUserById(channelId);
     const result = addStreamerAndWriteFile(channelName, channelId);
-    console.log(result);
+    console.log("[backend:337]: result", result);
     if (result) {
         const newChannelList = result;
         if (tmiClient) {
@@ -351,7 +344,7 @@ async function addNewStreamer(channelId) {
             console.error("no tmi connected??");
         }
         tmiClient.on("disconnected", (reason) => {
-            console.error(reason);
+            console.error("[backend:346]: reason", reason);
             startTmi(newChannelList);
         });
         return "Success, added to channels to monitor for raids";
@@ -465,7 +458,12 @@ function sendHealthBroadcast(channelId) {
         },
         (err, res) => {
             if (err) {
-                console.log(STRINGS.messageSendError, channelId, err);
+                console.error(
+                    "[backend:460]: STRINGS.messageSendError, channelId, err",
+                    STRINGS.messageSendError,
+                    channelId,
+                    err
+                );
             } else {
                 verboseLog(STRINGS.pubsubResponse, channelId, res.statusCode);
             }
@@ -488,7 +486,9 @@ async function getUserById(id) {
     let response = await fetch(url, { headers });
     if (response.ok) {
         let data = await response.json();
-        console.log("User for id " + id + " found: " + data.display_name);
+        console.log(
+            `[backend:488]: User for id ${id} found:  ${data.display_name}`
+        );
         return data.display_name;
     }
 }
@@ -529,15 +529,14 @@ function startTmi(channels) {
         channels: channels,
     });
     tmiClient.connect().then(() => {
-        console.log(`Listening for messages on ${channels}`);
+        console.log(`[backend:529]: Listening for messages on ${channels}`);
     });
     tmiClient.on("raided", (channel, username, viewers) => {
         // channel: String - Channel name being raided
         // username: String - Username raiding the channel
         // viewers: Integer - Viewers count
-        console.log(
-            `${channel} was raided by: ${username} with ${viewers} viewers`
-        );
+        console.log(`[backend:536]: 
+            ${channel} was raided by: ${username} with ${viewers} viewers`);
         channel = channel.replace("#", "");
         viewers = parseInt(viewers);
 
@@ -547,7 +546,7 @@ function startTmi(channels) {
 
 function startRaid(channel, username, viewers) {
     console.log(
-        `Starting raid on channel: ${channel}, started by: ${username}`
+        `[backend:549]: Starting raid on channel: ${channel}, started by: ${username}`
     );
     const channelId = channelIds[channel];
 
@@ -569,13 +568,11 @@ function startRaid(channel, username, viewers) {
         //!
         if (!Array.isArray(channelRaiders[channelId])) {
             channelRaiders[channelId] = [];
-            console.warn("made array");
         }
         if (
             !channelRaiders[channelId].some((item) => item.raider === username)
         ) {
             channelRaiders[channelId].push(raidPackage);
-            console.warn("added raidObj");
         }
         attemptRaidBroadcast(channelId);
     })();
@@ -610,11 +607,6 @@ function sendRaidBroadcast(channelId) {
         "Content-Type": "application/json",
         Authorization: bearerPrefix + makeServerToken(channelId),
     };
-    console.log(
-        "[backend:526]: channelRaiders[channelId]",
-        channelRaiders[channelId]
-    );
-    console.log("[backend:525]: channelRaiders", channelRaiders);
     // Create the POST body for the Twitch API request.
     const body = JSON.stringify({
         content_type: "application/json",
