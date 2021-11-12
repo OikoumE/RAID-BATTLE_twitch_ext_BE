@@ -60,8 +60,8 @@ var tmiClient;
 var healthModifier = 1;
 //! -------------------- my vars -------------------- //
 function printTimeout() {
+    console.log(Date.now());
     setTimeout(() => {
-        console.log(Date.now());
         printTimeout();
     }, 60000);
 }
