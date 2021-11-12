@@ -26,8 +26,6 @@
 // TODO PLACEHOLDER
 // TODO PLACEHOLDER
 
-
-
 //TODO if viewer reqest non-exsisting channel, add channel...............
 
 const fs = require("fs");
@@ -311,12 +309,24 @@ function ongoingRaidGameQueryHandler(req) {
     // Verify all requests.
     const payload = verifyAndDecode(req.headers.authorization);
     const { channel_id: channelId, opaque_user_id: opaqueUserId } = payload;
+    console.log(
+        "[backend:311]: channelNames[channelId]",
+        channelNames[channelId]
+    );
+    console.log(
+        "[backend:312]: typeof channelNames[channelId]",
+        typeof channelNames[channelId]
+    );
+    console.log(
+        "[backend:319]: channelNames[channelId] == null",
+        channelNames[channelId] == null
+    );
     console.log(channelId);
     console.log(
-        "[backend:240]: channelRaiders[channelId]",
+        "[backend:316]: channelRaiders[channelId]",
         channelRaiders[channelId]
     );
-    console.log("[backend:240]: channelRaiders", channelRaiders);
+    console.log("[backend:319]: channelRaiders", channelRaiders);
     if (
         !Array.isArray(channelRaiders[channelId]) //|| channelRaiders[channelId].length == 0
     ) {
