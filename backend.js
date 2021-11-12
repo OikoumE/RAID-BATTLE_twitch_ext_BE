@@ -60,6 +60,13 @@ var tmiClient;
 var healthModifier = 1;
 //! -------------------- my vars -------------------- //
 
+function printTimeout() {
+    setTimeout(() => {
+        Date.now();
+        printTimeout();
+    }, 60000);
+}
+
 const STRINGS = {
     secretEnv: usingValue("secret"),
     clientIdEnv: usingValue("client-id"),
