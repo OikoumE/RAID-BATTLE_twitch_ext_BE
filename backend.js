@@ -56,12 +56,12 @@ const channelRaiders = {};
 var channelsToJoin = [],
     channelIds = {},
     channelNames = {};
+
 var tmiClient;
-var healthModifier = 1;
 //! -------------------- my vars -------------------- //
 function printTimeout() {
     var date = new Date();
-    console.log(date.toLocaleDateString());
+    console.log(`${date.toDateString()} ${date.toTimeString()}`);
     setTimeout(() => {
         printTimeout();
     }, 60000);
