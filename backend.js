@@ -329,6 +329,9 @@ async function addNewStreamerHandler(req) {
             console.error(reason);
             startTmi(newChannelList);
         });
+        return "Success, added to channels to monitor for raids";
+    } else {
+        return "Already in the list of channels to monitor for raid";
     }
 }
 // TODO a class
