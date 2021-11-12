@@ -61,7 +61,7 @@ var healthModifier = 1;
 //! -------------------- my vars -------------------- //
 function printTimeout() {
     setTimeout(() => {
-        Date.now();
+        console.log(Date.now());
         printTimeout();
     }, 60000);
 }
