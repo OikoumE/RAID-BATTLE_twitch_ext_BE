@@ -172,7 +172,7 @@ function onLaunch() {
 })();
 
 function return404(req) {
-    return "<img src='https://http.cat/404.jpg' />";
+    return "<style> html { background-color: #000000;} </style><img src='https://http.cat/404.jpg' />";
 }
 
 function usingValue(name) {
