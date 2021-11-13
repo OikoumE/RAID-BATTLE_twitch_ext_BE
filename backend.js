@@ -569,8 +569,9 @@ async function getUserById(id) {
     if (response.ok) {
         let data = await response.json();
         console.log(
-            `[backend:483]: User for id ${id} found:  ${data.display_name}`
+            `[backend:572]: User for id ${id} found:  ${data.display_name}`
         );
+        console.log(`[backend:575]: data:  ${data}`);
         return data.display_name;
     }
 }
