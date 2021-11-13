@@ -263,6 +263,7 @@ function userIsInCooldown(opaqueUserId) {
 //! --------------------------------------------------------- //
 //*                       -- DATABASE --                     //
 //! ------------------------------------------------------- //
+//TODO make new MongoDB project, allow ip "*"
 class DataBase {
     constructor(mongoUri) {
         console.log(
