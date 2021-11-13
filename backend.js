@@ -655,7 +655,7 @@ async function getStreamById(id) {
         if (response.ok) {
             let data = await response.json();
             console.log(`[backend:657]: StreamData for id ${id} found:`, data);
-            return data;
+            return data.data[0];
         }
     } catch (err) {
         console.log("[backend:661]: Error when getting stream by ID", err);
@@ -742,7 +742,7 @@ async function startRaid(channel, username, viewers) {
     // (async () => {//!
     // const currentViewers = await getCurrentViewerAmount(channel),
     const streamData = await getStreamById(channelId),
-        currentViewers = streamData.stream.viewer_count,
+        currentViewers = streamData.viewer_count,
         raiderData = await getUser(`login=${username}`),
         raiderPicUrl = raiderData.profile_image_url, //.userPicUrl
         streamerPicUrl = streamerData.profilePicUrl, // HAVE IN DB
