@@ -608,7 +608,7 @@ async function getUser(path) {
         if (response.ok) {
             let data = await response.json();
             console.log(`[backend:648]: User for path ${path} found:`, data);
-            return data;
+            return data.data[0];
         } else {
             console.log("[backend:618]: response", response);
         }
@@ -739,37 +739,35 @@ async function startRaid(channel, username, viewers) {
     const streamerData = await dataBase.findOne({ channelName: channel });
     const channelId = streamerData.channelId;
     // (async () => {//!
-    // const currentViewers = await getCurrentViewerAmount(channel),
-    const streamData = await getStreamById(channelId);
-    // const streamData = await getStreamById(channelId),
-    //     currentViewers = streamData.viewer_count,
-    //     raiderData = await getUser(`login=${username}`),
-    //     raiderPicUrl = raiderData.profile_image_url, //.userPicUrl
-    //     streamerPicUrl = streamerData.profilePicUrl, // HAVE IN DB
-    //     supportRatio = getRatio(viewers, currentViewers);
-    // const raidPackage = {
-    //     channel,
-    //     raider: username,
-    //     health: initialHealth,
-    //     viewers,
-    //     currentViewers,
-    //     supportRatio,
-    //     raiderPicUrl,
-    //     streamerPicUrl,
-    // };
-    // if (!Array.isArray(channelRaiders[channelId])) {
-    //     channelRaiders[channelId] = [];
-    // }
-    // if (!channelRaiders[channelId].some((item) => item.raider === username)) {
-    //     channelRaiders[channelId].push(raidPackage);
-    // }
-    // attemptRaidBroadcast(channelId);
-    // // })();//!
-    // if (channelRaiders[channelId]) {
-    //     return channelRaiders[channelId];
-    // } else {
-    //     return null;
-    // }
+    const streamData = await getStreamById(channelId),
+        currentViewers = streamData.viewer_count,
+        raiderData = await getUser(`login=${username}`),
+        raiderPicUrl = raiderData.profile_image_url, //.userPicUrl
+        streamerPicUrl = streamerData.profilePicUrl, // HAVE IN DB
+        supportRatio = getRatio(viewers, currentViewers);
+    const raidPackage = {
+        channel,
+        raider: username,
+        health: initialHealth,
+        viewers,
+        currentViewers,
+        supportRatio,
+        raiderPicUrl,
+        streamerPicUrl,
+    };
+    if (!Array.isArray(channelRaiders[channelId])) {
+        channelRaiders[channelId] = [];
+    }
+    if (!channelRaiders[channelId].some((item) => item.raider === username)) {
+        channelRaiders[channelId].push(raidPackage);
+    }
+    attemptRaidBroadcast(channelId);
+    // })();//!
+    if (channelRaiders[channelId]) {
+        return channelRaiders[channelId];
+    } else {
+        return null;
+    }
 }
 
 //! --------------------------------------------------------- //
