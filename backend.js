@@ -325,9 +325,9 @@ function addStreamerToDb(streamer, channelId) {
 }
 function parseTmiChannelListFromDb(result) {
     console.log("[backend:317]: channels", result);
-    let channel = [];
+    let channels = [];
     for (const document of result) {
-        channel.push(document.channelName);
+        channels.push(document.channelName);
     }
     console.log("[backend:317]: channels", channels);
     return channels;
