@@ -137,7 +137,7 @@ async function onLaunch() {
     // const data = readJsonFile(streamersFilePath); //! REDO TO DB
     // channelsToJoin = data.channels; //! REDO TO DB
     // channelIds = data.channelIds; //! REDO TO DB
-    const dataBaseData = dataBase.find();
+    const dataBaseData = await dataBase.find();
     const result = parseTmiChannelListFromDb(dataBaseData);
     startTmi(result);
 }
