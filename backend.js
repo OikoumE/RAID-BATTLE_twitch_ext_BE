@@ -312,7 +312,9 @@ class DataBase {
     //TODO deleteOne
     async checkIfUserInDb(userName) {
         const result = await this.find();
+        console.log("[backend:314]: result", result);
         for (const document in result) {
+            console.log("[backend:316]: document", document);
             if (document.channelName.toLowerCase() == userName.toLowerCase()) {
                 return true;
             }
@@ -433,9 +435,7 @@ function addStreamerToChannelsHandler(req) {
 async function addNewStreamer(channelId) {
     const userData = await getUserById(channelId);
     // const result = addStreamerAndWriteFile(channelName, channelId);
-    const userExsist = await dataBase.checkIfUserInDb(
-        userData.display_name.toLowerCase()
-    );
+    const userExsist = await dataBase.checkIfUserInDb(userData.display_name);
     if (!userExsist) {
         const result = await addStreamerToDb(userData);
         console.log("[backend:337]: result", result);
