@@ -331,7 +331,7 @@ class DataBase {
 async function addNewStreamer(channelId) {
     const userExsist = await dataBase.checkIfUserInDb(channelId);
     if (!userExsist) {
-        const userData = await getUserById(channelId);
+        const userData = await getUser(`id=${channelId}`);
         const result = await addStreamerToDb(userData);
         console.log("[backend:337]: result", result);
         const allChannelList = await dataBase.find();
@@ -601,9 +601,9 @@ function checkIfTimeToGetNewToken() {
     return false;
 }
 
-async function getUserById(id) {
+async function getUser(path) {
     // Query Twitch for user details.
-    const url = `https://api.twitch.tv/helix/users?id=${id}`;
+    const url = "https://api.twitch.tv/helix/users?" + path;
     const headers = {
         Authorization: `Bearer ${getAppAccessToken()}`,
         "Client-Id": APP_CLIENT_ID,
@@ -613,7 +613,7 @@ async function getUserById(id) {
         let response = await fetch(url, { headers });
         if (response.ok) {
             let data = await response.json();
-            console.log(`[backend:648]: User for id ${id} found:`, data);
+            console.log(`[backend:648]: User for path ${path} found:`, data);
             return data;
         }
     } catch (err) {
@@ -654,11 +654,11 @@ async function getStreamById(id) {
         let response = await fetch(url, { headers });
         if (response.ok) {
             let data = await response.json();
-            console.log(`[backend:662]: StreamData for id ${id} found:`, data);
+            console.log(`[backend:657]: StreamData for id ${id} found:`, data);
             return data;
         }
     } catch (err) {
-        console.log("[backend:722]: Error when getting stream by ID", err);
+        console.log("[backend:661]: Error when getting stream by ID", err);
     }
     // const example_data = {
     //     data: [
@@ -683,22 +683,6 @@ async function getStreamById(id) {
     //     pagination: {},
     // };
 }
-
-// async function getUserPicUrl(user) {
-//     return await fetch(`https://decapi.me/twitch/avatar/${user}`).then(
-//         async (result) => {
-//             return await result.text();
-//         }
-//     );
-// }
-
-// async function getCurrentViewerAmount(channel) {
-//     return await fetch(`https://decapi.me/twitch/viewercount/${channel}`).then(
-//         async (result) => {
-//             return await result.text();
-//         }
-//     );
-// }
 
 function getRatio(raiders, viewers) {
     const highestNum = Math.max(raiders, viewers);
@@ -753,13 +737,15 @@ async function startRaid(channel, username, viewers) {
         `[backend:549]: Starting raid on channel: ${channel}, started by: ${username}`
     );
     // const channelId = channelIds[channel];
-    const result = await dataBase.findOne({ channelName: channel });
-    const channelId = result.channelId;
+    const streamerData = await dataBase.findOne({ channelName: channel });
+    const channelId = streamerData.channelId;
     // (async () => {//!
     // const currentViewers = await getCurrentViewerAmount(channel),
-    const currentViewers = await getStreamById(channelId).stream.viewers,
-        raiderPicUrl = await getUserPicUrl(username),
-        streamerPicUrl = await getUserPicUrl(channel),
+    const streamData = await getStreamById(channelId),
+        currentViewers = streamData.stream.viewer_count,
+        raiderData = await getUser(`login=${username}`),
+        raiderPicUrl = raiderData.profile_image_url, //.userPicUrl
+        streamerPicUrl = streamerData.profilePicUrl, // HAVE IN DB
         supportRatio = getRatio(viewers, currentViewers);
     const raidPackage = {
         channel,
