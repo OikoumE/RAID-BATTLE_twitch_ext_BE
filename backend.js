@@ -297,7 +297,8 @@ class DataBase {
             return result;
         }
         console.log(
-            `[backend:301]: no document found with document: ${document}`
+            `[backend:301]: no document found with document:`,
+            document
         );
     }
     async find(collection = this.collection) {
@@ -382,9 +383,9 @@ function writeJsonFile(path, payload) {
     let data = JSON.stringify(payload);
     try {
         fs.writeFile(path, data);
-        console.log("[backend:298]: Data written to file");
+        console.log("[backend:385]: Data written to file");
     } catch (err) {
-        console.log("[backend:301]: err", err);
+        console.log("[backend:387]: err", err);
     }
 }
 
