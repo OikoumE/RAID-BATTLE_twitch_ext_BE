@@ -310,31 +310,30 @@ class DataBase {
         return result;
     }
     //TODO deleteOne
-    async checkIfUserInDb(collection = this.collection, document) {
-        const result = await this.findOne(document);
-        console.log("[backend:314]: result", result);
-        if (result) {
-            return true;
+    async checkIfUserInDb(userName) {
+        const result = await this.find();
+        for (const document in result) {
+            if (document.channelName.toLowerCase() == userName.toLowerCase()) {
+                return true;
+            }
         }
+        console.log("[backend:314]: result", result);
         return false;
     }
 }
 //! -------------------- DATABASE HANDLERS -------------------- //
 async function addStreamerToDb(userData) {
-    const result = await checkIfUserInDb({
+    const result = await dataBase.insertOne({
         channelName: userData.display_name.toLowerCase(),
+        displayName: userData.display_name,
+        channelId: userData._id,
+        profilePicUrl: userData.logo,
     });
-    // const result = await dataBase.insertOne({
-    //     channelName: userData.display_name.toLowerCase(),
-    //     displayName: userData.display_name,
-    //     channelId: userData._id,
-    //     profilePicUrl: userData.logo,
-    // });
     return result;
     //!
 }
 function parseTmiChannelListFromDb(result) {
-    let channels = [];
+    const channels = [];
     for (const document of result) {
         channels.push(document.channelName);
     }
@@ -435,19 +434,16 @@ function addStreamerToChannelsHandler(req) {
 async function addNewStreamer(channelId) {
     const userData = await getUserById(channelId);
     // const result = addStreamerAndWriteFile(channelName, channelId);
-    const result = await addStreamerToDb(userData);
-    console.log("[backend:337]: result", result);
-    if (result) {
-        const newChannelList = result;
-        if (tmiClient) {
-            tmiClient.disconnect();
-        } else {
-            console.error("no tmi connected??");
-        }
-        tmiClient.on("disconnected", (reason) => {
-            console.error("[backend:346]: reason", reason);
-            startTmi(newChannelList);
-        });
+    const userExsist = await dataBase.checkIfUserInDb(
+        userData.display_name.toLowerCase()
+    );
+    if (!userExsist) {
+        const result = await addStreamerToDb(userData);
+        console.log("[backend:337]: result", result);
+        const allChannelList = await dataBase.find();
+        const newChannelList = parseTmiChannelListFromDb(allChannelList);
+        console.log("[backend:446]: newChannelList", newChannelList);
+        restartTmi(newChannelList);
         return "Success, added to channels to monitor for raids";
     } else {
         return "Already in the list of channels to monitor for raid";
@@ -635,7 +631,17 @@ function startTmi(channels) {
         startRaid(channel, username, viewers);
     });
 }
-
+function restartTmi(channelList) {
+    if (tmiClient) {
+        tmiClient.disconnect();
+    } else {
+        console.error("no tmi connected??");
+    }
+    tmiClient.on("disconnected", (reason) => {
+        console.error("[backend:346]: reason", reason);
+        startTmi(channelList);
+    });
+}
 async function startRaid(channel, username, viewers) {
     console.log(
         `[backend:549]: Starting raid on channel: ${channel}, started by: ${username}`
