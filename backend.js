@@ -131,7 +131,7 @@ const server = new Hapi.Server(serverOptions);
 //! ------------------------------------------------------- //
 async function onLaunch() {
     dataBase = new DataBase();
-    dataBase.connect();
+    await dataBase.connect();
     //this is ran when server starts up
     console.log("[backend:130]: Server starting");
     // const data = readJsonFile(streamersFilePath); //! REDO TO DB
