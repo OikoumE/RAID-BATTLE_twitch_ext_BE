@@ -57,7 +57,7 @@ const APP_CLIENT_ID =
         process.env.APP_CLIENT_ID || "cr20njfkgll4okyrhag7xxph270sqk", //! CHANGE WITH OWN EXT SPECIFIC APP CLIENT ID!
     APP_CLIENT_SECRET = process.env.APP_CLIENT_SECRET || "";
 let APP_ACCESS_TOKEN = null,
-    APP_ACCESS_TOKEN_EXPIRES_IN = null;
+    TOKEN_EXPIRE_DATE = null;
 
 const initialHealth = 100,
     channelRaiders = {},
@@ -283,9 +283,7 @@ class DataBase {
             .db(this.dataBaseName)
             .collection(collection)
             .insertOne(document);
-        console.log(
-            `[backend:287]: new db entry added at ${result.insertedId}`
-        );
+        console.log(`[backend:287]: new db entry added at`, result.insertedId);
     }
     async findOne(document, collection = this.collection) {
         const result = await this.client
@@ -293,7 +291,7 @@ class DataBase {
             .collection(collection)
             .findOne(document);
         if (result) {
-            console.log(`[backend:197]: found document: ${result}`);
+            console.log(`[backend:197]: found document:`, result);
             return result;
         }
         console.log(
@@ -312,14 +310,11 @@ class DataBase {
     //TODO deleteOne
     async checkIfUserInDb(channelId) {
         const result = await this.find();
-        console.log("[backend:314]: result", result);
         for (const document of result) {
-            console.log("[backend:316]: document", document);
             if (document.channelId == channelId) {
                 return true;
             }
         }
-        console.log("[backend:314]: result", result);
         return false;
     }
 }
@@ -654,7 +649,6 @@ async function getAppAccessToken() {
 }
 
 function checkIfTimeToGetNewToken() {
-    const expireDate = calculateTokenExpireDate();
     if (!APP_ACCESS_TOKEN || Date.now() >= TOKEN_EXPIRE_DATE) {
         return true;
     }
