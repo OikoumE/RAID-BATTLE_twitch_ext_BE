@@ -603,7 +603,7 @@ function checkIfTimeToGetNewToken() {
 
 async function getUserById(id) {
     // Query Twitch for user details.
-    const url = `https://api.twitch.tv/helix/users/${id}`;
+    const url = `https://api.twitch.tv/helix/users?id=${id}`;
     const headers = {
         Authorization: `Bearer ${getAppAccessToken()}`,
         "Client-Id": APP_CLIENT_ID,
@@ -644,12 +644,11 @@ async function getUserById(id) {
 
 async function getStreamById(id) {
     // Query Twitch for stream details.
-
+    const url = `https://api.twitch.tv/helix/streams?user_id=${id}`;
     const headers = {
         Authorization: `Bearer ${getAppAccessToken()}`,
         "Client-Id": APP_CLIENT_ID,
     };
-
     // Handle response.
     try {
         let response = await fetch(url, { headers });
