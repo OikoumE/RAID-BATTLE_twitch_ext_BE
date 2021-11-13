@@ -603,11 +603,12 @@ function checkIfTimeToGetNewToken() {
 
 async function getUser(path) {
     // Query Twitch for user details.
-    const url = "https://api.twitch.tv/helix/users?" + path;
-    const headers = {
-        Authorization: `Bearer ${getAppAccessToken()}`,
-        "Client-Id": APP_CLIENT_ID,
-    };
+    const url = "https://api.twitch.tv/helix/users?" + path,
+        appToken = await getAppAccessToken(),
+        headers = {
+            Authorization: `Bearer ${appToken}`,
+            "Client-Id": APP_CLIENT_ID,
+        };
     // Handle response.
     try {
         let response = await fetch(url, { headers });
@@ -646,11 +647,12 @@ async function getUser(path) {
 
 async function getStreamById(id) {
     // Query Twitch for stream details.
-    const url = `https://api.twitch.tv/helix/streams?user_id=${id}`;
-    const headers = {
-        Authorization: `Bearer ${getAppAccessToken()}`,
-        "Client-Id": APP_CLIENT_ID,
-    };
+    const url = `https://api.twitch.tv/helix/streams?user_id=${id}`,
+        appToken = await getAppAccessToken(),
+        headers = {
+            Authorization: `Bearer ${appToken}`,
+            "Client-Id": APP_CLIENT_ID,
+        };
     // Handle response.
     try {
         let response = await fetch(url, { headers });
