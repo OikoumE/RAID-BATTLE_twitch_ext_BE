@@ -571,7 +571,7 @@ async function getUserById(id) {
         console.log(
             `[backend:572]: User for id ${id} found:  ${data.display_name}`
         );
-        console.log(`[backend:575]: data:  ${data}`);
+        console.log(`[backend:575]: data:`, data);
         return data.display_name;
     }
 }
