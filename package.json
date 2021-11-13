@@ -19,6 +19,7 @@
         "hapi": "^17.8.4",
         "inert": "^5.1.0",
         "jsonwebtoken": "^8.2.0",
+        "mongodb": "^4.1.4",
         "node-fetch": "^2.6.6",
         "request": "^2.85.0",
         "selfsigned": "^1.10.2",

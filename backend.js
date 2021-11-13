@@ -54,6 +54,8 @@ const { get } = require("https");
 //! -------------------- my vars -------------------- //
 const tmi = require("tmi.js");
 const fetch = require("node-fetch");
+const { MongoClient } = require("mongodb");
+const mongoUri = process.env.MONGODB_URL;
 
 const initialHealth = 100,
     channelRaiders = {},
@@ -122,13 +124,16 @@ const server = new Hapi.Server(serverOptions);
 //! --------------------------------------------------------- //
 //*                     -- ON LAUNCH --                      //
 //! ------------------------------------------------------- //
-function onLaunch() {
+async function onLaunch() {
+    dataBase = new DataBase()
     //this is ran when server starts up
     console.log("[backend:130]: Server starting");
-    const data = readJsonFile(streamersFilePath);
-    channelsToJoin = data.channels;
-    channelIds = data.channelIds;
-    startTmi(data.channels);
+    // const data = readJsonFile(streamersFilePath); //! REDO TO DB
+    // channelsToJoin = data.channels; //! REDO TO DB
+    // channelIds = data.channelIds; //! REDO TO DB
+    const dataBaseData = dataBase.find()
+    const result = parseTmiChannelListFromDb(dataBaseData)
+    startTmi(result);
 }
 
 (async () => {
@@ -176,6 +181,7 @@ function onLaunch() {
     }, userCooldownClearIntervalMs);
     onLaunch();
 })();
+const dataBase;
 
 function return404(req) {
     return "<style> html { background-color: #000000;} </style><img src='https://http.cat/404.jpg' />";
@@ -247,6 +253,81 @@ function userIsInCooldown(opaqueUserId) {
     userCooldowns[opaqueUserId] = now + userCooldownMs;
     return false;
 }
+
+//! --------------------------------------------------------- //
+//*                       -- DATABASE --                     //
+//! ------------------------------------------------------- //
+class DataBase {
+    constructor() {
+        this.client = new MongoClient(mongoUri);
+        this.dataBaseName = "RAID_BATTLE";
+        this.collection = "users";
+    }
+
+    async connect() {
+        try {
+            await this.client.connect();
+        } catch (e) {
+            console.error(e);
+        } finally {
+            await this.client.close();
+        }
+    }
+
+    async insertOne(document, collection = this.collection) {
+        const result = await this.client
+            .db(this.dataBaseName)
+            .collection(collection)
+            .insertOne(document);
+        console.log(`new db entry added at ${result.insertedId}`);
+    }
+
+    async findOne(document, collection = this.collection) {
+        const result = await this.client
+            .db(this.dataBaseName)
+            .collection(collection)
+            .findOne(document);
+        if (result) {
+            console.log(`found document: ${result}`);
+            return result;
+        }
+        console.log(`no document found with document: ${document}`);
+    }
+
+    async find(collection = this.collection) {
+        const data = await this.client
+            .db(this.dataBaseName)
+            .collection(collection)
+            .find()
+            .toArray();
+        return data;
+    }
+    //TODO deleteOne
+}
+
+
+//! -------------------- DATABASE HANDLERS -------------------- //
+function addStreamerToDb(streamer, channelId){
+    //!
+}
+function parseTmiChannelListFromDb(result){
+    let channel = []
+    for (const document of result){
+        channel.push(document.channelName)
+    }
+    console.log('[backend:317]: channels', channels);
+    return channels
+}
+//! add broadcaster
+// TODO broadcaster install EXT and opens config
+// TODO viewer acces broadcast channel (onAuth)
+
+//! TMI
+// TODO get all broadcasters
+// TODO make Array
+// TODO restart
+
+
 
 //! --------------------------------------------------------- //
 //*                   -- FILE HANDLERs --                    //
@@ -530,17 +611,17 @@ function startTmi(channels) {
             ${channel} was raided by: ${username} with ${viewers} viewers`);
         channel = channel.replace("#", "");
         viewers = parseInt(viewers);
-
         startRaid(channel, username, viewers);
     });
 }
+
+
 
 function startRaid(channel, username, viewers) {
     console.log(
         `[backend:549]: Starting raid on channel: ${channel}, started by: ${username}`
     );
     const channelId = channelIds[channel];
-
     (async () => {
         const currentViewers = await getCurrentViewerAmount(channel),
             raiderPicUrl = await getUserPicUrl(username),
