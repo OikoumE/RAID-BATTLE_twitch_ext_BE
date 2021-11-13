@@ -580,7 +580,7 @@ function broadcastTimeleft() {
 //*                      -- TWITCH API --                    //
 //! ------------------------------------------------------- //
 async function getAppAccessToken() {
-    if (checkIfTimeToGetNewToken()) {
+    if (!APP_ACCESS_TOKEN || Date.now() >= TOKEN_EXPIRE_DATE) {
         const endpoint = `https://id.twitch.tv/oauth2/token?client_id=${APP_CLIENT_ID}&client_secret=${APP_CLIENT_SECRET}&grant_type=client_credentials`;
         const result = await fetch(endpoint, { method: "POST" });
         if (result.ok) {
@@ -594,13 +594,6 @@ async function getAppAccessToken() {
     return APP_ACCESS_TOKEN;
 }
 
-function checkIfTimeToGetNewToken() {
-    if (!APP_ACCESS_TOKEN || Date.now() >= TOKEN_EXPIRE_DATE) {
-        return true;
-    }
-    return false;
-}
-
 async function getUser(path) {
     // Query Twitch for user details.
     const url = "https://api.twitch.tv/helix/users?" + path,
@@ -612,7 +605,7 @@ async function getUser(path) {
     // Handle response.
     try {
         let response = await fetch(url, { headers });
-        if (response.status_code == 200) {
+        if (response.ok) {
             let data = await response.json();
             console.log(`[backend:648]: User for path ${path} found:`, data);
             return data;
@@ -656,7 +649,7 @@ async function getStreamById(id) {
     // Handle response.
     try {
         let response = await fetch(url, { headers });
-        if (response.status_code == 200) {
+        if (response.ok) {
             let data = await response.json();
             console.log(`[backend:657]: StreamData for id ${id} found:`, data);
             return data.data[0];
