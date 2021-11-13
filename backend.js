@@ -51,7 +51,10 @@ let userCooldowns = {}; // spam prevention
 const { resolveObjectURL } = require("buffer");
 const { get } = require("https");
 
-//! -------------------- my vars -------------------- //
+//! --------------------------------------------------------- //
+//*                      -- MY VARS --                       //
+//! ------------------------------------------------------- //
+
 const tmi = require("tmi.js");
 const fetch = require("node-fetch");
 const { MongoClient } = require("mongodb");
@@ -62,7 +65,8 @@ const initialHealth = 100,
     KEEP_HEROKU_ALIVE_INTERVAL = 5;
 var channelsToJoin = [],
     channelIds = {},
-    channelNames = {};
+    channelNames = {},
+    dataBase;
 
 var tmiClient;
 //! -------------------- my vars -------------------- //
@@ -125,14 +129,14 @@ const server = new Hapi.Server(serverOptions);
 //*                     -- ON LAUNCH --                      //
 //! ------------------------------------------------------- //
 async function onLaunch() {
-    dataBase = new DataBase()
+    dataBase = new DataBase();
     //this is ran when server starts up
     console.log("[backend:130]: Server starting");
     // const data = readJsonFile(streamersFilePath); //! REDO TO DB
     // channelsToJoin = data.channels; //! REDO TO DB
     // channelIds = data.channelIds; //! REDO TO DB
-    const dataBaseData = dataBase.find()
-    const result = parseTmiChannelListFromDb(dataBaseData)
+    const dataBaseData = dataBase.find();
+    const result = parseTmiChannelListFromDb(dataBaseData);
     startTmi(result);
 }
 
@@ -181,7 +185,6 @@ async function onLaunch() {
     }, userCooldownClearIntervalMs);
     onLaunch();
 })();
-const dataBase;
 
 function return404(req) {
     return "<style> html { background-color: #000000;} </style><img src='https://http.cat/404.jpg' />";
@@ -305,18 +308,17 @@ class DataBase {
     //TODO deleteOne
 }
 
-
 //! -------------------- DATABASE HANDLERS -------------------- //
-function addStreamerToDb(streamer, channelId){
+function addStreamerToDb(streamer, channelId) {
     //!
 }
-function parseTmiChannelListFromDb(result){
-    let channel = []
-    for (const document of result){
-        channel.push(document.channelName)
+function parseTmiChannelListFromDb(result) {
+    let channel = [];
+    for (const document of result) {
+        channel.push(document.channelName);
     }
-    console.log('[backend:317]: channels', channels);
-    return channels
+    console.log("[backend:317]: channels", channels);
+    return channels;
 }
 //! add broadcaster
 // TODO broadcaster install EXT and opens config
@@ -326,8 +328,6 @@ function parseTmiChannelListFromDb(result){
 // TODO get all broadcasters
 // TODO make Array
 // TODO restart
-
-
 
 //! --------------------------------------------------------- //
 //*                   -- FILE HANDLERs --                    //
@@ -614,8 +614,6 @@ function startTmi(channels) {
         startRaid(channel, username, viewers);
     });
 }
-
-
 
 function startRaid(channel, username, viewers) {
     console.log(
