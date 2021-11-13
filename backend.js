@@ -313,7 +313,7 @@ class DataBase {
     async checkIfUserInDb(userName) {
         const result = await this.find();
         console.log("[backend:314]: result", result);
-        for (const document in result) {
+        for (const document of result) {
             console.log("[backend:316]: document", document);
             if (document.channelName.toLowerCase() == userName.toLowerCase()) {
                 return true;
