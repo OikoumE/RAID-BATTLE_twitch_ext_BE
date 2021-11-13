@@ -54,7 +54,6 @@ const { get } = require("https");
 //! --------------------------------------------------------- //
 //*                      -- MY VARS --                       //
 //! ------------------------------------------------------- //
-
 const tmi = require("tmi.js");
 const fetch = require("node-fetch");
 const { MongoClient } = require("mongodb");
@@ -63,12 +62,7 @@ const mongoUri = process.env.MONGODB_URL;
 const initialHealth = 100,
     channelRaiders = {},
     KEEP_HEROKU_ALIVE_INTERVAL = 5;
-var channelsToJoin = [],
-    channelIds = {},
-    channelNames = {},
-    dataBase;
-
-var tmiClient;
+var dataBase, tmiClient;
 //! -------------------- my vars -------------------- //
 
 function printTimeout() {
@@ -274,7 +268,7 @@ class DataBase {
             useNewUrlParser: true,
             useUnifiedTopology: true,
         });
-        this.dataBaseName = "RAID_BATTLE";
+        this.dataBaseName = "RaidBattle";
         this.collection = "users";
     }
     async connect() {
@@ -321,7 +315,10 @@ class DataBase {
 }
 
 //! -------------------- DATABASE HANDLERS -------------------- //
-function addStreamerToDb(streamer, channelId) {
+async function addStreamerToDb(streamer, channelId) {
+    const result = await dataBase.addOne({ channelName: streamer, channelId });
+    console.log("[backend:319]: result", result);
+    return result;
     //!
 }
 function parseTmiChannelListFromDb(result) {
@@ -425,7 +422,8 @@ function addStreamerToChannelsHandler(req) {
 
 async function addNewStreamer(channelId) {
     const channelName = await getUserById(channelId);
-    const result = addStreamerAndWriteFile(channelName, channelId);
+    // const result = addStreamerAndWriteFile(channelName, channelId);
+    const result = addStreamerToDb(channelName, channelId);
     console.log("[backend:337]: result", result);
     if (result) {
         const newChannelList = result;
