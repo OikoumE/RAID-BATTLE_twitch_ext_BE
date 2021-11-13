@@ -14,16 +14,6 @@
  *    limitations under the License.
  */
 
-// TODO reset health after X time
-// TODO end game state
-// TODO when all raiders are dead
-// TODO timer, add to timer if new raid during game (part of class)
-// TODO sending gameOverState: win/defeated raiderX/loose
-
-// TODO clientId, clientSecret, APP_TOKEN
-// TODO check every 24hrs who has EXT installed
-// TODO keep users who have installed still, remove users who dont
-
 const fs = require("fs");
 const Hapi = require("hapi");
 const path = require("path");
@@ -58,6 +48,16 @@ const tmi = require("tmi.js");
 const fetch = require("node-fetch");
 const { MongoClient } = require("mongodb");
 const mongoUri = process.env.MONGODB_URL;
+
+// TODO make app for RAID BATTLE:
+// TODO clientId, clientSecret, APP_TOKEN
+// TODO add to HEROKU .env
+//* twitch api auth
+const APP_CLIENT_ID =
+        process.env.APP_CLIENT_ID || "cr20njfkgll4okyrhag7xxph270sqk", //! CHANGE WITH OWN EXT SPECIFIC APP CLIENT ID!
+    APP_CLIENT_SECRET = process.env.APP_CLIENT_SECRET || "";
+let APP_ACCESS_TOKEN = null,
+    APP_ACCESS_TOKEN_EXPIRES_IN = null;
 
 const initialHealth = 100,
     channelRaiders = {},
@@ -324,6 +324,22 @@ class DataBase {
     }
 }
 //! -------------------- DATABASE HANDLERS -------------------- //
+async function addNewStreamer(channelId) {
+    const userExsist = await dataBase.checkIfUserInDb(userData.display_name);
+    if (!userExsist) {
+        const userData = await getUserById(channelId);
+        const result = await addStreamerToDb(userData);
+        console.log("[backend:337]: result", result);
+        const allChannelList = await dataBase.find();
+        const newChannelList = parseTmiChannelListFromDb(allChannelList);
+        console.log("[backend:446]: newChannelList", newChannelList);
+        restartTmi(newChannelList);
+        return "Success, added to channels to monitor for raids";
+    } else {
+        return "Already in the list of channels to monitor for raid";
+    }
+}
+
 async function addStreamerToDb(userData) {
     const result = await dataBase.insertOne({
         channelName: userData.display_name.toLowerCase(),
@@ -354,53 +370,53 @@ function parseTmiChannelListFromDb(result) {
 //! --------------------------------------------------------- //
 //*                   -- FILE HANDLERs --                    //
 //! ------------------------------------------------------- //
-const streamersFilePath = "./streamers.json";
-function addStreamerAndWriteFile(streamer, channelId) {
-    const dataFromFile = readJsonFile(streamersFilePath);
-    channelsToJoin = dataFromFile.channels;
-    channelIds = dataFromFile.channelIds;
-    channelNames = dataFromFile.channelNames;
-    if (
-        !channelsToJoin.some(
-            (item) => item.toLowerCase() === streamer.toLowerCase()
-        )
-    ) {
-        console.log("[backend:265]: `adding ${streamer} to channels and list`");
-        channelsToJoin.push(streamer);
-        channelIds[channelId] = streamer;
-        channelNames[streamer] = `${channelId}`;
-        const dataToWrite = {
-            channels: channelsToJoin,
-            channelIds: channelIds,
-            channelNames: channelNames,
-        };
-        writeJsonFile(streamersFilePath, dataToWrite);
-        return dataToWrite.channels;
-    } else {
-        console.error("[backend:280]: streamer already in list");
-        return false;
-    }
-}
+// const streamersFilePath = "./streamers.json";
+// function addStreamerAndWriteFile(streamer, channelId) {
+//     const dataFromFile = readJsonFile(streamersFilePath);
+//     channelsToJoin = dataFromFile.channels;
+//     channelIds = dataFromFile.channelIds;
+//     channelNames = dataFromFile.channelNames;
+//     if (
+//         !channelsToJoin.some(
+//             (item) => item.toLowerCase() === streamer.toLowerCase()
+//         )
+//     ) {
+//         console.log("[backend:265]: `adding ${streamer} to channels and list`");
+//         channelsToJoin.push(streamer);
+//         channelIds[channelId] = streamer;
+//         channelNames[streamer] = `${channelId}`;
+//         const dataToWrite = {
+//             channels: channelsToJoin,
+//             channelIds: channelIds,
+//             channelNames: channelNames,
+//         };
+//         writeJsonFile(streamersFilePath, dataToWrite);
+//         return dataToWrite.channels;
+//     } else {
+//         console.error("[backend:280]: streamer already in list");
+//         return false;
+//     }
+// }
 
-function readJsonFile(path) {
-    try {
-        const data = fs.readFileSync(path, "utf8");
-        return JSON.parse(data);
-    } catch (err) {
-        console.log("[backend:291]: err:", err);
-        writeJsonFile(path, {});
-    }
-}
+// function readJsonFile(path) {
+//     try {
+//         const data = fs.readFileSync(path, "utf8");
+//         return JSON.parse(data);
+//     } catch (err) {
+//         console.log("[backend:291]: err:", err);
+//         writeJsonFile(path, {});
+//     }
+// }
 
-function writeJsonFile(path, payload) {
-    let data = JSON.stringify(payload);
-    try {
-        fs.writeFile(path, data);
-        console.log("[backend:385]: Data written to file");
-    } catch (err) {
-        console.log("[backend:387]: err", err);
-    }
-}
+// function writeJsonFile(path, payload) {
+//     let data = JSON.stringify(payload);
+//     try {
+//         fs.writeFile(path, data);
+//         console.log("[backend:385]: Data written to file");
+//     } catch (err) {
+//         console.log("[backend:387]: err", err);
+//     }
+// }
 
 //! --------------------------------------------------------- //
 //*                   -- ROUTE HANDLERS --                   //
@@ -430,23 +446,6 @@ function addStreamerToChannelsHandler(req) {
     const payload = verifyAndDecode(req.headers.authorization);
     const { channel_id: channelId, opaque_user_id: opaqueUserId } = payload;
     return addNewStreamer(channelId);
-}
-
-async function addNewStreamer(channelId) {
-    const userData = await getUserById(channelId);
-    // const result = addStreamerAndWriteFile(channelName, channelId);
-    const userExsist = await dataBase.checkIfUserInDb(userData.display_name);
-    if (!userExsist) {
-        const result = await addStreamerToDb(userData);
-        console.log("[backend:337]: result", result);
-        const allChannelList = await dataBase.find();
-        const newChannelList = parseTmiChannelListFromDb(allChannelList);
-        console.log("[backend:446]: newChannelList", newChannelList);
-        restartTmi(newChannelList);
-        return "Success, added to channels to monitor for raids";
-    } else {
-        return "Already in the list of channels to monitor for raid";
-    }
 }
 
 function raiderSupportHandler(req) {
@@ -561,123 +560,6 @@ function sendHealthBroadcast(channelId) {
     );
 }
 
-//! --------------------------------------------------------- //
-//*                       -- TMI.JS --                       //
-//! ------------------------------------------------------- //
-async function getUserById(id) {
-    // Check user map first.
-    // Query Twitch for user details.
-    const url = `https://api.twitch.tv/kraken/users/${id}`;
-    const headers = {
-        Accept: "application/vnd.twitchtv.v5+json",
-        "Client-ID": "cr20njfkgll4okyrhag7xxph270sqk", //! REPLACE WITH OWN CLIENT ID MADE FOR EXT ONLY!
-    };
-    // Handle response.
-    let response = await fetch(url, { headers });
-    if (response.ok) {
-        let data = await response.json();
-        console.log(`[backend:572]: User for id ${id} found:`, data);
-        return data;
-    }
-}
-
-async function getUserPicUrl(user) {
-    return await fetch(`https://decapi.me/twitch/avatar/${user}`).then(
-        async (result) => {
-            return await result.text();
-        }
-    );
-}
-
-async function getCurrentViewerAmount(channel) {
-    return await fetch(`https://decapi.me/twitch/viewercount/${channel}`).then(
-        async (result) => {
-            return await result.text();
-        }
-    );
-}
-
-function getRatio(raiders, viewers) {
-    const highestNum = Math.max(raiders, viewers);
-    const ratio = {
-        raider: viewers / highestNum,
-        streamer: raiders / highestNum,
-    };
-    //{ raider: 0.1, streamer: 1 }
-    console.log("[backend:446]: ratio", ratio);
-    return ratio;
-}
-
-function startTmi(channels) {
-    tmiClient = new tmi.Client({
-        connection: {
-            secure: true,
-            reconnect: true,
-        },
-        channels: channels,
-    });
-    tmiClient.connect().then(() => {
-        console.log(`[backend:529]: Listening for messages on ${channels}`);
-    });
-    tmiClient.on("raided", (channel, username, viewers) => {
-        // channel: String - Channel name being raided
-        // username: String - Username raiding the channel
-        // viewers: Integer - Viewers count
-        console.log(`[backend:536]: 
-            ${channel} was raided by: ${username} with ${viewers} viewers`);
-        channel = channel.replace("#", "");
-        viewers = parseInt(viewers);
-        startRaid(channel, username, viewers);
-    });
-}
-function restartTmi(channelList) {
-    if (tmiClient) {
-        tmiClient.disconnect();
-    } else {
-        console.error("no tmi connected??");
-    }
-    tmiClient.on("disconnected", (reason) => {
-        console.error("[backend:346]: reason", reason);
-        startTmi(channelList);
-    });
-}
-async function startRaid(channel, username, viewers) {
-    console.log(
-        `[backend:549]: Starting raid on channel: ${channel}, started by: ${username}`
-    );
-    // const channelId = channelIds[channel];
-    const result = await dataBase.findOne({ channelName: channel });
-    const channelId = result.channelId;
-    // (async () => {//!
-    const currentViewers = await getCurrentViewerAmount(channel),
-        raiderPicUrl = await getUserPicUrl(username),
-        streamerPicUrl = await getUserPicUrl(channel),
-        supportRatio = getRatio(viewers, currentViewers);
-    const raidPackage = {
-        channel,
-        raider: username,
-        health: initialHealth,
-        viewers,
-        currentViewers,
-        supportRatio,
-        raiderPicUrl,
-        streamerPicUrl,
-    };
-    if (!Array.isArray(channelRaiders[channelId])) {
-        channelRaiders[channelId] = [];
-    }
-    if (!channelRaiders[channelId].some((item) => item.raider === username)) {
-        channelRaiders[channelId].push(raidPackage);
-    }
-    attemptRaidBroadcast(channelId);
-    // })();//!
-    if (channelRaiders[channelId]) {
-        return channelRaiders[channelId];
-    } else {
-        return null;
-    }
-}
-
 function attemptRaidBroadcast(channelId) {
     // Check the cool-down to determine if it's okay to send now.
     const now = Date.now();
@@ -726,16 +608,22 @@ function sendRaidBroadcast(channelId) {
         }
     );
 }
-// TODO a class
-// TODO timethingy
-// TODO broadcast 1sec interval
-// TODO PLACEHOLDER
-// TODO PLACEHOLDER
 function broadcastTimeleft() {
+    // TODO reset health after X time
+    // TODO end game state
+    // TODO when all raiders are dead
+    // TODO timer, add to timer if new raid during game (part of class)
+    // TODO sending gameOverState: win/defeated raiderX/loose
+
+    // TODO a class/func
+    // TODO timerthingy
+    // TODO broadcast 1sec interval
+    // TODO PLACEHOLDER
+    // TODO PLACEHOLDER
     // TODO start counting down when game start
     // TODO attempt broadcast every second with updated TIMELEFT if game is still running
     // TODO when game end send final broadcast to end game on frontend and clean up
-    //TODO setInterval broadcast every sec for timer update!
+    // TODO setInterval broadcast every sec for timer update!
     //? maybe override broadcastHealth with a setinterval broadcast?
     setTimeout(() => {
         let gameIsRunning, TIMELEFT;
@@ -747,6 +635,228 @@ function broadcastTimeleft() {
         }
     }, 1000);
 }
+//! --------------------------------------------------------- //
+//*                      -- TWITCH API --                    //
+//! ------------------------------------------------------- //
+async function getAppAccessToken() {
+    if (checkIfTimeToGetNewToken()) {
+        const endpoint = `https://id.twitch.tv/oauth2/token?client_id=${APP_CLIENT_ID}&client_secret=${APP_CLIENT_SECRET}&grant_type=client_credentials`;
+        const result = await fetch(endpoint, { method: "POST" });
+        if (result.ok) {
+            const data = result.json();
+            console.log("[backend:646]: data", data);
+            APP_ACCESS_TOKEN = data.access_token;
+            TOKEN_EXPIRE_DATE = Date.now() + data.expires_in * 1000;
+        }
+    }
+    return APP_ACCESS_TOKEN;
+}
+
+function checkIfTimeToGetNewToken() {
+    const expireDate = calculateTokenExpireDate();
+    if (!APP_ACCESS_TOKEN || Date.now() >= TOKEN_EXPIRE_DATE) {
+        return true;
+    }
+    return false;
+}
+
+async function getUserById(id) {
+    // Check user map first.
+    // Query Twitch for user details.
+
+    // const url = `https://api.twitch.tv/kraken/users/${id}`;
+    // const headers = {
+    //     Accept: "application/vnd.twitchtv.v5+json",
+    //     "Client-ID": APP_CLIENT_ID,
+    // };
+    const url = `https://api.twitch.tv/helix/users/${id}`;
+    const headers = {
+        Authorization: `Bearer ${getAppAccessToken()}`,
+        "Client-Id": APP_CLIENT_ID,
+    };
+    // Handle response.
+    let response = await fetch(url, { headers });
+    if (response.ok) {
+        let data = await response.json();
+        console.log(`[backend:648]: User for id ${id} found:`, data);
+        return data;
+    }
+
+    response = requests.get(
+        "https://api.twitch.tv/helix/streams",
+        (headers = headers)
+    );
+
+    // const example_data = {
+    //     data: [
+    //         {
+    //             id: "141981764",
+    //             login: "twitchdev",
+    //             display_name: "TwitchDev",
+    //             type: "",
+    //             broadcaster_type: "partner",
+    //             description:
+    //                 "Supporting third-party developers building Twitch integrations from chatbots to game integrations.",
+    //             profile_image_url:
+    //                 "https://static-cdn.jtvnw.net/jtv_user_pictures/8a6381c7-d0c0-4576-b179-38bd5ce1d6af-profile_image-300x300.png",
+    //             offline_image_url:
+    //                 "https://static-cdn.jtvnw.net/jtv_user_pictures/3f13ab61-ec78-4fe6-8481-8682cb3b0ac2-channel_offline_image-1920x1080.png",
+    //             view_count: 5980557,
+    //             email: "not-real@email.com",
+    //             created_at: "2016-12-14T20:32:28Z",
+    //         },
+    //     ],
+    // };
+}
+
+async function getStreamById(id) {
+    // Check user map first.
+    // Query Twitch for stream details.
+
+    // const url = `https://api.twitch.tv/kraken/streams/${id}`;
+    // const headers = {
+    //     Accept: "application/vnd.twitchtv.v5+json",
+    //     "Client-ID": APP_CLIENT_ID,
+    // };
+
+    const headers = {
+        Authorization: `Bearer ${getAppAccessToken()}`,
+        "Client-Id": APP_CLIENT_ID,
+    };
+
+    // Handle response.
+    let response = await fetch(url, { headers });
+    if (response.ok) {
+        let data = await response.json();
+        console.log(`[backend:662]: StreamData for id ${id} found:`, data);
+        return data;
+    }
+    // const example_data = {
+    //     data: [
+    //         {
+    //             id: "40952121085",
+    //             user_id: "101051819",
+    //             user_login: "afro",
+    //             user_name: "Afro",
+    //             game_id: "32982",
+    //             game_name: "Grand Theft Auto V",
+    //             type: "live",
+    //             title: "Jacob: Digital Den Laptops & Routers | NoPixel | !MAINGEAR !FCF",
+    //             viewer_count: 1490,
+    //             started_at: "2021-03-10T03:18:11Z",
+    //             language: "en",
+    //             thumbnail_url:
+    //                 "https://static-cdn.jtvnw.net/previews-ttv/live_user_afro-{width}x{height}.jpg",
+    //             tag_ids: ["6ea6bca4-4712-4ab9-a906-e3336a9d8039"],
+    //             is_mature: false,
+    //         },
+    //     ],
+    //     pagination: {},
+    // };
+}
+
+// async function getUserPicUrl(user) {
+//     return await fetch(`https://decapi.me/twitch/avatar/${user}`).then(
+//         async (result) => {
+//             return await result.text();
+//         }
+//     );
+// }
+
+// async function getCurrentViewerAmount(channel) {
+//     return await fetch(`https://decapi.me/twitch/viewercount/${channel}`).then(
+//         async (result) => {
+//             return await result.text();
+//         }
+//     );
+// }
+
+function getRatio(raiders, viewers) {
+    const highestNum = Math.max(raiders, viewers);
+    const ratio = {
+        raider: viewers / highestNum,
+        streamer: raiders / highestNum,
+    };
+    //{ raider: 0.1, streamer: 1 }
+    console.log("[backend:446]: ratio", ratio);
+    return ratio;
+}
+
+//! --------------------------------------------------------- //
+//*                       -- TMI.JS --                       //
+//! ------------------------------------------------------- //
+
+function startTmi(channels) {
+    tmiClient = new tmi.Client({
+        connection: {
+            secure: true,
+            reconnect: true,
+        },
+        channels: channels,
+    });
+    tmiClient.connect().then(() => {
+        console.log(`[backend:529]: Listening for messages on ${channels}`);
+    });
+    tmiClient.on("raided", (channel, username, viewers) => {
+        // channel: String - Channel name being raided
+        // username: String - Username raiding the channel
+        // viewers: Integer - Viewers count
+        console.log(`[backend:536]: 
+            ${channel} was raided by: ${username} with ${viewers} viewers`);
+        channel = channel.replace("#", "");
+        viewers = parseInt(viewers);
+        startRaid(channel, username, viewers);
+    });
+}
+function restartTmi(channelList) {
+    if (tmiClient) {
+        tmiClient.disconnect();
+    } else {
+        console.error("no tmi connected??");
+    }
+    tmiClient.on("disconnected", (reason) => {
+        console.error("[backend:346]: reason", reason);
+        startTmi(channelList);
+    });
+}
+async function startRaid(channel, username, viewers) {
+    console.log(
+        `[backend:549]: Starting raid on channel: ${channel}, started by: ${username}`
+    );
+    // const channelId = channelIds[channel];
+    const result = await dataBase.findOne({ channelName: channel });
+    const channelId = result.channelId;
+    // (async () => {//!
+    // const currentViewers = await getCurrentViewerAmount(channel),
+    const currentViewers = await getStreamById(channelId).stream.viewers,
+        raiderPicUrl = await getUserPicUrl(username),
+        streamerPicUrl = await getUserPicUrl(channel),
+        supportRatio = getRatio(viewers, currentViewers);
+    const raidPackage = {
+        channel,
+        raider: username,
+        health: initialHealth,
+        viewers,
+        currentViewers,
+        supportRatio,
+        raiderPicUrl,
+        streamerPicUrl,
+    };
+    if (!Array.isArray(channelRaiders[channelId])) {
+        channelRaiders[channelId] = [];
+    }
+    if (!channelRaiders[channelId].some((item) => item.raider === username)) {
+        channelRaiders[channelId].push(raidPackage);
+    }
+    attemptRaidBroadcast(channelId);
+    // })();//!
+    if (channelRaiders[channelId]) {
+        return channelRaiders[channelId];
+    } else {
+        return null;
+    }
+}
+
 //! --------------------------------------------------------- //
 //*                     -- TEST AREA --                      //
 //! ------------------------------------------------------- //
