@@ -302,21 +302,34 @@ class DataBase {
         );
     }
     async find(collection = this.collection) {
-        const data = await this.client
+        const result = await this.client
             .db(this.dataBaseName)
             .collection(collection)
             .find()
             .toArray();
-        return data;
+        return result;
     }
     //TODO deleteOne
+    async checkIfUserInDb(collection = this.collection, document) {
+        const result = await this.findOne(document);
+        console.log("[backend:314]: result", result);
+        if (result) {
+            return true;
+        }
+        return false;
+    }
 }
 //! -------------------- DATABASE HANDLERS -------------------- //
-async function addStreamerToDb(streamer, channelId) {
-    const result = await dataBase.insertOne({
-        channelName: streamer,
-        channelId,
+async function addStreamerToDb(userData) {
+    const result = await checkIfUserInDb({
+        channelName: userData.display_name.toLowerCase(),
     });
+    // const result = await dataBase.insertOne({
+    //     channelName: userData.display_name.toLowerCase(),
+    //     displayName: userData.display_name,
+    //     channelId: userData._id,
+    //     profilePicUrl: userData.logo,
+    // });
     return result;
     //!
 }
@@ -420,9 +433,9 @@ function addStreamerToChannelsHandler(req) {
 }
 
 async function addNewStreamer(channelId) {
-    const channelName = await getUserById(channelId);
+    const userData = await getUserById(channelId);
     // const result = addStreamerAndWriteFile(channelName, channelId);
-    const result = await addStreamerToDb(channelName, channelId);
+    const result = await addStreamerToDb(userData);
     console.log("[backend:337]: result", result);
     if (result) {
         const newChannelList = result;
