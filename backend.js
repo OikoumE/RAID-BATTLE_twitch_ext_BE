@@ -317,7 +317,10 @@ class DataBase {
 
 //! -------------------- DATABASE HANDLERS -------------------- //
 async function addStreamerToDb(streamer, channelId) {
-    const result = await dataBase.addOne({ channelName: streamer, channelId });
+    const result = await dataBase.insertOne({
+        channelName: streamer,
+        channelId,
+    });
     console.log("[backend:319]: result", result);
     return result;
     //!
