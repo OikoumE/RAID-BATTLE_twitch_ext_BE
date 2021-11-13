@@ -278,7 +278,6 @@ class DataBase {
             console.log("[backend:276]: e", e);
         }
     }
-
     async insertOne(document, collection = this.collection) {
         const result = await this.client
             .db(this.dataBaseName)
@@ -288,7 +287,6 @@ class DataBase {
             `[backend:287]: new db entry added at ${result.insertedId}`
         );
     }
-
     async findOne(document, collection = this.collection) {
         const result = await this.client
             .db(this.dataBaseName)
@@ -302,31 +300,26 @@ class DataBase {
             `[backend:301]: no document found with document: ${document}`
         );
     }
-
     async find(collection = this.collection) {
         const data = await this.client
             .db(this.dataBaseName)
             .collection(collection)
             .find()
             .toArray();
-        console.log("[backend:311]: found data", data);
         return data;
     }
     //TODO deleteOne
 }
-
 //! -------------------- DATABASE HANDLERS -------------------- //
 async function addStreamerToDb(streamer, channelId) {
     const result = await dataBase.insertOne({
         channelName: streamer,
         channelId,
     });
-    console.log("[backend:319]: result", result);
     return result;
     //!
 }
 function parseTmiChannelListFromDb(result) {
-    console.log("[backend:317]: channels", result);
     let channels = [];
     for (const document of result) {
         channels.push(document.channelName);
