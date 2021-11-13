@@ -309,6 +309,7 @@ class DataBase {
             .collection(collection)
             .find()
             .toArray();
+        console.log("[backend:311]: found data", data);
         return data;
     }
     //TODO deleteOne
@@ -394,13 +395,13 @@ function writeJsonFile(path, payload) {
 //*                   -- ROUTE HANDLERS --                   //
 //! ------------------------------------------------------- //
 
-function ongoingRaidGameQueryHandler(req) {
+async function ongoingRaidGameQueryHandler(req) {
     // Verify all requests.
     const payload = verifyAndDecode(req.headers.authorization);
     const { channel_id: channelId, opaque_user_id: opaqueUserId } = payload;
-
+    const result = await dataBase.findOne({ channelId });
     //! ----------------
-    if (channelNames[channelId] == null) {
+    if (!result) {
         addNewStreamer(channelId);
     }
     //! ----------------
