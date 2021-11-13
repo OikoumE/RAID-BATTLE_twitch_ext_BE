@@ -256,6 +256,7 @@ function userIsInCooldown(opaqueUserId) {
 
     // Voting extensions must also track per-user votes to prevent skew.
     userCooldowns[opaqueUserId] = now + userCooldownMs;
+
     return false;
 }
 
