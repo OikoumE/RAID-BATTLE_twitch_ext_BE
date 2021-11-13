@@ -130,7 +130,7 @@ const server = new Hapi.Server(serverOptions);
 //*                     -- ON LAUNCH --                      //
 //! ------------------------------------------------------- //
 async function onLaunch() {
-    dataBase = new DataBase();
+    dataBase = new DataBase(mongoUri);
     await dataBase.connect();
     //this is ran when server starts up
     console.log("[backend:130]: Server starting");
@@ -263,8 +263,11 @@ function userIsInCooldown(opaqueUserId) {
 //*                       -- DATABASE --                     //
 //! ------------------------------------------------------- //
 class DataBase {
-    constructor() {
-        this.client = new MongoClient(mongoUri);
+    constructor(mongoUri) {
+        this.client = new MongoClient(mongoUri, {
+            useNewUrlParser: true,
+            useUnifiedTopology: true,
+        });
         this.dataBaseName = "RAID_BATTLE";
         this.collection = "users";
     }
