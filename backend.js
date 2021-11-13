@@ -131,7 +131,6 @@ const server = new Hapi.Server(serverOptions);
 //! ------------------------------------------------------- //
 async function onLaunch() {
     dataBase = new DataBase();
-    await dataBase.connect();
     //this is ran when server starts up
     console.log("[backend:130]: Server starting");
     // const data = readJsonFile(streamersFilePath); //! REDO TO DB
@@ -268,7 +267,9 @@ class DataBase {
         this.dataBaseName = "RAID_BATTLE";
         this.collection = "users";
     }
-
+    async init() {
+        await this.connect();
+    }
     async connect() {
         try {
             await this.client.connect();
@@ -313,6 +314,7 @@ function addStreamerToDb(streamer, channelId) {
     //!
 }
 function parseTmiChannelListFromDb(result) {
+    console.log("[backend:317]: channels", result);
     let channel = [];
     for (const document of result) {
         channel.push(document.channelName);
