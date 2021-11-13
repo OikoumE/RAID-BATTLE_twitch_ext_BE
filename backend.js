@@ -310,12 +310,12 @@ class DataBase {
         return result;
     }
     //TODO deleteOne
-    async checkIfUserInDb(userName) {
+    async checkIfUserInDb(channelId) {
         const result = await this.find();
         console.log("[backend:314]: result", result);
         for (const document of result) {
             console.log("[backend:316]: document", document);
-            if (document.channelName.toLowerCase() == userName.toLowerCase()) {
+            if (document.channelId == channelId) {
                 return true;
             }
         }
@@ -325,7 +325,7 @@ class DataBase {
 }
 //! -------------------- DATABASE HANDLERS -------------------- //
 async function addNewStreamer(channelId) {
-    const userExsist = await dataBase.checkIfUserInDb(userData.display_name);
+    const userExsist = await dataBase.checkIfUserInDb(channelId);
     if (!userExsist) {
         const userData = await getUserById(channelId);
         const result = await addStreamerToDb(userData);
@@ -646,6 +646,7 @@ async function getAppAccessToken() {
             const data = result.json();
             console.log("[backend:646]: data", data);
             APP_ACCESS_TOKEN = data.access_token;
+            process.env.APP_ACCESS_TOKEN = APP_ACCESS_TOKEN;
             TOKEN_EXPIRE_DATE = Date.now() + data.expires_in * 1000;
         }
     }
@@ -664,11 +665,6 @@ async function getUserById(id) {
     // Check user map first.
     // Query Twitch for user details.
 
-    // const url = `https://api.twitch.tv/kraken/users/${id}`;
-    // const headers = {
-    //     Accept: "application/vnd.twitchtv.v5+json",
-    //     "Client-ID": APP_CLIENT_ID,
-    // };
     const url = `https://api.twitch.tv/helix/users/${id}`;
     const headers = {
         Authorization: `Bearer ${getAppAccessToken()}`,
@@ -712,12 +708,6 @@ async function getUserById(id) {
 async function getStreamById(id) {
     // Check user map first.
     // Query Twitch for stream details.
-
-    // const url = `https://api.twitch.tv/kraken/streams/${id}`;
-    // const headers = {
-    //     Accept: "application/vnd.twitchtv.v5+json",
-    //     "Client-ID": APP_CLIENT_ID,
-    // };
 
     const headers = {
         Authorization: `Bearer ${getAppAccessToken()}`,
