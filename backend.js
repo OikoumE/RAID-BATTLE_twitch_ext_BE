@@ -131,6 +131,7 @@ const server = new Hapi.Server(serverOptions);
 //! ------------------------------------------------------- //
 async function onLaunch() {
     dataBase = new DataBase();
+    await dataBase.connect();
     //this is ran when server starts up
     console.log("[backend:130]: Server starting");
     // const data = readJsonFile(streamersFilePath); //! REDO TO DB
@@ -267,14 +268,11 @@ class DataBase {
         this.dataBaseName = "RAID_BATTLE";
         this.collection = "users";
     }
-    async init() {
-        await this.connect();
-    }
     async connect() {
         try {
             await this.client.connect();
         } catch (e) {
-            console.error(e);
+            console.log("[backend:276]: e", e);
         }
     }
 
@@ -283,7 +281,9 @@ class DataBase {
             .db(this.dataBaseName)
             .collection(collection)
             .insertOne(document);
-        console.log(`new db entry added at ${result.insertedId}`);
+        console.log(
+            `[backend:287]: new db entry added at ${result.insertedId}`
+        );
     }
 
     async findOne(document, collection = this.collection) {
@@ -292,10 +292,12 @@ class DataBase {
             .collection(collection)
             .findOne(document);
         if (result) {
-            console.log(`found document: ${result}`);
+            console.log(`[backend:197]: found document: ${result}`);
             return result;
         }
-        console.log(`no document found with document: ${document}`);
+        console.log(
+            `[backend:301]: no document found with document: ${document}`
+        );
     }
 
     async find(collection = this.collection) {
