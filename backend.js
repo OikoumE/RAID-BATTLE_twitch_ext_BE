@@ -264,6 +264,10 @@ function userIsInCooldown(opaqueUserId) {
 //! ------------------------------------------------------- //
 class DataBase {
     constructor(mongoUri) {
+        console.log(
+            "[backend:266]: attempting connection to mongoUri",
+            mongoUri
+        );
         this.client = new MongoClient(mongoUri, {
             useNewUrlParser: true,
             useUnifiedTopology: true,
