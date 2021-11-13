@@ -344,7 +344,6 @@ function parseTmiChannelListFromDb(result) {
 //! add broadcaster
 // TODO broadcaster install EXT and opens config
 // TODO viewer acces broadcast channel (onAuth)
-
 //! TMI
 // TODO get all broadcasters
 // TODO make Array
