@@ -32,7 +32,7 @@ const verboseLog = verboseLogging ? console.log.bind(console) : () => {};
 
 // Service state variables
 const serverTokenDurationSec = 30; // our tokens for pubsub expire after 30 seconds
-const userCooldownMs = 250; // maximum input rate per user to prevent bot abuse
+const userCooldownMs = 100; // maximum input rate per user to prevent bot abuse
 const userCooldownClearIntervalMs = 60000; // interval to reset our tracking object
 const channelCooldownMs = 1000; // maximum broadcast rate per channel
 const bearerPrefix = "Bearer "; // HTTP authorization headers have this prefix
@@ -42,6 +42,12 @@ const { resolveObjectURL } = require("buffer");
 const { get } = require("https");
 
 //! --------------------------------------------------------- //
+//*                      -- TODO's --                        //
+//! ------------------------------------------------------- //
+// TODO Make a logger that logs critical errors to DB
+// TODO log pr channelID: timestamp, error, scriptLocation
+
+//! --------------------------------------------------------- //
 //*                      -- MY VARS --                       //
 //! ------------------------------------------------------- //
 const tmi = require("tmi.js");
@@ -49,9 +55,6 @@ const fetch = require("node-fetch");
 const { MongoClient } = require("mongodb");
 const mongoUri = process.env.MONGODB_URL;
 
-// TODO make app for RAID BATTLE:
-// TODO clientId, clientSecret, APP_TOKEN
-// TODO add to HEROKU .env
 //* twitch api auth
 const APP_CLIENT_ID =
         process.env.APP_CLIENT_ID || "cr20njfkgll4okyrhag7xxph270sqk", //! CHANGE WITH OWN EXT SPECIFIC APP CLIENT ID!
@@ -247,17 +250,14 @@ function userIsInCooldown(opaqueUserId) {
     if (cooldown && cooldown > now) {
         return true;
     }
-
     // Voting extensions must also track per-user votes to prevent skew.
     userCooldowns[opaqueUserId] = now + userCooldownMs;
-
     return false;
 }
 
 //! --------------------------------------------------------- //
 //*                       -- DATABASE --                     //
 //! ------------------------------------------------------- //
-//TODO make new MongoDB project, allow ip "*"
 class DataBase {
     constructor(mongoUri) {
         console.log(
@@ -283,7 +283,14 @@ class DataBase {
             .db(this.dataBaseName)
             .collection(collection)
             .insertOne(document);
-        console.log(`[backend:287]: new db entry added at`, result.insertedId);
+        if (result) {
+            console.log(
+                `[backend:287]: new db entry added at`,
+                result.insertedId
+            );
+            return result;
+        }
+        console.log(`[backend:293]: no documents added:`, result);
     }
     async findOne(document, collection = this.collection) {
         const result = await this.client
@@ -291,7 +298,6 @@ class DataBase {
             .collection(collection)
             .findOne(document);
         if (result) {
-            console.log(`[backend:197]: found document:`, result);
             return result;
         }
         console.log(
@@ -305,9 +311,11 @@ class DataBase {
             .collection(collection)
             .find()
             .toArray();
-        return result;
+        if (result) {
+            return result;
+        }
+        console.log(`[backend:301]: no documents found:`, result);
     }
-    //TODO deleteOne
     async checkIfUserInDb(channelId) {
         const result = await this.find();
         for (const document of result) {
@@ -317,6 +325,7 @@ class DataBase {
         }
         return false;
     }
+    //TODO deleteOne //? idk if we need
 }
 //! -------------------- DATABASE HANDLERS -------------------- //
 async function addNewStreamer(channelId) {
@@ -343,7 +352,6 @@ async function addStreamerToDb(userData) {
         profilePicUrl: userData.logo,
     });
     return result;
-    //!
 }
 function parseTmiChannelListFromDb(result) {
     const channels = [];
@@ -354,79 +362,17 @@ function parseTmiChannelListFromDb(result) {
     return channels;
 }
 
-//! add broadcaster
-// TODO broadcaster install EXT and opens config
-// TODO viewer acces broadcast channel (onAuth)
-//! TMI
-// TODO get all broadcasters
-// TODO make Array
-// TODO restart
-
-//! --------------------------------------------------------- //
-//*                   -- FILE HANDLERs --                    //
-//! ------------------------------------------------------- //
-// const streamersFilePath = "./streamers.json";
-// function addStreamerAndWriteFile(streamer, channelId) {
-//     const dataFromFile = readJsonFile(streamersFilePath);
-//     channelsToJoin = dataFromFile.channels;
-//     channelIds = dataFromFile.channelIds;
-//     channelNames = dataFromFile.channelNames;
-//     if (
-//         !channelsToJoin.some(
-//             (item) => item.toLowerCase() === streamer.toLowerCase()
-//         )
-//     ) {
-//         console.log("[backend:265]: `adding ${streamer} to channels and list`");
-//         channelsToJoin.push(streamer);
-//         channelIds[channelId] = streamer;
-//         channelNames[streamer] = `${channelId}`;
-//         const dataToWrite = {
-//             channels: channelsToJoin,
-//             channelIds: channelIds,
-//             channelNames: channelNames,
-//         };
-//         writeJsonFile(streamersFilePath, dataToWrite);
-//         return dataToWrite.channels;
-//     } else {
-//         console.error("[backend:280]: streamer already in list");
-//         return false;
-//     }
-// }
-
-// function readJsonFile(path) {
-//     try {
-//         const data = fs.readFileSync(path, "utf8");
-//         return JSON.parse(data);
-//     } catch (err) {
-//         console.log("[backend:291]: err:", err);
-//         writeJsonFile(path, {});
-//     }
-// }
-
-// function writeJsonFile(path, payload) {
-//     let data = JSON.stringify(payload);
-//     try {
-//         fs.writeFile(path, data);
-//         console.log("[backend:385]: Data written to file");
-//     } catch (err) {
-//         console.log("[backend:387]: err", err);
-//     }
-// }
-
 //! --------------------------------------------------------- //
 //*                   -- ROUTE HANDLERS --                   //
 //! ------------------------------------------------------- //
-
 async function ongoingRaidGameQueryHandler(req) {
     // Verify all requests.
     const payload = verifyAndDecode(req.headers.authorization);
     const { channel_id: channelId, opaque_user_id: opaqueUserId } = payload;
     const result = await dataBase.findOne({ channelId });
-    //! ----------------
     if (!result) {
         addNewStreamer(channelId);
     }
-    //! ----------------
     if (
         !Array.isArray(channelRaiders[channelId]) //|| channelRaiders[channelId].length == 0
     ) {
@@ -609,7 +555,6 @@ function broadcastTimeleft() {
     // TODO when all raiders are dead
     // TODO timer, add to timer if new raid during game (part of class)
     // TODO sending gameOverState: win/defeated raiderX/loose
-
     // TODO a class/func
     // TODO timerthingy
     // TODO broadcast 1sec interval
@@ -630,6 +575,7 @@ function broadcastTimeleft() {
         }
     }, 1000);
 }
+
 //! --------------------------------------------------------- //
 //*                      -- TWITCH API --                    //
 //! ------------------------------------------------------- //
@@ -638,7 +584,7 @@ async function getAppAccessToken() {
         const endpoint = `https://id.twitch.tv/oauth2/token?client_id=${APP_CLIENT_ID}&client_secret=${APP_CLIENT_SECRET}&grant_type=client_credentials`;
         const result = await fetch(endpoint, { method: "POST" });
         if (result.ok) {
-            const data = result.json();
+            const data = await result.json();
             console.log("[backend:646]: data", data);
             APP_ACCESS_TOKEN = data.access_token;
             process.env.APP_ACCESS_TOKEN = APP_ACCESS_TOKEN;
@@ -656,26 +602,23 @@ function checkIfTimeToGetNewToken() {
 }
 
 async function getUserById(id) {
-    // Check user map first.
     // Query Twitch for user details.
-
     const url = `https://api.twitch.tv/helix/users/${id}`;
     const headers = {
         Authorization: `Bearer ${getAppAccessToken()}`,
         "Client-Id": APP_CLIENT_ID,
     };
     // Handle response.
-    let response = await fetch(url, { headers });
-    if (response.ok) {
-        let data = await response.json();
-        console.log(`[backend:648]: User for id ${id} found:`, data);
-        return data;
+    try {
+        let response = await fetch(url, { headers });
+        if (response.ok) {
+            let data = await response.json();
+            console.log(`[backend:648]: User for id ${id} found:`, data);
+            return data;
+        }
+    } catch (err) {
+        console.log("[backend:674]: Error when getting user by ID", err);
     }
-
-    response = requests.get(
-        "https://api.twitch.tv/helix/streams",
-        (headers = headers)
-    );
 
     // const example_data = {
     //     data: [
@@ -700,7 +643,6 @@ async function getUserById(id) {
 }
 
 async function getStreamById(id) {
-    // Check user map first.
     // Query Twitch for stream details.
 
     const headers = {
@@ -709,11 +651,15 @@ async function getStreamById(id) {
     };
 
     // Handle response.
-    let response = await fetch(url, { headers });
-    if (response.ok) {
-        let data = await response.json();
-        console.log(`[backend:662]: StreamData for id ${id} found:`, data);
-        return data;
+    try {
+        let response = await fetch(url, { headers });
+        if (response.ok) {
+            let data = await response.json();
+            console.log(`[backend:662]: StreamData for id ${id} found:`, data);
+            return data;
+        }
+    } catch (err) {
+        console.log("[backend:722]: Error when getting stream by ID", err);
     }
     // const example_data = {
     //     data: [
