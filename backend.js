@@ -70,6 +70,7 @@ var channelsToJoin = [],
 
 var tmiClient;
 //! -------------------- my vars -------------------- //
+
 function printTimeout() {
     var date = new Date();
     console.log(`ALIVE CHECKER: ${date.toDateString()} ${date.toTimeString()}`);
@@ -130,6 +131,7 @@ const server = new Hapi.Server(serverOptions);
 //! ------------------------------------------------------- //
 async function onLaunch() {
     dataBase = new DataBase();
+    dataBase.connect();
     //this is ran when server starts up
     console.log("[backend:130]: Server starting");
     // const data = readJsonFile(streamersFilePath); //! REDO TO DB
@@ -272,8 +274,6 @@ class DataBase {
             await this.client.connect();
         } catch (e) {
             console.error(e);
-        } finally {
-            await this.client.close();
         }
     }
 
