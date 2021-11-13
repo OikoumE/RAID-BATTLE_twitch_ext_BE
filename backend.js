@@ -334,6 +334,7 @@ function parseTmiChannelListFromDb(result) {
     console.log("[backend:317]: channels", channels);
     return channels;
 }
+
 //! add broadcaster
 // TODO broadcaster install EXT and opens config
 // TODO viewer acces broadcast channel (onAuth)
@@ -427,7 +428,7 @@ function addStreamerToChannelsHandler(req) {
 async function addNewStreamer(channelId) {
     const channelName = await getUserById(channelId);
     // const result = addStreamerAndWriteFile(channelName, channelId);
-    const result = addStreamerToDb(channelName, channelId);
+    const result = await addStreamerToDb(channelName, channelId);
     console.log("[backend:337]: result", result);
     if (result) {
         const newChannelList = result;
