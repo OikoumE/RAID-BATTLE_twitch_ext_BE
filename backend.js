@@ -624,37 +624,36 @@ function startTmi(channels) {
     });
 }
 
-function startRaid(channel, username, viewers) {
+async function startRaid(channel, username, viewers) {
     console.log(
         `[backend:549]: Starting raid on channel: ${channel}, started by: ${username}`
     );
-    const channelId = channelIds[channel];
-    (async () => {
-        const currentViewers = await getCurrentViewerAmount(channel),
-            raiderPicUrl = await getUserPicUrl(username),
-            streamerPicUrl = await getUserPicUrl(channel),
-            supportRatio = getRatio(viewers, currentViewers);
-        const raidPackage = {
-            channel,
-            raider: username,
-            health: initialHealth,
-            viewers,
-            currentViewers,
-            supportRatio,
-            raiderPicUrl,
-            streamerPicUrl,
-        };
-        //!
-        if (!Array.isArray(channelRaiders[channelId])) {
-            channelRaiders[channelId] = [];
-        }
-        if (
-            !channelRaiders[channelId].some((item) => item.raider === username)
-        ) {
-            channelRaiders[channelId].push(raidPackage);
-        }
-        attemptRaidBroadcast(channelId);
-    })();
+    // const channelId = channelIds[channel];
+    const result = await dataBase.findOne({ channelName: channel });
+    const channelId = result.channelId;
+    // (async () => {//!
+    const currentViewers = await getCurrentViewerAmount(channel),
+        raiderPicUrl = await getUserPicUrl(username),
+        streamerPicUrl = await getUserPicUrl(channel),
+        supportRatio = getRatio(viewers, currentViewers);
+    const raidPackage = {
+        channel,
+        raider: username,
+        health: initialHealth,
+        viewers,
+        currentViewers,
+        supportRatio,
+        raiderPicUrl,
+        streamerPicUrl,
+    };
+    if (!Array.isArray(channelRaiders[channelId])) {
+        channelRaiders[channelId] = [];
+    }
+    if (!channelRaiders[channelId].some((item) => item.raider === username)) {
+        channelRaiders[channelId].push(raidPackage);
+    }
+    attemptRaidBroadcast(channelId);
+    // })();//!
     if (channelRaiders[channelId]) {
         return channelRaiders[channelId];
     } else {
