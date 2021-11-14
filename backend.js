@@ -387,7 +387,7 @@ async function addNewStreamer(channelId) {
         };
     } else {
         returnData = {
-            result: "Already in the list of channels to monitor for raid",
+            result: "Already in the list of <br> channels to monitor for raid",
             data: null,
         };
     }
@@ -445,9 +445,12 @@ async function requestUserConfigHandler(req) {
     const { channel_id: channelId, opaque_user_id: opaqueUserId } = payload;
     const result = await dataBase.findOne({ channelId });
     if (result) {
-        return JSON.stringify({ result: "Found user", data: result });
+        return JSON.stringify({ result: "Loaded user config", data: result });
     }
-    return JSON.stringify({ result: "Did not find user", data: null });
+    return JSON.stringify({
+        result: "Did not find config <br> hit save to store config ",
+        data: null,
+    });
 }
 
 async function updateUserConfigHandler(req) {
