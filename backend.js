@@ -488,7 +488,9 @@ function parseUserConfigUpdateDocument(document) {
         const max = defaultUserConfig[key].max,
             min = defaultUserConfig[key].min;
         if (!key.toLowerCase().includes("enable")) {
-            parsedDoc[key] = value > max ? max : value < min ? min : value;
+            parsedDoc[key] = parseInt(
+                value > max ? max : value < min ? min : value
+            );
         } else {
             parsedDoc[key] = value;
         }
