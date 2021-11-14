@@ -104,9 +104,8 @@ async function printTimeout() {
     console.log();
     setTimeout(async () => {
         fetch("https://raid-battle-twitch-ext.herokuapp.com/").then((res) =>
-            console.log(res.ok)
+            console.log("[backend:107]: Herokupinger returned: ", res.status)
         );
-
         printTimeout();
     }, nextTimeout);
 }
@@ -624,16 +623,12 @@ async function sendRaidBroadcast(channelId) {
         target: ["broadcast"],
     });
     // Send the broadcast request to the Twitch API.
-    console.log(
-        "[backend:497]:",
-        `Broadcasting channelRaidersArray for channelId: ${channelId}`
-    );
     const url = "https://api.twitch.tv/helix/extensions/pubsub";
     const res = await fetch(url, { method: "POST", headers, body });
     console.log(
-        "[backend:503]: Result sending message to channel",
-        channelId,
-        res.status
+        "[backend:503]: ",
+        `Broadcasting to channelId: ${channelId}`,
+        `Response: ${res.status}`
     );
 }
 
@@ -845,8 +840,7 @@ async function startRaid(channel, username, viewers) {
     startBroadcastInterval(channelId);
     if (channelRaiders[channelId]) {
         console.log(
-            "[backend:844]: StartRaid returned:",
-            channelRaiders[channelId]
+            "[backend:844]: StartRaid returned: channelRaiders[channelId]"
         );
         return channelRaiders[channelId];
     } else {
