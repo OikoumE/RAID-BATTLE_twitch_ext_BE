@@ -580,13 +580,12 @@ async function startTestRaidHandler(req) {
     // console.log("[backend:566]: testRaidPayload", testRaidPayload);
     await addNewStreamer(channelId);
     const channel = await dataBase.findOne({ channelId });
-    return JSON.stringify(
-        startRaid(
-            channel.channelName,
-            testRaidPayload.testRaider,
-            testRaidPayload.testAmount
-        )
+    const startedRaid = await startRaid(
+        channel.channelName,
+        testRaidPayload.testRaider,
+        testRaidPayload.testAmount
     );
+    return JSON.stringify(startedRaid);
 }
 
 //! --------------------------------------------------------- //
