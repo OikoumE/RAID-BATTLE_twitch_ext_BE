@@ -53,6 +53,8 @@ const { get } = require("https");
 const tmi = require("tmi.js");
 const fetch = require("node-fetch");
 const { MongoClient } = require("mongodb");
+const { channel } = require("diagnostics_channel");
+const { stringify } = require("querystring");
 const mongoUri = process.env.MONGODB_URL;
 
 //* twitch api auth
@@ -423,7 +425,8 @@ function raiderSupportHandler(req) {
         }
     }
     // Broadcast the health change to all other extension instances on this channel.
-    // attemptHealthBroadcast(channelId, raider);
+    // attemptHealthBroadcast(channelId);
+    // attemptRaidBroadcast(channelId)
     return JSON.stringify(channelRaiders[channelId]);
 }
 function streamerSupportHandler(req) {
@@ -451,29 +454,132 @@ function streamerSupportHandler(req) {
     );
     // Broadcast the health change to all other extension instances on this channel.
     // attemptHealthBroadcast(channelId);
+    // attemptRaidBroadcast(channelId)
+
     return JSON.stringify(channelRaiders[channelId]);
 }
 
 //! -------------------- SEND BROADCAST TO EXT -------------------- //
-function attemptHealthBroadcast(channelId) {
+// function attemptHealthBroadcast(channelId) {
+//     // Check the cool-down to determine if it's okay to send now.
+//     const now = Date.now();
+//     const cooldown = channelCooldowns[channelId];
+//     if (!cooldown || cooldown.time < now) {
+//         // It is.
+//         sendHealthBroadcast(channelId);
+//         channelCooldowns[channelId] = { time: now + channelCooldownMs };
+//     } else if (!cooldown.trigger) {
+//         // It isn't; schedule a delayed broadcast if we haven't already done so.
+//         cooldown.trigger = setTimeout(
+//             sendHealthBroadcast,
+//             now - cooldown.time,
+//             channelId
+//         );
+//     }
+// }
+
+// function sendHealthBroadcast(channelId) {
+//     // Set the HTTP headers required by the Twitch API.
+//     const headers = {
+//         "Client-ID": clientId,
+//         "Content-Type": "application/json",
+//         Authorization: bearerPrefix + makeLegacyServerToken(channelId),
+//     };
+//     // Create the POST body for the Twitch API request.
+//     const body = JSON.stringify({
+//         content_type: "application/json",
+//         broadcaster_id: channelId,
+//         message: JSON.stringify(channelRaiders[channelId]),
+//         targets: ["broadcast"],
+//     });
+//     // Send the broadcast request to the Twitch API.
+//     verboseLog(
+//         "broadcasting channelRaidersArray: " +
+//             channelRaiders[channelId] +
+//             `, for ${channelId}`
+//     );
+//     request(
+//         `https://api.twitch.tv/helix/extensions/pubsub`,
+//         {
+//             method: "POST",
+//             headers,
+//             body,
+//         },
+//         (err, res) => {
+//             if (err) {
+//                 console.error(
+//                     "[backend:460]: STRINGS.messageSendError, channelId, err",
+//                     STRINGS.messageSendError,
+//                     channelId,
+//                     err
+//                 );
+//             } else {
+//                 verboseLog(STRINGS.pubsubResponse, channelId, res.statusCode);
+//             }
+//         }
+//     );
+// }
+//! BACKUP
+// function sendHealthBroadcast(channelId) {
+//     // Set the HTTP headers required by the Twitch API.
+//     const headers = {
+//         "Client-ID": clientId,
+//         "Content-Type": "application/json",
+//         Authorization: bearerPrefix + makeLegacyServerToken(channelId),
+//     };
+//     // Create the POST body for the Twitch API request.
+//     const body = JSON.stringify({
+//         content_type: "application/json",
+//         message: JSON.stringify(channelRaiders[channelId]),
+//         targets: ["broadcast"],
+//     });
+//     // Send the broadcast request to the Twitch API.
+//     verboseLog(
+//         "broadcasting channelRaidersArray: " +
+//             channelRaiders[channelId] +
+//             `, for ${channelId}`
+//     );
+//     request(
+//         `https://api.twitch.tv/extensions/message/${channelId}`,
+//         {
+//             method: "POST",
+//             headers,
+//             body,
+//         },
+//         (err, res) => {
+//             if (err) {
+//                 console.error(
+//                     "[backend:460]: STRINGS.messageSendError, channelId, err",
+//                     STRINGS.messageSendError,
+//                     channelId,
+//                     err
+//                 );
+//             } else {
+//                 verboseLog(STRINGS.pubsubResponse, channelId, res.statusCode);
+//             }
+//         }
+//     );
+// }
+
+function attemptRaidBroadcast(channelId) {
     // Check the cool-down to determine if it's okay to send now.
     const now = Date.now();
     const cooldown = channelCooldowns[channelId];
     if (!cooldown || cooldown.time < now) {
         // It is.
-        sendHealthBroadcast(channelId);
+        sendRaidBroadcast(channelId);
         channelCooldowns[channelId] = { time: now + channelCooldownMs };
     } else if (!cooldown.trigger) {
         // It isn't; schedule a delayed broadcast if we haven't already done so.
         cooldown.trigger = setTimeout(
-            sendHealthBroadcast,
+            sendRaidBroadcast,
             now - cooldown.time,
             channelId
         );
     }
 }
 
-function sendHealthBroadcast(channelId) {
+function sendRaidBroadcast(channelId) {
     // Set the HTTP headers required by the Twitch API.
     const headers = {
         "Client-ID": clientId,
@@ -483,6 +589,7 @@ function sendHealthBroadcast(channelId) {
     // Create the POST body for the Twitch API request.
     const body = JSON.stringify({
         content_type: "application/json",
+        broadcaster_id: channelId,
         message: JSON.stringify(channelRaiders[channelId]),
         targets: ["broadcast"],
     });
@@ -493,7 +600,7 @@ function sendHealthBroadcast(channelId) {
             `, for ${channelId}`
     );
     request(
-        `https://api.twitch.tv/extensions/message/${channelId}`,
+        `https://api.twitch.tv/helix/extensions/pubsub`,
         {
             method: "POST",
             headers,
@@ -514,54 +621,37 @@ function sendHealthBroadcast(channelId) {
     );
 }
 
-function attemptRaidBroadcast(channelId) {
-    // Check the cool-down to determine if it's okay to send now.
-    const now = Date.now();
-    const cooldown = channelCooldowns[channelId];
-    if (!cooldown || cooldown.time < now) {
-        // It is.
-        sendRaidBroadcast(channelId);
-        channelCooldowns[channelId] = { time: now + channelCooldownMs };
-    } else if (!cooldown.trigger) {
-        // It isn't; schedule a delayed broadcast if we haven't already done so.
-        cooldown.trigger = setTimeout(
-            sendRaidBroadcast,
-            now - cooldown.time,
-            channelId
-        );
-    }
-}
-function sendRaidBroadcast(channelId) {
-    // Set the HTTP headers required by the Twitch API.
-    const headers = {
-        "Client-ID": clientId,
-        "Content-Type": "application/json",
-        Authorization: bearerPrefix + makeLegacyServerToken(channelId),
-    };
-    // Create the POST body for the Twitch API request.
-    const body = JSON.stringify({
-        content_type: "application/json",
-        message: JSON.stringify(channelRaiders[channelId]),
-        targets: ["broadcast"],
-    });
-    // Send the broadcast request to the Twitch API.
-    // verboseLog(`broadcasting health: ${currentHealth}, for ${channelId}`);
-    request(
-        `https://api.twitch.tv/extensions/message/${channelId}`,
-        {
-            method: "POST",
-            headers,
-            body,
-        },
-        (err, res) => {
-            if (err) {
-                console.log(STRINGS.messageSendError, channelId, err);
-            } else {
-                verboseLog(STRINGS.pubsubResponse, channelId, res.statusCode);
-            }
-        }
-    );
-}
+// function sendRaidBroadcast(channelId) {
+//     // Set the HTTP headers required by the Twitch API.
+//     const headers = {
+//         "Client-ID": clientId,
+//         "Content-Type": "application/json",
+//         Authorization: bearerPrefix + makeLegacyServerToken(channelId),
+//     };
+//     // Create the POST body for the Twitch API request.
+//     const body = JSON.stringify({
+//         content_type: "application/json",
+//         message: JSON.stringify(channelRaiders[channelId]),
+//         targets: ["broadcast"],
+//     });
+//     // Send the broadcast request to the Twitch API.
+//     // verboseLog(`broadcasting health: ${currentHealth}, for ${channelId}`);
+//     request(
+//         `https://api.twitch.tv/extensions/message/${channelId}`,
+//         {
+//             method: "POST",
+//             headers,
+//             body,
+//         },
+//         (err, res) => {
+//             if (err) {
+//                 console.log(STRINGS.messageSendError, channelId, err);
+//             } else {
+//                 verboseLog(STRINGS.pubsubResponse, channelId, res.statusCode);
+//             }
+//         }
+//     );
+// }
 
 //! --------------------------------------------------------- //
 //*                       -- CHAT API --                     //
@@ -662,7 +752,8 @@ function broadcastTimeleft() {
         let gameIsRunning, TIMELEFT;
         if (gameIsRunning) {
             broadcastTimeleft();
-            attemptHealthBroadcast("123");
+            // attemptHealthBroadcast("123");
+            // attemptRaidBroadcast("123");
         } else if (!gameIsRunning && TIMELEFT == 0) {
             //broadcast end raid game
         }
