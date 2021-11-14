@@ -347,6 +347,17 @@ class DataBase {
         }
         console.log(`[backend:301]: no documents found:`, result);
     }
+    async updateOne(
+        filterDocument,
+        updateDocument,
+        collection = this.collection
+    ) {
+        const result = await this.client
+            .db(this.dataBaseName)
+            .collection(collection)
+            .updateOne(filterDocument, updateDocument);
+        return result;
+    }
     async checkIfUserInDb(channelId) {
         const result = await this.find();
         for (const document of result) {
@@ -436,12 +447,17 @@ function requestUserConfigHandler(req) {
     return { result: "Did not find user", data: null };
 }
 
-function updateUserConfigHandler(req) {
+async function updateUserConfigHandler(req) {
     // Verify all requests.
     const payload = verifyAndDecode(req.headers.authorization);
     const { channel_id: channelId, opaque_user_id: opaqueUserId } = payload;
-    console.log("[backend:440]: req.body", req.payload);
-    return { result: "something", data: null };
+    const updateDocument = req.payload;
+    const updateResult = dataBase.updateOne(
+        { channelId },
+        { $set: { userConfig: updateDocument } }
+    );
+    console.log("[backend:456]: updateResult", updateResult);
+    return { result: "User Config updated!", data: updateResult };
     //TODO depending on success with DB, return result
 }
 
