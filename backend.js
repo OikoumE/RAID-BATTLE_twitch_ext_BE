@@ -852,10 +852,10 @@ async function constructRaidPackage(
             defaultUserConfig.gameDuration.default;
 
     return {
-        channel,
-        raider: username,
+        channel: streamerData.channelName,
+        raider: raiderUserName,
         health: initialHealth,
-        viewers,
+        viewers: raiderAmount,
         currentViewers,
         supportRatio,
         raiderPicUrl,
