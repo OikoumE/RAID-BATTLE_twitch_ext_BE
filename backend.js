@@ -833,19 +833,22 @@ async function startRaid(channel, username, viewers) {
             viewers,
             streamerData
         );
-
     if (!Array.isArray(channelRaiders[channelId])) {
         channelRaiders[channelId] = [];
     }
     if (!channelRaiders[channelId].some((item) => item.raider === username)) {
         channelRaiders[channelId].push(raidPackage);
     }
-    // attemptRaidBroadcast(channelId); //!
-    startBroadcastInterval(channelId); //*
     attemptRaidBroadcast(channelId);
+    startBroadcastInterval(channelId);
     if (channelRaiders[channelId]) {
+        console.log(
+            "[backend:844]: StartRaid returned:",
+            channelRaiders[channelId]
+        );
         return channelRaiders[channelId];
     } else {
+        console.log("[backend:850]:StartRaid returned:, Null");
         return null;
     }
 }
