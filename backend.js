@@ -441,6 +441,7 @@ function requestUserConfigHandler(req) {
     const payload = verifyAndDecode(req.headers.authorization);
     const { channel_id: channelId, opaque_user_id: opaqueUserId } = payload;
     const result = dataBase.findOne({ channelId });
+    console.log(result);
     if (result) {
         return JSON.stringify({ result: "Found user", data: result });
     }
@@ -477,19 +478,22 @@ function raiderSupportHandler(req) {
     console.log(channelRaiders[channelId]);
     if (channelRaiders[channelId]) {
         for (const raiderObj of channelRaiders[channelId]) {
-            if (raiderObj.raider == raider && raiderObj.health < 100) {
-                console.log(
-                    `increase health on : ${raider} in stream: ${channelId}, by ${opaqueUserId}`
-                );
-                raiderObj.health =
-                    raiderObj.health + raiderObj.supportRatio.raider;
-                return channelRaiders[channelId];
+            if (raiderObj.raider == raider) {
+                if (raiderObj.health < 100) {
+                    console.log(
+                        `increase health on : ${raider} in stream: ${channelId}, by ${opaqueUserId}`
+                    );
+                    raiderObj.health =
+                        raiderObj.health + raiderObj.supportRatio.raider;
+                }
+                break;
             }
         }
-    } else {
-        console.log("[backend:493]: returning null");
-        return null;
+        return channelRaiders[channelId];
     }
+    console.log("[backend:493]: returning null");
+    return "NO ACTIVE GAMES RUNNING; STOP ALL RUNNING GAMES";
+
     // Broadcast the health change to all other extension instances on this channel.
     // attemptHealthBroadcast(channelId);
     // attemptRaidBroadcast(channelId)
@@ -513,10 +517,9 @@ function streamerSupportHandler(req) {
             }
         }
         return channelRaiders[channelId];
-    } else {
-        console.log("[backend:493]: returning null");
-        return null;
     }
+    console.log("[backend:493]: returning null");
+    return "NO ACTIVE GAMES RUNNING; STOP ALL RUNNING GAMES";
 
     // Broadcast the health change to all other extension instances on this channel.
     // attemptHealthBroadcast(channelId);
