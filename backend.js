@@ -371,7 +371,7 @@ class DataBase {
         if (result) {
             return result;
         }
-        console.log(`[backend:301]: no documents found:`, result);
+        console.log(`[backend:302]: no documents found:`, result);
     }
     async updateOne(
         filterDocument,
@@ -578,6 +578,7 @@ async function startTestRaidHandler(req) {
     const { channel_id: channelId, opaque_user_id: opaqueUserId } = payload;
     const testRaidPayload = JSON.parse(req.payload);
     // console.log("[backend:566]: testRaidPayload", testRaidPayload);
+    await addNewStreamer(channelId);
     const channel = await dataBase.findOne({ channelId });
     return JSON.stringify(
         startRaid(
