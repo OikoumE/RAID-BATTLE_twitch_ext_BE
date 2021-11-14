@@ -558,7 +558,7 @@ function sendRaidBroadcast(channelId) {
 //! ------------------------------------------------------- //
 function sendChatMessageToChannel(message, channelId) {
     // not more often than every 5sec
-
+    console.log("sending message: " + message + " to channel: " + channelId);
     const url = `https://api.twitch.tv/helix/extensions/chat?broadcaster_id=${channelId}`;
     fetch(url, {
         method: "POST",
@@ -621,7 +621,6 @@ async function getAppAccessToken() {
         const result = await fetch(endpoint, { method: "POST" });
         if (result.ok) {
             const data = await result.json();
-            console.log("[backend:588]: data", data);
             APP_ACCESS_TOKEN = data.access_token;
             process.env.APP_ACCESS_TOKEN = APP_ACCESS_TOKEN;
             TOKEN_EXPIRE_DATE = Date.now() + data.expires_in * 1000;
@@ -643,7 +642,6 @@ async function getUser(path) {
         let response = await fetch(url, { headers });
         if (response.ok) {
             let data = await response.json();
-            console.log(`[backend:648]: User for path ${path} found:`, data);
             return data.data[0];
         } else {
             console.log("[backend:618]: response", response);
@@ -666,7 +664,6 @@ async function getStreamById(id) {
         let response = await fetch(url, { headers });
         if (response.ok) {
             let data = await response.json();
-            console.log(`[backend:657]: StreamData for id ${id} found:`, data);
             return data.data[0];
         } else {
             console.log("[backend:593]: response", response);
