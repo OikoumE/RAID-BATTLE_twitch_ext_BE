@@ -676,6 +676,7 @@ function startBroadcastInterval(channelId) {
             }
         }, 1000);
     } else {
+        clearTimeout(timeLeftBroadcast);
         attemptRaidBroadcast(channelId);
         startBroadcastInterval(channelId);
     }
