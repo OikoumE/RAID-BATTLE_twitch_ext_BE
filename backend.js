@@ -518,7 +518,7 @@ function streamerSupportHandler(req) {
         }
         return channelRaiders[channelId];
     }
-    console.log("[backend:493]: returning null");
+    console.log("[backend:520]: returning null");
     return "NO ACTIVE GAMES RUNNING; STOP ALL RUNNING GAMES";
 
     // Broadcast the health change to all other extension instances on this channel.
