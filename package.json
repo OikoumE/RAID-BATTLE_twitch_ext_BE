@@ -13,6 +13,7 @@
     "author": "itsOik",
     "license": "Apache-2.0",
     "dependencies": {
+        "big-time": "^2.0.1",
         "boom": "^7.2.0",
         "color": "^3.0.0",
         "commander": "^2.15.0",
