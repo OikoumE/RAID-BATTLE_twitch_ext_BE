@@ -848,7 +848,7 @@ async function constructRaidPackage(
         streamerPicUrl = streamerData.profilePicUrl, // HAVE IN DB
         supportRatio = getRatio(raiderAmount, currentViewers),
         gameExpireTime =
-            Date.now() / 1000 + streamData.userConfig.gameDuration ||
+            Date.now() / 1000 + streamerData.userConfig.gameDuration ||
             defaultUserConfig.gameDuration.default;
 
     return {
