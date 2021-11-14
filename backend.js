@@ -151,11 +151,17 @@ async function onLaunch() {
         path: "/addStreamerToChannels/",
         handler: addStreamerToChannelsHandler, //
     });
-    // Handle adding new streamers to channels to watch for raids
+    // Handle user requesting userConfig
     server.route({
         method: "POST",
         path: "/requestUserConfig/",
         handler: requestUserConfigHandler, //
+    });
+    // Handle user updating userConfig
+    server.route({
+        method: "POST",
+        path: "/updateUserConfig/",
+        handler: updateUserConfigHandler, //
     });
     // Handle a viewer request to support the raider.
     server.route({
@@ -365,10 +371,12 @@ async function addNewStreamer(channelId) {
         restartTmi(newChannelList);
         return JSON.stringify({
             result: "Success, added to channels to monitor for raids",
+            data: result,
         });
     } else {
         return JSON.stringify({
             result: "Already in the list of channels to monitor for raid",
+            data: null,
         });
     }
 }
@@ -416,17 +424,25 @@ function addStreamerToChannelsHandler(req) {
     const { channel_id: channelId, opaque_user_id: opaqueUserId } = payload;
     return JSON.stringify({ result: addNewStreamer(channelId) });
 }
+
 function requestUserConfigHandler(req) {
     // Verify all requests.
     const payload = verifyAndDecode(req.headers.authorization);
     const { channel_id: channelId, opaque_user_id: opaqueUserId } = payload;
     const result = dataBase.findOne({ channelId });
     if (result) {
-        return result;
+        return { result: "Found user", data: result };
     }
-    //TODO search DB for user.
-    //TODO if no user, return null
-    return null;
+    return { result: "Did not find user", data: null };
+}
+
+function updateUserConfigHandler(req) {
+    // Verify all requests.
+    const payload = verifyAndDecode(req.headers.authorization);
+    const { channel_id: channelId, opaque_user_id: opaqueUserId } = payload;
+    console.log("[backend:440]: req.body", req.body);
+    return { result: "something", data: null };
+    //TODO depending on success with DB, return result
 }
 
 function raiderSupportHandler(req) {
@@ -521,7 +537,7 @@ async function sendRaidBroadcast(channelId) {
     });
     // Send the broadcast request to the Twitch API.
     console.log(
-        "[backend:497]: ",
+        "[backend:497]:",
         `Broadcasting channelRaidersArray for channelId: ${channelId}`
     );
     const url = "https://api.twitch.tv/helix/extensions/pubsub";
@@ -542,8 +558,6 @@ async function sendChatMessageToChannel(message, channelId) {
 
     console.log(`sending message: "${message}" to channel: "${channelId}"`);
     const bullshitToken = makeHelixServerToken(channelId);
-    console.log("[backend:574]: bullshitToken", bullshitToken);
-    // const url = `https://api.twitch.tv/helix/extensions/chat?broadcaster_id=${channelId}`,
     const url = `https://api.twitch.tv/helix/extensions/chat?broadcaster_id=${channelId}`,
         headers = {
             "Client-ID": clientId,
