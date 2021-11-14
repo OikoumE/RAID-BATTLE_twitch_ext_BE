@@ -440,7 +440,7 @@ function updateUserConfigHandler(req) {
     // Verify all requests.
     const payload = verifyAndDecode(req.headers.authorization);
     const { channel_id: channelId, opaque_user_id: opaqueUserId } = payload;
-    console.log("[backend:440]: req.body", req.body);
+    console.log("[backend:440]: req.body", req.payload);
     return { result: "something", data: null };
     //TODO depending on success with DB, return result
 }
