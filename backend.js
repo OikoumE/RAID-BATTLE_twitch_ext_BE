@@ -87,12 +87,20 @@ const defaultUserConfig = {
 
 //! -------------------- my vars -------------------- //
 
-function printTimeout() {
+async function printTimeout() {
     var date = new Date();
-    console.log(`ALIVE CHECKER: ${date.toDateString()} ${date.toTimeString()}`);
-    setTimeout(() => {
+    let nextTimeout = Math.random() * KEEP_HEROKU_ALIVE_INTERVAL * 60 * 1000;
+    console.log(
+        `ALIVE CHECKER: ${date.toLocaleTimeString()}-  "Heroku timeout for", ${nextTimeout}`
+    );
+    console.log();
+    setTimeout(async () => {
+        fetch("https://raid-battle-twitch-ext.herokuapp.com/").then((res) =>
+            console.log(res)
+        );
+
         printTimeout();
-    }, KEEP_HEROKU_ALIVE_INTERVAL * 60 * 1000);
+    }, nextTimeout);
 }
 printTimeout();
 
@@ -305,10 +313,6 @@ function userIsInCooldown(opaqueUserId) {
 //! ------------------------------------------------------- //
 class DataBase {
     constructor(mongoUri) {
-        console.log(
-            "[backend:266]: attempting connection to mongoUri",
-            mongoUri
-        );
         this.client = new MongoClient(mongoUri, {
             useNewUrlParser: true,
             useUnifiedTopology: true,
