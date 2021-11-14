@@ -433,7 +433,7 @@ function addStreamerToChannelsHandler(req) {
     // Verify all requests.
     const payload = verifyAndDecode(req.headers.authorization);
     const { channel_id: channelId, opaque_user_id: opaqueUserId } = payload;
-    return JSON.stringify({ result: addNewStreamer(channelId) });
+    return JSON.stringify(addNewStreamer(channelId));
 }
 
 async function requestUserConfigHandler(req) {
