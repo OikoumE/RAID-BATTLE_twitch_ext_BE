@@ -233,7 +233,7 @@ function verifyAndDecode(header) {
 }
 // ! -------------------- SERVER STUFF -------------------- //
 // Create and return a JWT for use by this service.
-function makeServerToken(channelId) {
+function makeLegacyServerToken(channelId) {
     const payload = {
         exp: Math.floor(Date.now() / 1000) + serverTokenDurationSec,
         channel_id: channelId,
@@ -242,6 +242,14 @@ function makeServerToken(channelId) {
         pubsub_perms: {
             send: ["*"],
         },
+    };
+    return jsonwebtoken.sign(payload, secret, { algorithm: "HS256" });
+}
+function makeHelixServerToken(channelId) {
+    const payload = {
+        exp: Math.floor(Date.now() / 1000) + serverTokenDurationSec,
+        user_id: ownerId, // extension owner ID for the call to Twitch PubSub
+        role: "external",
     };
     return jsonwebtoken.sign(payload, secret, { algorithm: "HS256" });
 }
@@ -469,7 +477,7 @@ function sendHealthBroadcast(channelId) {
     const headers = {
         "Client-ID": clientId,
         "Content-Type": "application/json",
-        Authorization: bearerPrefix + makeServerToken(channelId),
+        Authorization: bearerPrefix + makeLegacyServerToken(channelId),
     };
     // Create the POST body for the Twitch API request.
     const body = JSON.stringify({
@@ -527,7 +535,7 @@ function sendRaidBroadcast(channelId) {
     const headers = {
         "Client-ID": clientId,
         "Content-Type": "application/json",
-        Authorization: bearerPrefix + makeServerToken(channelId),
+        Authorization: bearerPrefix + makeLegacyServerToken(channelId),
     };
     // Create the POST body for the Twitch API request.
     const body = JSON.stringify({
@@ -560,7 +568,6 @@ function sendRaidBroadcast(channelId) {
 async function sendChatMessageToChannel(message, channelId) {
     // not more often than every 5sec
     // Maximum: 280 characters.
-    console.log("sending message: " + message + " to channel: " + channelId);
 
     const url = `https://api.twitch.tv/helix/extensions/chat?broadcaster_id=${channelId}`;
 
@@ -568,7 +575,7 @@ async function sendChatMessageToChannel(message, channelId) {
     const headers = {
         "Client-ID": clientId,
         "Content-Type": "application/json",
-        Authorization: bearerPrefix + makeServerToken(channelId),
+        Authorization: bearerPrefix + makeHelixServerToken(channelId),
     };
     // Create the POST body for the Twitch API request.
     const body = JSON.stringify({
@@ -577,7 +584,7 @@ async function sendChatMessageToChannel(message, channelId) {
         extension_version: CURRENT_VERSION,
     });
     // Send the broadcast request to the Twitch API.
-    // verboseLog(`broadcasting health: ${currentHealth}, for ${channelId}`);
+    console.log("sending message: " + message + " to channel: " + channelId);
     request(
         url,
         {
