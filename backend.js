@@ -579,7 +579,7 @@ function attemptRaidBroadcast(channelId) {
     }
 }
 
-function sendRaidBroadcast(channelId) {
+async function sendRaidBroadcast(channelId) {
     // Set the HTTP headers required by the Twitch API.
     const headers = {
         "Client-ID": clientId,
@@ -595,30 +595,19 @@ function sendRaidBroadcast(channelId) {
     });
     // Send the broadcast request to the Twitch API.
     console.log(
-        "Broadcasting channelRaidersArray: ",
-        channelRaiders[channelId],
-        `, for channelId: ${channelId}`
+        "[backend:597]: ",
+        `Broadcasting channelRaidersArray for channelId: ${channelId}`
     );
-    request(
-        `https://api.twitch.tv/helix/extensions/pubsub`,
-        {
-            method: "POST",
-            headers,
-            body,
-        },
-        (err, res) => {
-            if (err) {
-                console.error(
-                    "[backend:460]: STRINGS.messageSendError, channelId, err",
-                    STRINGS.messageSendError,
-                    channelId,
-                    err
-                );
-            } else {
-                console.log(STRINGS.pubsubResponse, channelId, res.statusCode);
-            }
-        }
+    const url = "https://api.twitch.tv/helix/extensions/pubsub";
+    const res = await fetch(url, { method: "POST", headers, body });
+
+    console.error(
+        "[backend:460]: STRINGS.messageSendError, channelId, err",
+        STRINGS.messageSendError,
+        channelId,
+        res.status
     );
+    console.log(res);
 }
 
 // function sendRaidBroadcast(channelId) {
