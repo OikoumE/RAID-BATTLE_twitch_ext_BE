@@ -189,8 +189,8 @@ async function onLaunch() {
     // Handle broadcasting a testraid
     server.route({
         method: "POST",
-        path: "/TESTRAID/{raider?}",
-        handler: startTestRaid, //
+        path: "/TESTRAID/",
+        handler: startTestRaidHandler, //
     });
     //! /TESTING
     // Start the server.
@@ -529,8 +529,24 @@ function streamerSupportHandler(req) {
     // attemptHealthBroadcast(channelId);
     // attemptRaidBroadcast(channelId)
 }
+async function startTestRaidHandler(req) {
+    // Verify all requests.
+    const payload = verifyAndDecode(req.headers.authorization);
+    const { channel_id: channelId, opaque_user_id: opaqueUserId } = payload;
+    const testRaidPayload = req.payload;
+    const channel = await dataBase.findOne(channelId);
+    return JSON.stringify(
+        startRaid(
+            channel.channelName,
+            testRaidPayload.testRaider,
+            testRaidPayload.testAmount
+        )
+    );
+}
 
-//! -------------------- SEND BROADCAST TO EXT -------------------- //
+//! --------------------------------------------------------- //
+//*                  -- BROADCAST TO EXT --                  //
+//! ------------------------------------------------------- //
 function attemptRaidBroadcast(channelId) {
     // Check the cool-down to determine if it's okay to send now.
     const now = Date.now();
@@ -796,31 +812,3 @@ async function startRaid(channel, username, viewers) {
         return null;
     }
 }
-
-//! --------------------------------------------------------- //
-//*                     -- TEST AREA --                      //
-//! ------------------------------------------------------- //
-//! -------------------- SEND TESTRAID BROADCAST TO EXT -------------------- //
-let numberOfRaiders = 0;
-function startTestRaid(req) {
-    //! TESTING
-    // Tmi wil trigger raid internally
-    // Verify all requests.
-    const payload = verifyAndDecode(req.headers.authorization); //! NOT NEEDED AFTER TESTING
-    const { channel_id: channelId, opaque_user_id: opaqueUserId } = payload; //! NOT NEEDED AFTER TESTING
-    //! PRETENDING TMI TRIGGERED:
-    const raider = req.params.raider;
-    testRaiderArray = [
-        "matissetec",
-        "itsoik",
-        "oik_does_python",
-        "developerrig",
-    ];
-    testRaiderAmount = [15, 20, 10, 5];
-    const channel = "itsoik",
-        username = raider || testRaiderArray[numberOfRaiders],
-        raidAmount = testRaiderAmount[numberOfRaiders];
-    numberOfRaiders++;
-    return JSON.stringify(startRaid(channel, username, raidAmount));
-}
-// ! -------------------- SEND TESTRAID BROADCAST TO EXT END -------------------- //
