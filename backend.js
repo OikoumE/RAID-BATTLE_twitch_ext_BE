@@ -483,13 +483,9 @@ function raiderSupportHandler(req) {
                 );
                 raiderObj.health =
                     raiderObj.health + raiderObj.supportRatio.raider;
-                console.log(
-                    "[backend:332]: raiderObj.supportRatio.raider",
-                    raiderObj.supportRatio.raider
-                );
+                return channelRaiders[channelId];
             }
         }
-        return channelRaiders[channelId];
     } else {
         console.log("[backend:493]: returning null");
         return null;
@@ -506,23 +502,20 @@ function streamerSupportHandler(req) {
     if (userIsInCooldown(opaqueUserId)) {
         throw Boom.tooManyRequests(STRINGS.cooldown);
     }
-    for (const raiderObj of channelRaiders[channelId]) {
-        if (raiderObj.health >= 1) {
-            raiderObj.health =
-                raiderObj.health - raiderObj.supportRatio.streamer;
-            console.log(
-                "[backend:350]: raiderObj.supportRatio.streamer",
-                raiderObj.supportRatio.streamer
-            );
-            console.log(
-                `reduce health on all raiders in stream: ${channelId}, by ${opaqueUserId}`
-            );
-            return channelRaiders[channelId];
-        } else {
-            console.log("[backend:493]: returning null");
-            return null;
-            //TODO RETURN DEAFETED RAIDER STATE!
+    if (channelRaiders[channelId]) {
+        for (const raiderObj of channelRaiders[channelId]) {
+            if (raiderObj.health >= 1) {
+                console.log(
+                    `reduce health on all raiders in stream: ${channelId}, by ${opaqueUserId}`
+                );
+                raiderObj.health =
+                    raiderObj.health - raiderObj.supportRatio.streamer;
+            }
         }
+        return channelRaiders[channelId];
+    } else {
+        console.log("[backend:493]: returning null");
+        return null;
     }
     // Broadcast the health change to all other extension instances on this channel.
     // attemptHealthBroadcast(channelId);
