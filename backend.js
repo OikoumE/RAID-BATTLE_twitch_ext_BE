@@ -391,7 +391,7 @@ async function addNewStreamer(channelId) {
             data: null,
         };
     }
-    return JSON.stringify(returnData);
+    return returnData;
 }
 async function addStreamerToDb(userData) {
     const result = await dataBase.insertOne({
