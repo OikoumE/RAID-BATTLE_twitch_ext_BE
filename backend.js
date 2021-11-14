@@ -455,18 +455,41 @@ async function requestUserConfigHandler(req) {
 
 async function updateUserConfigHandler(req) {
     // Verify all requests.
+
     const payload = verifyAndDecode(req.headers.authorization);
     const { channel_id: channelId, opaque_user_id: opaqueUserId } = payload;
-    const updateDocument = req.payload;
+    const jsonUpdateDocument = JSON.parse(req.payload),
+        updateDocument = parseUserConfigUpdateDocument(jsonUpdateDocument);
+
     const updateResult = await dataBase.updateOne(
         { channelId },
-        { $set: { userConfig: JSON.parse(updateDocument) } }
+        { $set: { userConfig: updateDocument } }
     );
     return JSON.stringify({
         result: "User Config updated!",
         data: updateResult,
     });
     //TODO depending on success with DB, return result
+}
+
+const defaultConfig = {
+    gameDuration: { default: 120, max: 300, min: 60 },
+    extendGameDuration: { default: 60, max: 180, min: 0 },
+    extendGameDurationEnabled: { default: true },
+    introDuration: { default: 30, max: 60, min: 0 },
+    gameResultDuration: { default: 30, max: 60, min: 0 },
+    enableChatOutput: { default: false },
+};
+function parseUserConfigUpdateDocument(document) {
+    const parsedDoc = {};
+    for (const [key, value] of Object.entries(document)) {
+        const max = defaultConfig[key].max,
+            min = defaultConfig[key].min;
+        if (!key.toLowerCase().includes("enable")) {
+            parsedDoc[key] = value > max ? max : value < min ? min : value;
+        }
+    }
+    return parsedDoc;
 }
 
 function raiderSupportHandler(req) {
