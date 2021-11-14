@@ -565,7 +565,6 @@ async function startTestRaidHandler(req) {
     const testRaidPayload = JSON.parse(req.payload);
     // console.log("[backend:566]: testRaidPayload", testRaidPayload);
     const channel = await dataBase.findOne({ channelId });
-    console.log("[backend:567]: channel", channel);
     return JSON.stringify(
         startRaid(
             channel.channelName,
@@ -573,7 +572,6 @@ async function startTestRaidHandler(req) {
             testRaidPayload.testAmount
         )
     );
-    return null;
 }
 
 //! --------------------------------------------------------- //
@@ -658,30 +656,27 @@ async function sendChatMessageToChannel(message, channelId) {
     );
 }
 
-function broadcastTimeleft(channelId) {
-    // TODO store a (date.now()/1000 + userConfig.gameDuration) in a GAME when in starts
-    // TODO add to timer if new raid during game
+// TODO store a (date.now()/1000 + userConfig.gameDuration) in a GAME when in starts
+// TODO add to timer if new raid during game
+// TODO timerthingy
+// TODO start counting down when game start
+// TODO attempt broadcast every second with updated TIMELEFT if game is still running
+// TODO reset health after X time
+// TODO sending gameOverState: win/defeated raiderX/loose
+// TODO when game end send final broadcast to end game on frontend and clean up
 
-    // TODO timerthingy
-    // TODO start counting down when game start
-
-    // TODO attempt broadcast every second with updated TIMELEFT if game is still running
-
-    // TODO reset health after X time
-
-    // TODO sending gameOverState: win/defeated raiderX/loose
-
-    // TODO when game end send final broadcast to end game on frontend and clean up
-
-    //? maybe override broadcastHealth with a setinterval broadcast?
-    const timeLeftBroadcast = setTimeout(() => {
-        if (!checkIfGameExpired(channelRaiders[channelId])) {
-            broadcastTimeleft(channelId);
-            attemptRaidBroadcast(channelId);
-        } else {
-            //broadcast end raid game
-        }
-    }, 1000);
+let timeLeftBroadcast;
+function startBroadcastInterval(channelId) {
+    if (!timeLeftBroadcast) {
+        timeLeftBroadcast = setTimeout(() => {
+            if (!checkIfGameExpired(channelRaiders[channelId])) {
+                broadcastTimeleft(channelId);
+                attemptRaidBroadcast(channelId);
+            } else {
+                //broadcast end raid game
+            }
+        }, 1000);
+    }
 }
 
 function checkIfGameExpired(gameArray) {
