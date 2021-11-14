@@ -622,7 +622,6 @@ async function sendRaidBroadcast(channelId) {
         message: JSON.stringify(channelRaiders[channelId]),
         target: ["broadcast"],
     });
-
     // Send the broadcast request to the Twitch API.
     const url = "https://api.twitch.tv/helix/extensions/pubsub";
     const res = await fetch(url, { method: "POST", headers, body });
