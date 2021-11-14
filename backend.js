@@ -729,7 +729,7 @@ async function startRaid(channel, username, viewers) {
     // const channelId = channelIds[channel];
     const streamerData = await dataBase.findOne({ channelName: channel });
     const channelId = streamerData.channelId;
-    sendChatMessageToChannel({ message: "message" }, channelId);
+    sendChatMessageToChannel("message", channelId);
     // (async () => {//!
     const streamData = await getStreamById(channelId),
         currentViewers = streamData.viewer_count,
