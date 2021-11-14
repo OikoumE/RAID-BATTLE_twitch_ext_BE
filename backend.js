@@ -560,7 +560,7 @@ function sendChatMessageToChannel(message, channelId) {
     // not more often than every 5sec
     console.log("sending message: " + message + " to channel: " + channelId);
     const url = `https://api.twitch.tv/helix/extensions/chat?broadcaster_id=${channelId}`;
-    fetch(url, {
+    const result = await fetch(url, {
         method: "POST",
         headers: {
             Authorization: bearerPrefix + makeServerToken(channelId),
@@ -573,6 +573,7 @@ function sendChatMessageToChannel(message, channelId) {
             extension_version: CURRENT_VERSION,
         }),
     });
+    console.log("Send chat message result", result);
 }
 
 function broadcastTimeleft() {
@@ -729,7 +730,10 @@ async function startRaid(channel, username, viewers) {
     // const channelId = channelIds[channel];
     const streamerData = await dataBase.findOne({ channelName: channel });
     const channelId = streamerData.channelId;
-    sendChatMessageToChannel("message", channelId);
+    sendChatMessageToChannel(
+        `Starting RAID-BATTLE on channel: ${channel}, started by: ${username}`,
+        channelId
+    );
     // (async () => {//!
     const streamData = await getStreamById(channelId),
         currentViewers = streamData.viewer_count,
