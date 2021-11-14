@@ -556,7 +556,7 @@ function sendRaidBroadcast(channelId) {
 //! --------------------------------------------------------- //
 //*                       -- CHAT API --                     //
 //! ------------------------------------------------------- //
-function sendChatMessageToChannel(message, channelId) {
+async function sendChatMessageToChannel(message, channelId) {
     // not more often than every 5sec
     console.log("sending message: " + message + " to channel: " + channelId);
     const url = `https://api.twitch.tv/helix/extensions/chat?broadcaster_id=${channelId}`;
