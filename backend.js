@@ -518,6 +518,7 @@ function streamerSupportHandler(req) {
             return channelRaiders[channelId];
         } else {
             return null;
+
             //TODO RETURN DEAFETED RAIDER STATE!
         }
     }
