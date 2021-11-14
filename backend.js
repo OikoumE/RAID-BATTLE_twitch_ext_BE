@@ -572,48 +572,76 @@ async function sendChatMessageToChannel(message, channelId) {
     let broadcaster_id = channelId;
 
     console.log("sending message: " + message + " to channel: " + channelId);
-    const got = require("got");
 
-    got({
-        url: "https://api.twitch.tv/helix/extensions/chat",
-        method: "POST",
-        headers: {
+    const url = `https://api.twitch.tv/helix/extensions/chat?broadcaster_id=${channelId}`,
+        headers = {
             "Client-ID": clientId,
             Authorization: "Bearer " + makeHelixServerToken(),
             "Content-Type": "application/json",
         },
-        searchParams: {
-            broadcaster_id,
-        },
-        body: JSON.stringify({
+        body = JSON.stringify({
             // text: message,
             text: "Test Message",
             extension_id: clientId,
             extension_version: CURRENT_VERSION,
-        }),
-        responseType: "json",
-    })
-        .then((resp) => {
-            console.log(
-                "Result",
-                resp.statusCode,
-                resp.body,
-                resp.headers["ratelimit-remaining"],
-                "/",
-                resp.headers["ratelimit-limit"]
-            );
-        })
-        .catch((err) => {
-            if (err.response) {
-                console.error(
-                    "API ERROR",
-                    err.response.statusCode,
-                    err.response.body
-                );
-                return;
-            }
-            console.error("BAD ERROR", err);
         });
+    fetch(
+        url,
+        {
+            method: "POST",
+            headers,
+            body,
+        },
+        (err, res) => {
+            if (err) {
+                console.log(STRINGS.messageSendError, channelId, err);
+            } else {
+                verboseLog(STRINGS.pubsubResponse, channelId, res.statusCode);
+            }
+        }
+    );
+
+    // const got = require("got");
+    // got({
+    //     url: "https://api.twitch.tv/helix/extensions/chat",
+    //     method: "POST",
+    //     headers: {
+    //         "Client-ID": clientId,
+    //         Authorization: "Bearer " + makeHelixServerToken(),
+    //         "Content-Type": "application/json",
+    //     },
+    //     searchParams: {
+    //         broadcaster_id,
+    //     },
+    //     body: JSON.stringify({
+    //         // text: message,
+    //         text: "Test Message",
+    //         extension_id: clientId,
+    //         extension_version: CURRENT_VERSION,
+    //     }),
+    //     responseType: "json",
+    // })
+    //     .then((resp) => {
+    //         console.log(
+    //             "Result",
+    //             resp.statusCode,
+    //             resp.body,
+    //             resp.headers["ratelimit-remaining"],
+    //             "/",
+    //             resp.headers["ratelimit-limit"]
+    //         );
+    //     })
+    //     .catch((err) => {
+    //         if (err.response) {
+    //             console.error(
+    //                 "API ERROR",
+    //                 err.response.statusCode,
+    //                 err.response.body
+    //             );
+    //             return;
+    //         }
+    //         console.error("BAD ERROR", err);
+    //     });
 }
 
 function broadcastTimeleft() {
