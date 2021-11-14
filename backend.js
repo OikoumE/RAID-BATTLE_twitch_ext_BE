@@ -561,21 +561,38 @@ async function sendChatMessageToChannel(message, channelId) {
     // not more often than every 5sec
     // Maximum: 280 characters.
     console.log("sending message: " + message + " to channel: " + channelId);
+
     const url = `https://api.twitch.tv/helix/extensions/chat?broadcaster_id=${channelId}`;
-    const result = await fetch(url, {
-        method: "POST",
-        headers: {
-            Authorization: bearerPrefix + makeServerToken(channelId),
-            "Client-Id": clientId,
-            "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-            text: message,
-            extension_id: clientId,
-            extension_version: CURRENT_VERSION,
-        }),
+
+    // Set the HTTP headers required by the Twitch API.
+    const headers = {
+        "Client-ID": clientId,
+        "Content-Type": "application/json",
+        Authorization: bearerPrefix + makeServerToken(channelId),
+    };
+    // Create the POST body for the Twitch API request.
+    const body = JSON.stringify({
+        text: message,
+        extension_id: clientId,
+        extension_version: CURRENT_VERSION,
     });
-    console.log("Send chat message result: ", result.status, result.statusText);
+    // Send the broadcast request to the Twitch API.
+    // verboseLog(`broadcasting health: ${currentHealth}, for ${channelId}`);
+    request(
+        url,
+        {
+            method: "POST",
+            headers,
+            body,
+        },
+        (err, res) => {
+            if (err) {
+                console.log(STRINGS.messageSendError, channelId, err);
+            } else {
+                verboseLog(STRINGS.pubsubResponse, channelId, res.statusCode);
+            }
+        }
+    );
 }
 
 function broadcastTimeleft() {
