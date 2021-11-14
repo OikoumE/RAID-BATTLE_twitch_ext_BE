@@ -238,11 +238,11 @@ function verifyAndDecode(header) {
 function makeLegacyServerToken(channelId) {
     const payload = {
         exp: Math.floor(Date.now() / 1000) + serverTokenDurationSec,
-        channel_id: channelId,
         user_id: ownerId, // extension owner ID for the call to Twitch PubSub
         role: "external",
+        channel_id: channelId,
         pubsub_perms: {
-            send: ["*"],
+            send: ["broadcast"],
         },
     };
     return jsonwebtoken.sign(payload, secret, { algorithm: "HS256" });
