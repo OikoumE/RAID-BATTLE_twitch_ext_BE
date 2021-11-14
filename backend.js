@@ -245,9 +245,10 @@ function makeLegacyServerToken(channelId) {
     };
     return jsonwebtoken.sign(payload, secret, { algorithm: "HS256" });
 }
-function makeHelixServerToken() {
+function makeHelixServerToken(channelId) {
     const payload = {
         exp: Math.floor(Date.now() / 1000) + serverTokenDurationSec,
+        channel_id: channelId,
         user_id: ownerId, // extension owner ID for the call to Twitch PubSub
         role: "external",
     };
@@ -569,14 +570,12 @@ async function sendChatMessageToChannel(message, channelId) {
     // not more often than every 5sec
     // Maximum: 280 characters.
 
-    let broadcaster_id = channelId;
-
     console.log("sending message: " + message + " to channel: " + channelId);
 
     const url = `https://api.twitch.tv/helix/extensions/chat?broadcaster_id=${channelId}`,
         headers = {
             "Client-ID": clientId,
-            Authorization: "Bearer " + makeHelixServerToken(),
+            Authorization: "Bearer " + makeHelixServerToken(channelId),
             "Content-Type": "application/json",
         },
         body = JSON.stringify({
@@ -585,21 +584,8 @@ async function sendChatMessageToChannel(message, channelId) {
             extension_id: clientId,
             extension_version: CURRENT_VERSION,
         });
-    fetch(
-        url,
-        {
-            method: "POST",
-            headers,
-            body,
-        },
-        (err, res) => {
-            if (err) {
-                console.log(STRINGS.messageSendError, channelId, err);
-            } else {
-                verboseLog(STRINGS.pubsubResponse, channelId, res.statusCode);
-            }
-        }
-    );
+    const res = await fetch(url, { method: "POST", headers, body });
+    verboseLog(STRINGS.pubsubResponse, channelId, res.statusCode);
 
     // const got = require("got");
     // got({
