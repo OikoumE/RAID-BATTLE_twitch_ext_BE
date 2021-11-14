@@ -251,7 +251,7 @@ function makeHelixServerToken(channelId) {
         user_id: ownerId, // extension owner ID for the call to Twitch PubSub
         role: "external",
     };
-    return jsonwebtoken.sign(payload, secret, { algorithm: "HS256" });
+    return jsonwebtoken.sign(payload, secret);
 }
 
 function userIsInCooldown(opaqueUserId) {
