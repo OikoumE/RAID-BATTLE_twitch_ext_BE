@@ -675,11 +675,12 @@ function startBroadcastInterval(channelId) {
                 //broadcast end raid game
             }
         }, 1000);
-    } else {
-        clearTimeout(timeLeftBroadcast);
-        attemptRaidBroadcast(channelId);
-        startBroadcastInterval(channelId);
     }
+    // else {
+    //     clearTimeout(timeLeftBroadcast);
+    //     attemptRaidBroadcast(channelId);
+    //     startBroadcastInterval(channelId);
+    // }
 }
 
 function checkIfGameExpired(gameArray) {
