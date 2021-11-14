@@ -817,7 +817,7 @@ async function startRaid(channel, username, viewers) {
     );
     const streamerData = await dataBase.findOne({ channelName: channel }),
         channelId = streamerData.channelId,
-        raidPackage = constructRaidPackage(
+        raidPackage = await constructRaidPackage(
             channelId,
             username,
             viewers,
