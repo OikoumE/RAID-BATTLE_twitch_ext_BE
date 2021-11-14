@@ -145,17 +145,17 @@ async function onLaunch() {
 }
 
 (async () => {
-    // Handle broadcasting a testraid
-    server.route({
-        method: "POST",
-        path: "/TESTRAID/{raider?}",
-        handler: startTestRaid, //
-    });
     // Handle adding new streamers to channels to watch for raids
     server.route({
         method: "POST",
         path: "/addStreamerToChannels/",
         handler: addStreamerToChannelsHandler, //
+    });
+    // Handle adding new streamers to channels to watch for raids
+    server.route({
+        method: "POST",
+        path: "/requestUserConfig/",
+        handler: requestUserConfigHandler, //
     });
     // Handle a viewer request to support the raider.
     server.route({
@@ -179,6 +179,14 @@ async function onLaunch() {
         path: "/",
         handler: return404,
     });
+    //! TESTING
+    // Handle broadcasting a testraid
+    server.route({
+        method: "POST",
+        path: "/TESTRAID/{raider?}",
+        handler: startTestRaid, //
+    });
+    //! /TESTING
     // Start the server.
     await server.start();
     console.log(`[backend:174]: ${STRINGS.serverStarted}${server.info.uri}`);
@@ -249,12 +257,15 @@ function makeLegacyServerToken(channelId) {
 }
 function makeHelixServerToken(channelId) {
     const payload = {
-        exp: Math.floor(Date.now() / 1000) + 4,
+        exp: Math.floor(Date.now() / 1000) + serverTokenDurationSec,
         user_id: ownerId, // extension owner ID for the call to Twitch PubSub
-        channel_id: ownerId,
         role: "external",
+        channel_id: channelId,
+        pubsub_perms: {
+            send: ["broadcast"],
+        },
     };
-    return jsonwebtoken.sign(payload, secret);
+    return jsonwebtoken.sign(payload, secret, { algorithm: "HS256" });
 }
 
 function userIsInCooldown(opaqueUserId) {
@@ -352,9 +363,13 @@ async function addNewStreamer(channelId) {
         const newChannelList = parseTmiChannelListFromDb(allChannelList);
         console.log("[backend:446]: newChannelList", newChannelList);
         restartTmi(newChannelList);
-        return "Success, added to channels to monitor for raids";
+        return JSON.stringify({
+            result: "Success, added to channels to monitor for raids",
+        });
     } else {
-        return "Already in the list of channels to monitor for raid";
+        return JSON.stringify({
+            result: "Already in the list of channels to monitor for raid",
+        });
     }
 }
 async function addStreamerToDb(userData) {
@@ -392,14 +407,18 @@ async function ongoingRaidGameQueryHandler(req) {
         console.log("[backend:321]: No active games");
         return null;
     }
-    return channelRaiders[channelId];
+    return JSON.stringify({ result: channelRaiders[channelId] });
 }
 
 function addStreamerToChannelsHandler(req) {
     // Verify all requests.
     const payload = verifyAndDecode(req.headers.authorization);
     const { channel_id: channelId, opaque_user_id: opaqueUserId } = payload;
-    return addNewStreamer(channelId);
+    return JSON.stringify({ result: addNewStreamer(channelId) });
+}
+function requestUserConfigHandler(req) {
+    //TODO search DB for user.
+    //TODO if no user, return null
 }
 
 function raiderSupportHandler(req) {
@@ -411,7 +430,7 @@ function raiderSupportHandler(req) {
     if (userIsInCooldown(opaqueUserId)) {
         throw Boom.tooManyRequests(STRINGS.cooldown);
     }
-    verboseLog(
+    console.log(
         `increase health on raider: ${raider} in stream: ${channelId}, by ${opaqueUserId}`
     );
     // increase health on specific raider
@@ -427,7 +446,7 @@ function raiderSupportHandler(req) {
     // Broadcast the health change to all other extension instances on this channel.
     // attemptHealthBroadcast(channelId);
     // attemptRaidBroadcast(channelId)
-    return JSON.stringify(channelRaiders[channelId]);
+    return JSON.stringify({ result: channelRaiders[channelId] });
 }
 function streamerSupportHandler(req) {
     // Verify all requests.
@@ -456,111 +475,10 @@ function streamerSupportHandler(req) {
     // attemptHealthBroadcast(channelId);
     // attemptRaidBroadcast(channelId)
 
-    return JSON.stringify(channelRaiders[channelId]);
+    return JSON.stringify({ result: channelRaiders[channelId] });
 }
 
 //! -------------------- SEND BROADCAST TO EXT -------------------- //
-// function attemptHealthBroadcast(channelId) {
-//     // Check the cool-down to determine if it's okay to send now.
-//     const now = Date.now();
-//     const cooldown = channelCooldowns[channelId];
-//     if (!cooldown || cooldown.time < now) {
-//         // It is.
-//         sendHealthBroadcast(channelId);
-//         channelCooldowns[channelId] = { time: now + channelCooldownMs };
-//     } else if (!cooldown.trigger) {
-//         // It isn't; schedule a delayed broadcast if we haven't already done so.
-//         cooldown.trigger = setTimeout(
-//             sendHealthBroadcast,
-//             now - cooldown.time,
-//             channelId
-//         );
-//     }
-// }
-
-// function sendHealthBroadcast(channelId) {
-//     // Set the HTTP headers required by the Twitch API.
-//     const headers = {
-//         "Client-ID": clientId,
-//         "Content-Type": "application/json",
-//         Authorization: bearerPrefix + makeLegacyServerToken(channelId),
-//     };
-//     // Create the POST body for the Twitch API request.
-//     const body = JSON.stringify({
-//         content_type: "application/json",
-//         broadcaster_id: channelId,
-//         message: JSON.stringify(channelRaiders[channelId]),
-//         targets: ["broadcast"],
-//     });
-//     // Send the broadcast request to the Twitch API.
-//     verboseLog(
-//         "broadcasting channelRaidersArray: " +
-//             channelRaiders[channelId] +
-//             `, for ${channelId}`
-//     );
-//     request(
-//         `https://api.twitch.tv/helix/extensions/pubsub`,
-//         {
-//             method: "POST",
-//             headers,
-//             body,
-//         },
-//         (err, res) => {
-//             if (err) {
-//                 console.error(
-//                     "[backend:460]: STRINGS.messageSendError, channelId, err",
-//                     STRINGS.messageSendError,
-//                     channelId,
-//                     err
-//                 );
-//             } else {
-//                 verboseLog(STRINGS.pubsubResponse, channelId, res.statusCode);
-//             }
-//         }
-//     );
-// }
-//! BACKUP
-// function sendHealthBroadcast(channelId) {
-//     // Set the HTTP headers required by the Twitch API.
-//     const headers = {
-//         "Client-ID": clientId,
-//         "Content-Type": "application/json",
-//         Authorization: bearerPrefix + makeLegacyServerToken(channelId),
-//     };
-//     // Create the POST body for the Twitch API request.
-//     const body = JSON.stringify({
-//         content_type: "application/json",
-//         message: JSON.stringify(channelRaiders[channelId]),
-//         targets: ["broadcast"],
-//     });
-//     // Send the broadcast request to the Twitch API.
-//     verboseLog(
-//         "broadcasting channelRaidersArray: " +
-//             channelRaiders[channelId] +
-//             `, for ${channelId}`
-//     );
-//     request(
-//         `https://api.twitch.tv/extensions/message/${channelId}`,
-//         {
-//             method: "POST",
-//             headers,
-//             body,
-//         },
-//         (err, res) => {
-//             if (err) {
-//                 console.error(
-//                     "[backend:460]: STRINGS.messageSendError, channelId, err",
-//                     STRINGS.messageSendError,
-//                     channelId,
-//                     err
-//                 );
-//             } else {
-//                 verboseLog(STRINGS.pubsubResponse, channelId, res.statusCode);
-//             }
-//         }
-//     );
-// }
-
 function attemptRaidBroadcast(channelId) {
     // Check the cool-down to determine if it's okay to send now.
     const now = Date.now();
@@ -595,53 +513,17 @@ async function sendRaidBroadcast(channelId) {
     });
     // Send the broadcast request to the Twitch API.
     console.log(
-        "[backend:597]: ",
+        "[backend:497]: ",
         `Broadcasting channelRaidersArray for channelId: ${channelId}`
     );
     const url = "https://api.twitch.tv/helix/extensions/pubsub";
     const res = await fetch(url, { method: "POST", headers, body });
-
-    console.error(
-        "[backend:460]: STRINGS.messageSendError, channelId, err",
-        STRINGS.messageSendError,
+    console.log(
+        "[backend:503]: Result sending message to channel",
         channelId,
         res.status
     );
-    console.log("[backend:609]: res", res);
-    console.log("[backend:610]: await res.text()", await res.text());
 }
-
-// function sendRaidBroadcast(channelId) {
-//     // Set the HTTP headers required by the Twitch API.
-//     const headers = {
-//         "Client-ID": clientId,
-//         "Content-Type": "application/json",
-//         Authorization: bearerPrefix + makeLegacyServerToken(channelId),
-//     };
-//     // Create the POST body for the Twitch API request.
-//     const body = JSON.stringify({
-//         content_type: "application/json",
-//         message: JSON.stringify(channelRaiders[channelId]),
-//         targets: ["broadcast"],
-//     });
-//     // Send the broadcast request to the Twitch API.
-//     // verboseLog(`broadcasting health: ${currentHealth}, for ${channelId}`);
-//     request(
-//         `https://api.twitch.tv/extensions/message/${channelId}`,
-//         {
-//             method: "POST",
-//             headers,
-//             body,
-//         },
-//         (err, res) => {
-//             if (err) {
-//                 console.log(STRINGS.messageSendError, channelId, err);
-//             } else {
-//                 verboseLog(STRINGS.pubsubResponse, channelId, res.statusCode);
-//             }
-//         }
-//     );
-// }
 
 //! --------------------------------------------------------- //
 //*                       -- CHAT API --                     //
@@ -654,7 +536,7 @@ async function sendChatMessageToChannel(message, channelId) {
     const bullshitToken = makeHelixServerToken(channelId);
     console.log("[backend:574]: bullshitToken", bullshitToken);
     // const url = `https://api.twitch.tv/helix/extensions/chat?broadcaster_id=${channelId}`,
-    const url = `https://api.twitch.tv/helix/extensions/chat?broadcaster_id=${ownerId}`,
+    const url = `https://api.twitch.tv/helix/extensions/chat?broadcaster_id=${channelId}`,
         headers = {
             "Client-ID": clientId,
             Authorization: "Bearer " + bullshitToken,
@@ -668,50 +550,8 @@ async function sendChatMessageToChannel(message, channelId) {
         });
     const res = await fetch(url, { method: "POST", headers, body });
     console.log(
-        `Broadcast char message result: ${res.status}: ${res.statusText}`
+        `[backend:532]: Broadcast chat message result: ${res.status}: ${res.statusText}`
     );
-
-    // const got = require("got");
-    // got({
-    //     url: "https://api.twitch.tv/helix/extensions/chat",
-    //     method: "POST",
-    //     headers: {
-    //         "Client-ID": clientId,
-    //         Authorization: "Bearer " + makeHelixServerToken(),
-    //         "Content-Type": "application/json",
-    //     },
-    //     searchParams: {
-    //         broadcaster_id,
-    //     },
-    //     body: JSON.stringify({
-    //         // text: message,
-    //         text: "Test Message",
-    //         extension_id: clientId,
-    //         extension_version: CURRENT_VERSION,
-    //     }),
-    //     responseType: "json",
-    // })
-    //     .then((resp) => {
-    //         console.log(
-    //             "Result",
-    //             resp.statusCode,
-    //             resp.body,
-    //             resp.headers["ratelimit-remaining"],
-    //             "/",
-    //             resp.headers["ratelimit-limit"]
-    //         );
-    //     })
-    //     .catch((err) => {
-    //         if (err.response) {
-    //             console.error(
-    //                 "API ERROR",
-    //                 err.response.statusCode,
-    //                 err.response.body
-    //             );
-    //             return;
-    //         }
-    //         console.error("BAD ERROR", err);
-    //     });
 }
 
 function broadcastTimeleft() {
