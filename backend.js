@@ -870,8 +870,9 @@ async function constructRaidPackage(
         supportRatio = getRatio(raiderAmount, currentViewers),
         gameExpireTime =
             Date.now() / 1000 +
-            (streamerData.userConfig.gameDuration ||
-                defaultUserConfig.gameDuration.default);
+            (streamerData.userConfig
+                ? streamerData.userConfig.gameDuration
+                : defaultUserConfig.gameDuration.default);
 
     return {
         channel: streamerData.channelName,
