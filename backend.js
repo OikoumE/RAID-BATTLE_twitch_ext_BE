@@ -625,6 +625,12 @@ async function sendRaidBroadcast(channelId) {
 //! --------------------------------------------------------- //
 //*                       -- CHAT API --                     //
 //! ------------------------------------------------------- //
+//TODO FIGURE OUT TWITCH BULLSHIT DOCS!!!!!!!!!!!
+//! sendChatMessageToChannel(
+//!     `Starting RAID-BATTLE on channel: ${channel}, started by: ${username}`,
+//!     channelId
+//! );
+
 async function sendChatMessageToChannel(message, channelId) {
     // not more often than every 5sec
     // Maximum: 280 characters.
@@ -649,42 +655,47 @@ async function sendChatMessageToChannel(message, channelId) {
     );
 }
 
-function broadcastTimeleft() {
-    // USERCONFIG:
-    // GameDuration: Default = 120 (how long does a game last (in sec))
-    // ExtendGameDuration (how much time to add (in sec) if multiraid)
-    // ExtendGameDurationEnabled (whether or not to extend current game if another raid occurs (bool))
-    // IntroDuration (how much time to wait before starting game (insec), for allowing alerts etc to finnish)
-    // GameResultDuration (how long will the result of the game be displayed (in sec))
-    // EnableChatOutput (whether or not to announce to chat, that game is starting/ending/result (bool))
-    //
-    //
-    //
-    //
+function broadcastTimeleft(channelId) {
+    // TODO store a (date.now()/1000 + userConfig.gameDuration) in a GAME when in starts
+    // TODO add to timer if new raid during game
+
+    // TODO timerthingy
+    // TODO start counting down when game start
+
+    // TODO attempt broadcast every second with updated TIMELEFT if game is still running
 
     // TODO reset health after X time
-    // TODO end game state
-    // TODO when all raiders are dead
-    // TODO timer, add to timer if new raid during game (part of class)
+
     // TODO sending gameOverState: win/defeated raiderX/loose
-    // TODO a class/func
-    // TODO timerthingy
-    // TODO broadcast 1sec interval
-    // TODO start counting down when game start
-    // TODO attempt broadcast every second with updated TIMELEFT if game is still running
+
     // TODO when game end send final broadcast to end game on frontend and clean up
-    // TODO setInterval broadcast every sec for timer update!
+
     //? maybe override broadcastHealth with a setinterval broadcast?
     const timeLeftBroadcast = setTimeout(() => {
-        let gameIsRunning, TIMELEFT;
-        if (gameIsRunning) {
-            broadcastTimeleft();
-            // attemptHealthBroadcast("123");
-            // attemptRaidBroadcast("123");
-        } else if (!gameIsRunning && TIMELEFT == 0) {
+        if (!checkIfGameExpired(channelRaiders[channelId])) {
+            broadcastTimeleft(channelId);
+            attemptRaidBroadcast(channelId);
+        } else {
             //broadcast end raid game
         }
     }, 1000);
+}
+
+function checkIfGameExpired(gameArray) {
+    const stateArray = [];
+    for (const game of gameArray) {
+        if (Date.now() / 1000 >= game.gameExpireTime) {
+            stateArray.push(true);
+        } else {
+            stateArray.push(false);
+        }
+    }
+    for (let i = 0; i < stateArray.length; i++) {
+        if (!stateArray[i]) {
+            return false;
+        }
+    }
+    return true;
 }
 
 //! --------------------------------------------------------- //
@@ -802,21 +813,37 @@ async function startRaid(channel, username, viewers) {
     console.log(
         `[backend:549]: Starting raid on channel: ${channel}, started by: ${username}`
     );
-    // const channelId = channelIds[channel];
-    const streamerData = await dataBase.findOne({ channelName: channel });
-    const channelId = streamerData.channelId;
-    sendChatMessageToChannel(
-        `Starting RAID-BATTLE on channel: ${channel}, started by: ${username}`,
-        channelId
-    );
-    // (async () => {//!
+    const streamerData = await dataBase.findOne({ channelName: channel }),
+        channelId = streamerData.channelId,
+        raidPackage = constructRaidPackage(channelId, username, viewers);
+
+    if (!Array.isArray(channelRaiders[channelId])) {
+        channelRaiders[channelId] = [];
+    }
+    if (!channelRaiders[channelId].some((item) => item.raider === username)) {
+        channelRaiders[channelId].push(raidPackage);
+    }
+    // attemptRaidBroadcast(channelId); //!
+    startBroadcastInterval(channelId); //*
+    if (channelRaiders[channelId]) {
+        return channelRaiders[channelId];
+    } else {
+        return null;
+    }
+}
+
+function constructRaidPackage(channelId, raiderUserName, raiderAmount) {
     const streamData = await getStreamById(channelId),
         currentViewers = streamData.viewer_count,
-        raiderData = await getUser(`login=${username}`),
+        raiderData = await getUser(`login=${raiderUserName}`),
         raiderPicUrl = raiderData.profile_image_url, //.userPicUrl
         streamerPicUrl = streamerData.profilePicUrl, // HAVE IN DB
-        supportRatio = getRatio(viewers, currentViewers);
-    const raidPackage = {
+        supportRatio = getRatio(raiderAmount, currentViewers),
+        gameExpireTime =
+            Date.now() / 1000 + streamData.userConfig.gameDuration ||
+            defaultUserConfig.gameDuration.default;
+
+    return {
         channel,
         raider: username,
         health: initialHealth,
@@ -825,19 +852,6 @@ async function startRaid(channel, username, viewers) {
         supportRatio,
         raiderPicUrl,
         streamerPicUrl,
+        gameExpireTime,
     };
-
-    if (!Array.isArray(channelRaiders[channelId])) {
-        channelRaiders[channelId] = [];
-    }
-    if (!channelRaiders[channelId].some((item) => item.raider === username)) {
-        channelRaiders[channelId].push(raidPackage);
-    }
-    attemptRaidBroadcast(channelId);
-    // })();//!
-    if (channelRaiders[channelId]) {
-        return channelRaiders[channelId];
-    } else {
-        return null;
-    }
 }
