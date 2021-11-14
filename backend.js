@@ -832,7 +832,7 @@ async function startRaid(channel, username, viewers) {
     }
 }
 
-function constructRaidPackage(channelId, raiderUserName, raiderAmount) {
+async function constructRaidPackage(channelId, raiderUserName, raiderAmount) {
     const streamData = await getStreamById(channelId),
         currentViewers = streamData.viewer_count,
         raiderData = await getUser(`login=${raiderUserName}`),
