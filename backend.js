@@ -669,10 +669,12 @@ function startBroadcastInterval(channelId) {
     if (timeLeftBroadcast) {
         clearInterval(timeLeftBroadcast);
     }
-    timeLeftBroadcast = setInterval(
-        () => attemptRaidBroadcast(channelId),
-        1000
-    );
+    if (!checkIfGameExpired(channelRaiders[channelId])) {
+        timeLeftBroadcast = setInterval(
+            () => attemptRaidBroadcast(channelId),
+            1000
+        );
+    }
     // timeLeftBroadcast = setTimeout(() => {
     //     if (!checkIfGameExpired(channelRaiders[channelId])) {
     //         attemptRaidBroadcast(channelId);
