@@ -564,6 +564,7 @@ async function startTestRaidHandler(req) {
     const { channel_id: channelId, opaque_user_id: opaqueUserId } = payload;
     const testRaidPayload = req.payload;
     const channel = await dataBase.findOne(channelId);
+    console.log("[backend:566]: testRaidPayload", testRaidPayload);
     return JSON.stringify(
         startRaid(
             channel.channelName,
