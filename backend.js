@@ -59,7 +59,8 @@ const mongoUri = process.env.MONGODB_URL;
 const APP_CLIENT_ID =
         process.env.APP_CLIENT_ID || "cr20njfkgll4okyrhag7xxph270sqk", //! CHANGE WITH OWN EXT SPECIFIC APP CLIENT ID!
     APP_CLIENT_SECRET = process.env.APP_CLIENT_SECRET || "",
-    CURRENT_VERSION = process.env.CURRENT_VERSION || "0.0.4";
+    // CURRENT_VERSION = process.env.CURRENT_VERSION || "0.0.4";
+    CURRENT_VERSION = "0.0.4";
 
 let APP_ACCESS_TOKEN = null,
     TOKEN_EXPIRE_DATE = null;
@@ -558,6 +559,7 @@ function sendRaidBroadcast(channelId) {
 //! ------------------------------------------------------- //
 async function sendChatMessageToChannel(message, channelId) {
     // not more often than every 5sec
+    // Maximum: 280 characters.
     console.log("sending message: " + message + " to channel: " + channelId);
     const url = `https://api.twitch.tv/helix/extensions/chat?broadcaster_id=${channelId}`;
     const result = await fetch(url, {
@@ -573,7 +575,7 @@ async function sendChatMessageToChannel(message, channelId) {
             extension_version: CURRENT_VERSION,
         }),
     });
-    console.log("Send chat message result", result);
+    console.log("Send chat message result: ", result.status, result.statusText);
 }
 
 function broadcastTimeleft() {
