@@ -508,7 +508,6 @@ function raiderSupportHandler(req) {
         throw Boom.tooManyRequests(STRINGS.cooldown);
     }
     // increase health on specific raider
-    console.log(channelRaiders[channelId]);
     if (channelRaiders[channelId]) {
         for (const raiderObj of channelRaiders[channelId]) {
             if (raiderObj.raider == raider) {
@@ -680,6 +679,8 @@ function startBroadcastInterval(channelId) {
                 //broadcast end raid game
             }
         }, 1000);
+    } else {
+        attemptRaidBroadcast(channelId);
     }
 }
 
