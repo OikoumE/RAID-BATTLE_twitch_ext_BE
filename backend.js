@@ -591,7 +591,7 @@ async function sendRaidBroadcast(channelId) {
         content_type: "application/json",
         broadcaster_id: channelId,
         message: JSON.stringify(channelRaiders[channelId]),
-        targets: ["broadcast"],
+        target: ["broadcast"],
     });
     // Send the broadcast request to the Twitch API.
     console.log(
@@ -607,10 +607,8 @@ async function sendRaidBroadcast(channelId) {
         channelId,
         res.status
     );
-    console.log(res);
-    console.log(res.body);
-    console.log(await res.text());
-    console.log(await res.json());
+    console.log("[backend:609]: res", res);
+    console.log("[backend:610]: await res.text()", await res.text());
 }
 
 // function sendRaidBroadcast(channelId) {
