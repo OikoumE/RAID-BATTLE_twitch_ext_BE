@@ -670,8 +670,8 @@ function startBroadcastInterval(channelId) {
     if (!timeLeftBroadcast) {
         timeLeftBroadcast = setTimeout(() => {
             if (!checkIfGameExpired(channelRaiders[channelId])) {
-                broadcastTimeleft(channelId);
                 attemptRaidBroadcast(channelId);
+                startBroadcastInterval(channelId);
             } else {
                 //broadcast end raid game
             }
