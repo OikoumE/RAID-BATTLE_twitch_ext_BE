@@ -609,8 +609,8 @@ async function sendRaidBroadcast(channelId) {
     );
     console.log(res);
     console.log(res.body);
-    console.log(res.text());
-    console.log(res.json());
+    console.log(await res.text());
+    console.log(await res.json());
 }
 
 // function sendRaidBroadcast(channelId) {
