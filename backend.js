@@ -245,7 +245,7 @@ function makeLegacyServerToken(channelId) {
     };
     return jsonwebtoken.sign(payload, secret, { algorithm: "HS256" });
 }
-function makeHelixServerToken(channelId) {
+function makeHelixServerToken() {
     const payload = {
         exp: Math.floor(Date.now() / 1000) + serverTokenDurationSec,
         user_id: ownerId, // extension owner ID for the call to Twitch PubSub
@@ -569,37 +569,50 @@ async function sendChatMessageToChannel(message, channelId) {
     // not more often than every 5sec
     // Maximum: 280 characters.
 
-    const url = `https://api.twitch.tv/helix/extensions/chat?broadcaster_id=${channelId}`;
+    let broadcaster_id = channelId;
 
-    // Set the HTTP headers required by the Twitch API.
-    const headers = {
-        "Client-ID": clientId,
-        "Content-Type": "application/json",
-        Authorization: bearerPrefix + makeHelixServerToken(channelId),
-    };
-    // Create the POST body for the Twitch API request.
-    const body = JSON.stringify({
-        text: message,
-        extension_id: clientId,
-        extension_version: CURRENT_VERSION,
-    });
-    // Send the broadcast request to the Twitch API.
     console.log("sending message: " + message + " to channel: " + channelId);
-    request(
-        url,
-        {
-            method: "POST",
-            headers,
-            body,
+    const got = require("got");
+    got({
+        url: "https://api.twitch.tv/helix/extensions/chat",
+        method: "POST",
+        headers: {
+            "Client-ID": clientId,
+            Authorization: "Bearer " + makeHelixServerToken(),
+            "Content-Type": "application/json",
         },
-        (err, res) => {
-            if (err) {
-                console.log(STRINGS.messageSendError, channelId, err);
-            } else {
-                verboseLog(STRINGS.pubsubResponse, channelId, res.statusCode);
+        searchParams: {
+            broadcaster_id,
+        },
+        body: JSON.stringify({
+            // text: message,
+            text: "Test Message",
+            extension_id: clientId,
+            extension_version: CURRENT_VERSION,
+        }),
+        responseType: "json",
+    })
+        .then((resp) => {
+            console.log(
+                "Result",
+                resp.statusCode,
+                resp.body,
+                resp.headers["ratelimit-remaining"],
+                "/",
+                resp.headers["ratelimit-limit"]
+            );
+        })
+        .catch((err) => {
+            if (err.response) {
+                console.error(
+                    "API ERROR",
+                    err.response.statusCode,
+                    err.response.body
+                );
+                return;
             }
-        }
-    );
+            console.error("BAD ERROR", err);
+        });
 }
 
 function broadcastTimeleft() {
