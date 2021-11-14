@@ -73,7 +73,7 @@ let APP_ACCESS_TOKEN = null,
 
 const initialHealth = 100,
     channelRaiders = {},
-    KEEP_HEROKU_ALIVE_INTERVAL = 5;
+    KEEP_HEROKU_ALIVE_INTERVAL = 15;
 var dataBase, tmiClient;
 
 const defaultUserConfig = {
@@ -89,14 +89,20 @@ const defaultUserConfig = {
 
 async function printTimeout() {
     var date = new Date();
-    let nextTimeout = Math.random() * KEEP_HEROKU_ALIVE_INTERVAL * 60 * 1000;
+    let nextTimeout =
+        Math.floor(
+            Math.random() *
+                Math.floor(Math.random() * KEEP_HEROKU_ALIVE_INTERVAL)
+        ) *
+        60 *
+        1000;
     console.log(
         `ALIVE CHECKER: ${date.toLocaleTimeString()}-  "Heroku timeout for", ${nextTimeout}`
     );
     console.log();
     setTimeout(async () => {
         fetch("https://raid-battle-twitch-ext.herokuapp.com/").then((res) =>
-            console.log(res)
+            console.log(res.ok)
         );
 
         printTimeout();
