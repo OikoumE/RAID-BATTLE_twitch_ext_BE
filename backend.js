@@ -594,10 +594,10 @@ function sendRaidBroadcast(channelId) {
         targets: ["broadcast"],
     });
     // Send the broadcast request to the Twitch API.
-    verboseLog(
-        "broadcasting channelRaidersArray: " +
-            channelRaiders[channelId] +
-            `, for ${channelId}`
+    console.log(
+        "Broadcasting channelRaidersArray: ",
+        channelRaiders[channelId],
+        `, for channelId: ${channelId}`
     );
     request(
         `https://api.twitch.tv/helix/extensions/pubsub`,
@@ -615,7 +615,7 @@ function sendRaidBroadcast(channelId) {
                     err
                 );
             } else {
-                verboseLog(STRINGS.pubsubResponse, channelId, res.statusCode);
+                console.log(STRINGS.pubsubResponse, channelId, res.statusCode);
             }
         }
     );
@@ -677,7 +677,9 @@ async function sendChatMessageToChannel(message, channelId) {
             extension_version: CURRENT_VERSION,
         });
     const res = await fetch(url, { method: "POST", headers, body });
-    console.log(res);
+    console.log(
+        `Broadcast char message result: ${res.status}: ${res.statusText}`
+    );
 
     // const got = require("got");
     // got({
@@ -871,6 +873,7 @@ function restartTmi(channelList) {
     });
 }
 async function startRaid(channel, username, viewers) {
+    //TODO this calles broadcastTimeleft
     console.log(
         `[backend:549]: Starting raid on channel: ${channel}, started by: ${username}`
     );
