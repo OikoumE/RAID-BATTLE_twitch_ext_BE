@@ -46,7 +46,11 @@ const { get } = require("https");
 //! ------------------------------------------------------- //
 // TODO Make a logger that logs critical errors to DB
 // TODO log pr channelID: timestamp, error, scriptLocation
-
+// TODO broadcast endgame state from EBS to EXT, with game result
+// TODO calculate game result
+// TODO FE: clean up
+// TODO fine tune timer, add to timer, multiraid
+// TODO sending gameOverState: win/defeated raiderX/loose
 //! --------------------------------------------------------- //
 //*                      -- MY VARS --                       //
 //! ------------------------------------------------------- //
@@ -479,7 +483,6 @@ async function updateUserConfigHandler(req) {
         result: "User Config updated!",
         data: updateResult,
     });
-    //TODO depending on success with DB, return result
 }
 
 function parseUserConfigUpdateDocument(document) {
@@ -655,15 +658,6 @@ async function sendChatMessageToChannel(message, channelId) {
     );
 }
 
-// TODO store a (date.now()/1000 + userConfig.gameDuration) in a GAME when in starts
-// TODO add to timer if new raid during game
-// TODO timerthingy
-// TODO start counting down when game start
-// TODO attempt broadcast every second with updated TIMELEFT if game is still running
-// TODO reset health after X time
-// TODO sending gameOverState: win/defeated raiderX/loose
-// TODO when game end send final broadcast to end game on frontend and clean up
-
 let timeLeftBroadcast;
 function startBroadcastInterval(channelId) {
     if (timeLeftBroadcast) {
@@ -818,7 +812,6 @@ function restartTmi(channelList) {
     });
 }
 async function startRaid(channel, username, viewers) {
-    //TODO this calles broadcastTimeleft
     console.log(
         `[backend:549]: Starting raid on channel: ${channel}, started by: ${username}`
     );
