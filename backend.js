@@ -564,15 +564,15 @@ async function startTestRaidHandler(req) {
     const { channel_id: channelId, opaque_user_id: opaqueUserId } = payload;
     const testRaidPayload = JSON.parse(req.payload);
     // console.log("[backend:566]: testRaidPayload", testRaidPayload);
-    const channel = await dataBase.findOne(channelId);
+    const channel = await dataBase.findOne({ channelId });
     console.log("[backend:567]: channel", channel);
-    // return JSON.stringify(
-    //     startRaid(
-    //         channel.channelName,
-    //         testRaidPayload.testRaider,
-    //         testRaidPayload.testAmount
-    //     )
-    // );
+    return JSON.stringify(
+        startRaid(
+            channel.channelName,
+            testRaidPayload.testRaider,
+            testRaidPayload.testAmount
+        )
+    );
     return null;
 }
 
