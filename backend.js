@@ -247,8 +247,7 @@ function makeLegacyServerToken(channelId) {
 }
 function makeHelixServerToken(channelId) {
     const payload = {
-        exp: Math.floor(Date.now() / 1000) + serverTokenDurationSec,
-        channel_id: channelId,
+        exp: Math.floor(Date.now() / 1000) + 4,
         user_id: ownerId, // extension owner ID for the call to Twitch PubSub
         role: "external",
     };
