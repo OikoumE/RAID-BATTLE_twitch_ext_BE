@@ -813,7 +813,12 @@ async function startRaid(channel, username, viewers) {
     );
     const streamerData = await dataBase.findOne({ channelName: channel }),
         channelId = streamerData.channelId,
-        raidPackage = constructRaidPackage(channelId, username, viewers);
+        raidPackage = constructRaidPackage(
+            channelId,
+            username,
+            viewers,
+            streamerData
+        );
 
     if (!Array.isArray(channelRaiders[channelId])) {
         channelRaiders[channelId] = [];
@@ -830,7 +835,12 @@ async function startRaid(channel, username, viewers) {
     }
 }
 
-async function constructRaidPackage(channelId, raiderUserName, raiderAmount) {
+async function constructRaidPackage(
+    channelId,
+    raiderUserName,
+    raiderAmount,
+    streamerData
+) {
     const streamData = await getStreamById(channelId),
         currentViewers = streamData.viewer_count,
         raiderData = await getUser(`login=${raiderUserName}`),
