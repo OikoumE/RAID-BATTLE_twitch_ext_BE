@@ -473,13 +473,14 @@ function raiderSupportHandler(req) {
     if (userIsInCooldown(opaqueUserId)) {
         throw Boom.tooManyRequests(STRINGS.cooldown);
     }
-    console.log(
-        `increase health on raider: ${raider} in stream: ${channelId}, by ${opaqueUserId}`
-    );
     // increase health on specific raider
+    console.log(channelRaiders[channelId]);
     if (channelRaiders[channelId]) {
         for (const raiderObj of channelRaiders[channelId]) {
             if (raiderObj.raider == raider && raiderObj.health < 100) {
+                console.log(
+                    `increase health on : ${raider} in stream: ${channelId}, by ${opaqueUserId}`
+                );
                 raiderObj.health =
                     raiderObj.health + raiderObj.supportRatio.raider;
                 console.log(
@@ -490,6 +491,7 @@ function raiderSupportHandler(req) {
         }
         return channelRaiders[channelId];
     } else {
+        console.log("[backend:493]: returning null");
         return null;
     }
     // Broadcast the health change to all other extension instances on this channel.
@@ -517,8 +519,8 @@ function streamerSupportHandler(req) {
             );
             return channelRaiders[channelId];
         } else {
+            console.log("[backend:493]: returning null");
             return null;
-
             //TODO RETURN DEAFETED RAIDER STATE!
         }
     }
