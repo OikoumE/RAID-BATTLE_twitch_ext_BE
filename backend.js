@@ -442,9 +442,9 @@ function requestUserConfigHandler(req) {
     const { channel_id: channelId, opaque_user_id: opaqueUserId } = payload;
     const result = dataBase.findOne({ channelId });
     if (result) {
-        return { result: "Found user", data: result };
+        return JSON.stringify({ result: "Found user", data: result });
     }
-    return { result: "Did not find user", data: null };
+    return JSON.stringify({ result: "Did not find user", data: null });
 }
 
 async function updateUserConfigHandler(req) {
@@ -457,7 +457,10 @@ async function updateUserConfigHandler(req) {
         { $set: { userConfig: JSON.parse(updateDocument) } }
     );
     console.log("[backend:456]: updateResult", updateResult);
-    return { result: "User Config updated!", data: updateResult };
+    return JSON.stringify({
+        result: "User Config updated!",
+        data: updateResult,
+    });
     //TODO depending on success with DB, return result
 }
 
@@ -474,19 +477,24 @@ function raiderSupportHandler(req) {
         `increase health on raider: ${raider} in stream: ${channelId}, by ${opaqueUserId}`
     );
     // increase health on specific raider
-    for (const raiderObj of channelRaiders[channelId]) {
-        if (raiderObj.raider == raider && raiderObj.health < 100) {
-            raiderObj.health = raiderObj.health + raiderObj.supportRatio.raider;
-            console.log(
-                "[backend:332]: raiderObj.supportRatio.raider",
-                raiderObj.supportRatio.raider
-            );
+    if (channelRaiders[channelId]) {
+        for (const raiderObj of channelRaiders[channelId]) {
+            if (raiderObj.raider == raider && raiderObj.health < 100) {
+                raiderObj.health =
+                    raiderObj.health + raiderObj.supportRatio.raider;
+                console.log(
+                    "[backend:332]: raiderObj.supportRatio.raider",
+                    raiderObj.supportRatio.raider
+                );
+            }
         }
+        return channelRaiders[channelId];
+    } else {
+        return null;
     }
     // Broadcast the health change to all other extension instances on this channel.
     // attemptHealthBroadcast(channelId);
     // attemptRaidBroadcast(channelId)
-    return JSON.stringify({ result: channelRaiders[channelId] });
 }
 function streamerSupportHandler(req) {
     // Verify all requests.
@@ -504,18 +512,18 @@ function streamerSupportHandler(req) {
                 "[backend:350]: raiderObj.supportRatio.streamer",
                 raiderObj.supportRatio.streamer
             );
+            console.log(
+                `reduce health on all raiders in stream: ${channelId}, by ${opaqueUserId}`
+            );
+            return channelRaiders[channelId];
         } else {
+            return null;
             //TODO RETURN DEAFETED RAIDER STATE!
         }
     }
-    verboseLog(
-        `reduce health on all raiders in stream: ${channelId}, by ${opaqueUserId}`
-    );
     // Broadcast the health change to all other extension instances on this channel.
     // attemptHealthBroadcast(channelId);
     // attemptRaidBroadcast(channelId)
-
-    return JSON.stringify({ result: channelRaiders[channelId] });
 }
 
 //! -------------------- SEND BROADCAST TO EXT -------------------- //
