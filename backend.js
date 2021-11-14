@@ -556,7 +556,7 @@ function sendRaidBroadcast(channelId) {
 //! --------------------------------------------------------- //
 //*                       -- CHAT API --                     //
 //! ------------------------------------------------------- //
-function sendChatMessageToChannel(channelId) {
+function sendChatMessageToChannel(message, channelId) {
     // not more often than every 5sec
 
     const url = `https://api.twitch.tv/helix/extensions/chat?broadcaster_id=${channelId}`;
@@ -568,7 +568,7 @@ function sendChatMessageToChannel(channelId) {
             "Content-Type": "application/json",
         },
         body: JSON.stringify({
-            text: "Hello",
+            text: message,
             extension_id: clientId,
             extension_version: CURRENT_VERSION,
         }),
@@ -732,7 +732,7 @@ async function startRaid(channel, username, viewers) {
     // const channelId = channelIds[channel];
     const streamerData = await dataBase.findOne({ channelName: channel });
     const channelId = streamerData.channelId;
-    sendChatMessageToChannel(channelId);
+    sendChatMessageToChannel({ message: "message" }, channelId);
     // (async () => {//!
     const streamData = await getStreamById(channelId),
         currentViewers = streamData.viewer_count,
