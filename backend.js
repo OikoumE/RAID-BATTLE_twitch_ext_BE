@@ -438,7 +438,7 @@ async function ongoingRaidGameQueryHandler(req) {
         console.log("[backend:321]: No active games");
         return null;
     }
-    return JSON.stringify({ result: channelRaiders[channelId] });
+    return JSON.stringify(channelRaiders[channelId]);
 }
 
 async function addStreamerToChannelsHandler(req) {
