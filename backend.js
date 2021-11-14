@@ -431,7 +431,7 @@ async function ongoingRaidGameQueryHandler(req) {
     return JSON.stringify({ result: channelRaiders[channelId] });
 }
 
-function addStreamerToChannelsHandler(req) {
+async function addStreamerToChannelsHandler(req) {
     // Verify all requests.
     const payload = verifyAndDecode(req.headers.authorization);
     const { channel_id: channelId, opaque_user_id: opaqueUserId } = payload;
