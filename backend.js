@@ -562,7 +562,7 @@ async function startTestRaidHandler(req) {
     // Verify all requests.
     const payload = verifyAndDecode(req.headers.authorization);
     const { channel_id: channelId, opaque_user_id: opaqueUserId } = payload;
-    const testRaidPayload = req.payload;
+    const testRaidPayload = JSON.parse(req.payload);
     const channel = await dataBase.findOne(channelId);
     console.log("[backend:566]: testRaidPayload", testRaidPayload);
     return JSON.stringify(
