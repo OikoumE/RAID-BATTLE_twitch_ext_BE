@@ -666,14 +666,21 @@ async function sendChatMessageToChannel(message, channelId) {
 
 let timeLeftBroadcast;
 function startBroadcastInterval(channelId) {
-    timeLeftBroadcast = setTimeout(() => {
-        if (!checkIfGameExpired(channelRaiders[channelId])) {
-            attemptRaidBroadcast(channelId);
-            startBroadcastInterval(channelId);
-        } else {
-            //broadcast end raid game
-        }
-    }, 1000);
+    if (timeLeftBroadcast) {
+        clearInterval(timeLeftBroadcast);
+    }
+    timeLeftBroadcast = setInterval(
+        () => attemptRaidBroadcast(channelId),
+        1000
+    );
+    // timeLeftBroadcast = setTimeout(() => {
+    //     if (!checkIfGameExpired(channelRaiders[channelId])) {
+    //         attemptRaidBroadcast(channelId);
+    //         startBroadcastInterval(channelId);
+    //     } else {
+    //         //broadcast end raid game
+    //     }
+    // }, 1000);
     // else {
     //     clearTimeout(timeLeftBroadcast);
     //     attemptRaidBroadcast(channelId);
@@ -830,6 +837,7 @@ async function startRaid(channel, username, viewers) {
     }
     // attemptRaidBroadcast(channelId); //!
     startBroadcastInterval(channelId); //*
+    attemptRaidBroadcast(channelId);
     if (channelRaiders[channelId]) {
         return channelRaiders[channelId];
     } else {
