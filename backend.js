@@ -58,7 +58,9 @@ const mongoUri = process.env.MONGODB_URL;
 //* twitch api auth
 const APP_CLIENT_ID =
         process.env.APP_CLIENT_ID || "cr20njfkgll4okyrhag7xxph270sqk", //! CHANGE WITH OWN EXT SPECIFIC APP CLIENT ID!
-    APP_CLIENT_SECRET = process.env.APP_CLIENT_SECRET || "";
+    APP_CLIENT_SECRET = process.env.APP_CLIENT_SECRET || "",
+    CURRENT_VERSION = process.env.CURRENT_VERSION || "0.0.4";
+
 let APP_ACCESS_TOKEN = null,
     TOKEN_EXPIRE_DATE = null;
 
@@ -343,7 +345,6 @@ async function addNewStreamer(channelId) {
         return "Already in the list of channels to monitor for raid";
     }
 }
-
 async function addStreamerToDb(userData) {
     const result = await dataBase.insertOne({
         channelName: userData.display_name.toLowerCase(),
@@ -412,7 +413,7 @@ function raiderSupportHandler(req) {
         }
     }
     // Broadcast the health change to all other extension instances on this channel.
-    attemptHealthBroadcast(channelId, raider);
+    // attemptHealthBroadcast(channelId, raider);
     return JSON.stringify(channelRaiders[channelId]);
 }
 function streamerSupportHandler(req) {
@@ -439,7 +440,7 @@ function streamerSupportHandler(req) {
         `reduce health on all raiders in stream: ${channelId}, by ${opaqueUserId}`
     );
     // Broadcast the health change to all other extension instances on this channel.
-    attemptHealthBroadcast(channelId);
+    // attemptHealthBroadcast(channelId);
     return JSON.stringify(channelRaiders[channelId]);
 }
 
@@ -477,7 +478,9 @@ function sendHealthBroadcast(channelId) {
     });
     // Send the broadcast request to the Twitch API.
     verboseLog(
-        `broadcasting channelRaidersArray: ${channelRaiders[channelId]}, for ${channelId}`
+        "broadcasting channelRaidersArray: " +
+            channelRaiders[channelId] +
+            `, for ${channelId}`
     );
     request(
         `https://api.twitch.tv/extensions/message/${channelId}`,
@@ -549,7 +552,42 @@ function sendRaidBroadcast(channelId) {
         }
     );
 }
+
+//! --------------------------------------------------------- //
+//*                       -- CHAT API --                     //
+//! ------------------------------------------------------- //
+function sendChatMessageToChannel(channelId) {
+    // not more often than every 5sec
+
+    const url = `https://api.twitch.tv/helix/extensions/chat?broadcaster_id=${channelId}`;
+    fetch(url, {
+        method: "POST",
+        headers: {
+            Authorization: bearerPrefix + makeServerToken(channelId),
+            "Client-Id": clientId,
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            text: "Hello",
+            extension_id: clientId,
+            extension_version: CURRENT_VERSION,
+        }),
+    });
+}
+
 function broadcastTimeleft() {
+    // USERCONFIG:
+    // GameDuration: Default = 120 (how long does a game last (in sec))
+    // ExtendGameDuration (how much time to add (in sec) if multiraid)
+    // ExtendGameDurationEnabled (whether or not to extend current game if another raid occurs (bool))
+    // IntroDuration (how much time to wait before starting game (insec), for allowing alerts etc to finnish)
+    // GameResultDuration (how long will the result of the game be displayed (in sec))
+    // EnableChatOutput (whether or not to announce to chat, that game is starting/ending/result (bool))
+    //
+    //
+    //
+    //
+
     // TODO reset health after X time
     // TODO end game state
     // TODO when all raiders are dead
@@ -558,14 +596,12 @@ function broadcastTimeleft() {
     // TODO a class/func
     // TODO timerthingy
     // TODO broadcast 1sec interval
-    // TODO PLACEHOLDER
-    // TODO PLACEHOLDER
     // TODO start counting down when game start
     // TODO attempt broadcast every second with updated TIMELEFT if game is still running
     // TODO when game end send final broadcast to end game on frontend and clean up
     // TODO setInterval broadcast every sec for timer update!
     //? maybe override broadcastHealth with a setinterval broadcast?
-    setTimeout(() => {
+    const timeLeftBroadcast = setTimeout(() => {
         let gameIsRunning, TIMELEFT;
         if (gameIsRunning) {
             broadcastTimeleft();
@@ -696,6 +732,7 @@ async function startRaid(channel, username, viewers) {
     // const channelId = channelIds[channel];
     const streamerData = await dataBase.findOne({ channelName: channel });
     const channelId = streamerData.channelId;
+    sendChatMessageToChannel(channelId);
     // (async () => {//!
     const streamData = await getStreamById(channelId),
         currentViewers = streamData.viewer_count,
