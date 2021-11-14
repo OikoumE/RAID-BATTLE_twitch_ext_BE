@@ -585,8 +585,7 @@ async function sendChatMessageToChannel(message, channelId) {
             extension_version: CURRENT_VERSION,
         });
     const res = await fetch(url, { method: "POST", headers, body });
-    verboseLog(STRINGS.pubsubResponse, channelId, res.statusCode);
-
+    console.log(res);
     // const got = require("got");
     // got({
     //     url: "https://api.twitch.tv/helix/extensions/chat",
