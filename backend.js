@@ -97,7 +97,9 @@ async function printTimeout() {
         60 *
         1000;
     console.log(
-        `ALIVE CHECKER: ${date.toLocaleTimeString()}-  "Heroku timeout for", ${nextTimeout}`
+        `ALIVE CHECKER: ${date.toLocaleTimeString()}-  "Heroku timeout for", ${Math.floor(
+            nextTimeout / 1000 / 60
+        )} min`
     );
     console.log();
     setTimeout(async () => {
@@ -484,7 +486,7 @@ async function updateUserConfigHandler(req) {
     const { channel_id: channelId, opaque_user_id: opaqueUserId } = payload;
     const jsonUpdateDocument = JSON.parse(req.payload),
         updateDocument = parseUserConfigUpdateDocument(jsonUpdateDocument);
-
+    await addNewStreamer(channelId);
     const updateResult = await dataBase.updateOne(
         { channelId },
         { $set: { userConfig: updateDocument } }
