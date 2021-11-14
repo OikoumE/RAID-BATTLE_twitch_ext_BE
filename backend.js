@@ -610,10 +610,6 @@ async function sendRaidBroadcast(channelId) {
     });
     // Send the broadcast request to the Twitch API.
     console.log(
-        "[backend:612]: channelRaiders[channelId]",
-        channelRaiders[channelId]
-    );
-    console.log(
         "[backend:497]:",
         `Broadcasting channelRaidersArray for channelId: ${channelId}`
     );
@@ -681,6 +677,7 @@ function startBroadcastInterval(channelId) {
         }, 1000);
     } else {
         attemptRaidBroadcast(channelId);
+        startBroadcastInterval(channelId);
     }
 }
 
