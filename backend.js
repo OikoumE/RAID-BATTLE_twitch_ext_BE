@@ -809,6 +809,7 @@ function startTestRaid(req) {
     const payload = verifyAndDecode(req.headers.authorization); //! NOT NEEDED AFTER TESTING
     const { channel_id: channelId, opaque_user_id: opaqueUserId } = payload; //! NOT NEEDED AFTER TESTING
     //! PRETENDING TMI TRIGGERED:
+    const raider = req.params.raider;
     testRaiderArray = [
         "matissetec",
         "itsoik",
@@ -817,9 +818,9 @@ function startTestRaid(req) {
     ];
     testRaiderAmount = [15, 20, 10, 5];
     const channel = "itsoik",
-        username = testRaiderArray[numberOfRaiders],
+        username = raider || testRaiderArray[numberOfRaiders],
         raidAmount = testRaiderAmount[numberOfRaiders];
     numberOfRaiders++;
-    return startRaid(channel, username, raidAmount);
+    return JSON.stringify(startRaid(channel, username, raidAmount));
 }
 // ! -------------------- SEND TESTRAID BROADCAST TO EXT END -------------------- //
