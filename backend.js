@@ -452,9 +452,9 @@ async function updateUserConfigHandler(req) {
     const payload = verifyAndDecode(req.headers.authorization);
     const { channel_id: channelId, opaque_user_id: opaqueUserId } = payload;
     const updateDocument = req.payload;
-    const updateResult = dataBase.updateOne(
+    const updateResult = await dataBase.updateOne(
         { channelId },
-        { $set: { userConfig: updateDocument } }
+        { $set: { userConfig: JSON.parse(updateDocument) } }
     );
     console.log("[backend:456]: updateResult", updateResult);
     return { result: "User Config updated!", data: updateResult };
