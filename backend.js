@@ -249,6 +249,7 @@ function makeHelixServerToken(channelId) {
     const payload = {
         exp: Math.floor(Date.now() / 1000) + 4,
         user_id: ownerId, // extension owner ID for the call to Twitch PubSub
+        channel_id: ownerId,
         role: "external",
     };
     return jsonwebtoken.sign(payload, secret);
@@ -572,7 +573,8 @@ async function sendChatMessageToChannel(message, channelId) {
     console.log(`sending message: "${message}" to channel: "${channelId}"`);
     const bullshitToken = makeHelixServerToken(channelId);
     console.log("[backend:574]: bullshitToken", bullshitToken);
-    const url = `https://api.twitch.tv/helix/extensions/chat?broadcaster_id=${channelId}`,
+    // const url = `https://api.twitch.tv/helix/extensions/chat?broadcaster_id=${channelId}`,
+    const url = `https://api.twitch.tv/helix/extensions/chat?broadcaster_id=${ownerId}`,
         headers = {
             "Client-ID": clientId,
             Authorization: "Bearer " + bullshitToken,
