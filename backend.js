@@ -417,8 +417,16 @@ function addStreamerToChannelsHandler(req) {
     return JSON.stringify({ result: addNewStreamer(channelId) });
 }
 function requestUserConfigHandler(req) {
+    // Verify all requests.
+    const payload = verifyAndDecode(req.headers.authorization);
+    const { channel_id: channelId, opaque_user_id: opaqueUserId } = payload;
+    const result = dataBase.findOne({ channelId });
+    if (result) {
+        return result;
+    }
     //TODO search DB for user.
     //TODO if no user, return null
+    return null;
 }
 
 function raiderSupportHandler(req) {
