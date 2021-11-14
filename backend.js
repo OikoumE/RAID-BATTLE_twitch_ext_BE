@@ -570,12 +570,13 @@ async function sendChatMessageToChannel(message, channelId) {
     // not more often than every 5sec
     // Maximum: 280 characters.
 
-    console.log("sending message: " + message + " to channel: " + channelId);
-
+    console.log(`sending message: "${message}" to channel: "${channelId}"`);
+    const bullshitToken = makeHelixServerToken(channelId);
+    console.log("[backend:574]: bullshitToken", bullshitToken);
     const url = `https://api.twitch.tv/helix/extensions/chat?broadcaster_id=${channelId}`,
         headers = {
             "Client-ID": clientId,
-            Authorization: "Bearer " + makeHelixServerToken(channelId),
+            Authorization: "Bearer " + bullshitToken,
             "Content-Type": "application/json",
         },
         body = JSON.stringify({
@@ -586,6 +587,7 @@ async function sendChatMessageToChannel(message, channelId) {
         });
     const res = await fetch(url, { method: "POST", headers, body });
     console.log(res);
+
     // const got = require("got");
     // got({
     //     url: "https://api.twitch.tv/helix/extensions/chat",
