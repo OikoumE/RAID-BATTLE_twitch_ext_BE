@@ -372,6 +372,7 @@ class DataBase {
 //! -------------------- DATABASE HANDLERS -------------------- //
 async function addNewStreamer(channelId) {
     const userExsist = await dataBase.checkIfUserInDb(channelId);
+    let returnData;
     if (!userExsist) {
         const userData = await getUser(`id=${channelId}`);
         const result = await addStreamerToDb(userData);
@@ -380,16 +381,17 @@ async function addNewStreamer(channelId) {
         const newChannelList = parseTmiChannelListFromDb(allChannelList);
         console.log("[backend:446]: newChannelList", newChannelList);
         restartTmi(newChannelList);
-        return JSON.stringify({
+        returnData = {
             result: "Success, added to channels to monitor for raids",
             data: result,
-        });
+        };
     } else {
-        return JSON.stringify({
+        returnData = {
             result: "Already in the list of channels to monitor for raid",
             data: null,
-        });
+        };
     }
+    return JSON.stringify(returnData);
 }
 async function addStreamerToDb(userData) {
     const result = await dataBase.insertOne({
@@ -433,7 +435,8 @@ function addStreamerToChannelsHandler(req) {
     // Verify all requests.
     const payload = verifyAndDecode(req.headers.authorization);
     const { channel_id: channelId, opaque_user_id: opaqueUserId } = payload;
-    return JSON.stringify(addNewStreamer(channelId));
+    const result = await addNewStreamer(channelId);
+    return JSON.stringify(result);
 }
 
 async function requestUserConfigHandler(req) {
@@ -441,7 +444,6 @@ async function requestUserConfigHandler(req) {
     const payload = verifyAndDecode(req.headers.authorization);
     const { channel_id: channelId, opaque_user_id: opaqueUserId } = payload;
     const result = await dataBase.findOne({ channelId });
-    console.log(result);
     if (result) {
         return JSON.stringify({ result: "Found user", data: result });
     }
@@ -457,7 +459,6 @@ async function updateUserConfigHandler(req) {
         { channelId },
         { $set: { userConfig: JSON.parse(updateDocument) } }
     );
-    console.log("[backend:456]: updateResult", updateResult);
     return JSON.stringify({
         result: "User Config updated!",
         data: updateResult,
