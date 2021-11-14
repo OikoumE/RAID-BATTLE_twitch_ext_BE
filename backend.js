@@ -387,7 +387,7 @@ async function addNewStreamer(channelId) {
         };
     } else {
         returnData = {
-            result: "Already in the list of <br> channels to monitor for raid",
+            result: "Already in the list of channels to monitor for raid",
             data: null,
         };
     }
@@ -448,7 +448,7 @@ async function requestUserConfigHandler(req) {
         return JSON.stringify({ result: "Loaded user config", data: result });
     }
     return JSON.stringify({
-        result: "Did not find config <br> hit save to store config ",
+        result: "Did not find config, hit save to store config",
         data: null,
     });
 }
