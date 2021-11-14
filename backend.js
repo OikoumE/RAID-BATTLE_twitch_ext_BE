@@ -71,6 +71,16 @@ const initialHealth = 100,
     channelRaiders = {},
     KEEP_HEROKU_ALIVE_INTERVAL = 5;
 var dataBase, tmiClient;
+
+const defaultUserConfig = {
+    gameDuration: { default: 120, max: 300, min: 60 },
+    extendGameDuration: { default: 60, max: 180, min: 0 },
+    extendGameDurationEnabled: { default: true },
+    introDuration: { default: 30, max: 60, min: 0 },
+    gameResultDuration: { default: 30, max: 60, min: 0 },
+    enableChatOutput: { default: false },
+};
+
 //! -------------------- my vars -------------------- //
 
 function printTimeout() {
@@ -472,19 +482,11 @@ async function updateUserConfigHandler(req) {
     //TODO depending on success with DB, return result
 }
 
-const defaultConfig = {
-    gameDuration: { default: 120, max: 300, min: 60 },
-    extendGameDuration: { default: 60, max: 180, min: 0 },
-    extendGameDurationEnabled: { default: true },
-    introDuration: { default: 30, max: 60, min: 0 },
-    gameResultDuration: { default: 30, max: 60, min: 0 },
-    enableChatOutput: { default: false },
-};
 function parseUserConfigUpdateDocument(document) {
     const parsedDoc = {};
     for (const [key, value] of Object.entries(document)) {
-        const max = defaultConfig[key].max,
-            min = defaultConfig[key].min;
+        const max = defaultUserConfig[key].max,
+            min = defaultUserConfig[key].min;
         if (!key.toLowerCase().includes("enable")) {
             parsedDoc[key] = value > max ? max : value < min ? min : value;
         }
