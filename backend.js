@@ -573,6 +573,7 @@ async function sendChatMessageToChannel(message, channelId) {
 
     console.log("sending message: " + message + " to channel: " + channelId);
     const got = require("got");
+
     got({
         url: "https://api.twitch.tv/helix/extensions/chat",
         method: "POST",
