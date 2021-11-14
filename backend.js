@@ -666,16 +666,14 @@ async function sendChatMessageToChannel(message, channelId) {
 
 let timeLeftBroadcast;
 function startBroadcastInterval(channelId) {
-    if (!timeLeftBroadcast) {
-        timeLeftBroadcast = setTimeout(() => {
-            if (!checkIfGameExpired(channelRaiders[channelId])) {
-                attemptRaidBroadcast(channelId);
-                startBroadcastInterval(channelId);
-            } else {
-                //broadcast end raid game
-            }
-        }, 1000);
-    }
+    timeLeftBroadcast = setTimeout(() => {
+        if (!checkIfGameExpired(channelRaiders[channelId])) {
+            attemptRaidBroadcast(channelId);
+            startBroadcastInterval(channelId);
+        } else {
+            //broadcast end raid game
+        }
+    }, 1000);
     // else {
     //     clearTimeout(timeLeftBroadcast);
     //     attemptRaidBroadcast(channelId);
