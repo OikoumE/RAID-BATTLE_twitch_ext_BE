@@ -517,6 +517,7 @@ function streamerSupportHandler(req) {
         console.log("[backend:493]: returning null");
         return null;
     }
+
     // Broadcast the health change to all other extension instances on this channel.
     // attemptHealthBroadcast(channelId);
     // attemptRaidBroadcast(channelId)
