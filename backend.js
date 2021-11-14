@@ -348,8 +348,8 @@ async function addStreamerToDb(userData) {
     const result = await dataBase.insertOne({
         channelName: userData.display_name.toLowerCase(),
         displayName: userData.display_name,
-        channelId: userData._id,
-        profilePicUrl: userData.logo,
+        channelId: userData.id,
+        profilePicUrl: userData.profile_image_url,
     });
     return result;
 }
@@ -615,27 +615,6 @@ async function getUser(path) {
     } catch (err) {
         console.log("[backend:674]: Error when getting user by ID", err);
     }
-
-    // const example_data = {
-    //     data: [
-    //         {
-    //             id: "141981764",
-    //             login: "twitchdev",
-    //             display_name: "TwitchDev",
-    //             type: "",
-    //             broadcaster_type: "partner",
-    //             description:
-    //                 "Supporting third-party developers building Twitch integrations from chatbots to game integrations.",
-    //             profile_image_url:
-    //                 "https://static-cdn.jtvnw.net/jtv_user_pictures/8a6381c7-d0c0-4576-b179-38bd5ce1d6af-profile_image-300x300.png",
-    //             offline_image_url:
-    //                 "https://static-cdn.jtvnw.net/jtv_user_pictures/3f13ab61-ec78-4fe6-8481-8682cb3b0ac2-channel_offline_image-1920x1080.png",
-    //             view_count: 5980557,
-    //             email: "not-real@email.com",
-    //             created_at: "2016-12-14T20:32:28Z",
-    //         },
-    //     ],
-    // };
 }
 
 async function getStreamById(id) {
@@ -659,28 +638,6 @@ async function getStreamById(id) {
     } catch (err) {
         console.log("[backend:661]: Error when getting stream by ID", err);
     }
-    // const example_data = {
-    //     data: [
-    //         {
-    //             id: "40952121085",
-    //             user_id: "101051819",
-    //             user_login: "afro",
-    //             user_name: "Afro",
-    //             game_id: "32982",
-    //             game_name: "Grand Theft Auto V",
-    //             type: "live",
-    //             title: "Jacob: Digital Den Laptops & Routers | NoPixel | !MAINGEAR !FCF",
-    //             viewer_count: 1490,
-    //             started_at: "2021-03-10T03:18:11Z",
-    //             language: "en",
-    //             thumbnail_url:
-    //                 "https://static-cdn.jtvnw.net/previews-ttv/live_user_afro-{width}x{height}.jpg",
-    //             tag_ids: ["6ea6bca4-4712-4ab9-a906-e3336a9d8039"],
-    //             is_mature: false,
-    //         },
-    //     ],
-    //     pagination: {},
-    // };
 }
 
 function getRatio(raiders, viewers) {
@@ -713,8 +670,9 @@ function startTmi(channels) {
         // channel: String - Channel name being raided
         // username: String - Username raiding the channel
         // viewers: Integer - Viewers count
-        console.log(`[backend:536]: 
-            ${channel} was raided by: ${username} with ${viewers} viewers`);
+        console.log(
+            `[backend:536]: ${channel} was raided by: ${username} with ${viewers} viewers`
+        );
         channel = channel.replace("#", "");
         viewers = parseInt(viewers);
         startRaid(channel, username, viewers);
@@ -755,6 +713,7 @@ async function startRaid(channel, username, viewers) {
         raiderPicUrl,
         streamerPicUrl,
     };
+
     if (!Array.isArray(channelRaiders[channelId])) {
         channelRaiders[channelId] = [];
     }
