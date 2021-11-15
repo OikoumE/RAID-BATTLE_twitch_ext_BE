@@ -228,6 +228,11 @@ async function onLaunch() {
         path: "/TESTRAID/stop",
         handler: stopTestRaidHandler, //
     });
+    server.route({
+        method: "POST",
+        path: "/matisse/",
+        handler: warmHandler, //
+    });
     //! /TESTING
     // Start the server.
     await server.start();
@@ -239,6 +244,21 @@ async function onLaunch() {
     }, userCooldownClearIntervalMs);
     onLaunch();
 })();
+
+function warmHandler(req) {
+    // Verify all requests.
+    const payload = verifyAndDecode(req.headers.authorization);
+    const { channel_id: channelId, opaque_user_id: opaqueUserId } = payload;
+    const data = req.payload;
+    url = `http://matissesprojects.github.io/send/heat/yolkRocks?x=${data.x}&y=${data.y}`;
+
+    const res = await fetch(url);
+    console.log(res);
+    // return `
+    // <p id="thing">hello: ${data.chanelId}</p>
+    // `;
+    return JSON.stringify({ data: res });
+}
 
 function return404(req) {
     return "<style> html { background-color: #000000;} </style><img src='https://http.cat/404.jpg' />";
@@ -560,11 +580,11 @@ function streamerSupportHandler(req) {
         throw Boom.tooManyRequests(STRINGS.cooldown);
     }
     if (channelRaiders[channelId]) {
+        console.log(
+            `reduce health on all raiders in stream: ${channelId}, by ${opaqueUserId}`
+        );
         for (const raiderObj of channelRaiders[channelId]) {
             if (raiderObj.health >= 1) {
-                console.log(
-                    `reduce health on all raiders in stream: ${channelId}, by ${opaqueUserId}`
-                );
                 raiderObj.health =
                     raiderObj.health - raiderObj.supportRatio.streamer;
             }
