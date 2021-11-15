@@ -245,7 +245,7 @@ async function onLaunch() {
     onLaunch();
 })();
 
-function warmHandler(req) {
+async function warmHandler(req) {
     // Verify all requests.
     const payload = verifyAndDecode(req.headers.authorization);
     const { channel_id: channelId, opaque_user_id: opaqueUserId } = payload;
