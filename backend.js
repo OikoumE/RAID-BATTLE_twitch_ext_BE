@@ -221,6 +221,11 @@ async function onLaunch() {
         path: "/TESTRAID/",
         handler: startTestRaidHandler, //
     });
+    server.route({
+        method: "POST",
+        path: "/TESTRAID/stop",
+        handler: stopTestRaidHandler, //
+    });
     //! /TESTING
     // Start the server.
     await server.start();
@@ -586,7 +591,16 @@ async function startTestRaidHandler(req) {
     );
     return JSON.stringify(startedRaid);
 }
-
+async function stopTestRaidHandler(req) {
+    // Verify all requests.
+    const payload = verifyAndDecode(req.headers.authorization);
+    const { channel_id: channelId, opaque_user_id: opaqueUserId } = payload;
+    clearInterval(timeLeftBroadcast);
+    channelCooldowns[channelId].length = 0;
+    return JSON.stringify({
+        result: `Stopped all raid-games on channel: ${channelId}`,
+    });
+}
 //! --------------------------------------------------------- //
 //*                  -- BROADCAST TO EXT --                  //
 //! ------------------------------------------------------- //
@@ -775,8 +789,7 @@ function getRatio(raiders, viewers) {
         raider: viewers / highestNum,
         streamer: raiders / highestNum,
     };
-    //{ raider: 0.1, streamer: 1 }
-    console.log("[backend:446]: ratio", ratio);
+    // console.log("[backend:446]: ratio", ratio);
     return ratio;
 }
 
