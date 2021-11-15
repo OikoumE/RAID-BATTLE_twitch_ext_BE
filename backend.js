@@ -250,7 +250,7 @@ async function warmHandler(req) {
     const payload = verifyAndDecode(req.headers.authorization);
     const { channel_id: channelId, opaque_user_id: opaqueUserId } = payload;
     let res;
-    if (channelId == 468106723 || channelId == 468106723) {
+    if (channelId == 468106723 || channelId == 93645775) {
         const data = req.payload;
         console.log(data);
         const jsonData = JSON.parse(data);
