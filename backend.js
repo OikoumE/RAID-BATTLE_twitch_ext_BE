@@ -872,7 +872,7 @@ async function constructRaidPackage(
         streamerPicUrl = streamerData.profilePicUrl, // HAVE IN DB
         supportRatio = getRatio(raiderAmount, currentViewers),
         //TODO figure out how to add extendGameDuration instead of gameDuration
-        gameTimeObj = constructGameTimeObject(streamerData);
+        gameTimeObj = constructGameTimeObject(streamerData, channelId);
 
     return {
         channel: streamerData.channelName,
@@ -890,7 +890,7 @@ async function constructRaidPackage(
 // TODO server stop broadcast if gameDuration.max < Date.now() /1000
 // TODO and remove game(s) from channelRaiders[channelId]
 
-function constructGameTimeObject(streamerData) {
+function constructGameTimeObject(streamerData, channelId) {
     // handles creating the gameTimeObj: {gameDuration, introDuration, gameResultDuration}
     const haveConf = streamerData.userConfig ? true : false;
     let gameResultDuration, introDuration, gameDuration;
