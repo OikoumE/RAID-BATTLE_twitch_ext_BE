@@ -933,6 +933,7 @@ function calculateGameDuration(introDuration, streamerData, channelId) {
                     : defaultUserConfig.gameDuration.default)
         );
     }
+    console.log("[backend:935]: gameDuration", gameDuration);
     return gameDuration;
 }
 function calculateGameResultDuration(gameDuration, streamerData) {
@@ -943,5 +944,6 @@ function calculateGameResultDuration(gameDuration, streamerData) {
                 ? streamerData.userConfig.gameResultDuration
                 : defaultUserConfig.gameResultDuration.default)
     );
+    console.log("[backend:946]: gameResultDuration", gameResultDuration);
     return gameResultDuration;
 }
