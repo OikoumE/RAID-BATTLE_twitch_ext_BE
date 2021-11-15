@@ -904,6 +904,12 @@ function calculateIntroDuration(streamerData) {
 function calculateGameDuration(introDuration, streamerData) {
     // set gameDuration on gameTimeObj
     // if there are more than 0 games in the list use extendGameDuration
+    console.log(channelRaiders[streamerData.channelId]);
+    console.log(channelRaiders[streamerData.channelId].length > 1);
+    console.log(
+        channelRaiders[streamerData.channelId] &&
+            channelRaiders[streamerData.channelId].length > 1
+    );
     if (
         channelRaiders[streamerData.channelId] &&
         channelRaiders[streamerData.channelId].length > 1
