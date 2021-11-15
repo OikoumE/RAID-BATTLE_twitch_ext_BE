@@ -895,7 +895,7 @@ function constructGameTimeObject(streamerData, channelId) {
     const haveConf = streamerData.userConfig ? true : false;
     let gameResultDuration, introDuration, gameDuration;
     // set gameDuration on gameTimeObj
-    if (channelRaiders[channelId].length > 1) {
+    if (channelRaiders[channelId] && channelRaiders[channelId].length > 1) {
         // using extendGameDuration if ongoing game
         gameDuration =
             Date.now() / 1000 +
