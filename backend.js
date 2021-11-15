@@ -818,16 +818,16 @@ async function startRaid(channel, username, viewers) {
         `[backend:549]: Starting raid on channel: ${channel}, started by: ${username}`
     );
     const streamerData = await dataBase.findOne({ channelName: channel }),
-        channelId = streamerData.channelId,
-        raidPackage = await constructRaidPackage(
-            channelId,
-            username,
-            viewers,
-            streamerData
-        );
+        channelId = streamerData.channelId;
     if (!Array.isArray(channelRaiders[channelId])) {
         channelRaiders[channelId] = [];
     }
+    const raidPackage = await constructRaidPackage(
+        channelId,
+        username,
+        viewers,
+        streamerData
+    );
     if (!channelRaiders[channelId].some((item) => item.raider === username)) {
         channelRaiders[channelId].push(raidPackage);
     }
@@ -884,7 +884,6 @@ async function constructRaidPackage(
 
 function constructGameTimeObject(streamerData, channelId) {
     // handles creating the gameTimeObj: {gameDuration, introDuration, gameResultDuration}
-
     const introDuration = calculateIntroDuration(streamerData),
         gameDuration = calculateGameDuration(
             introDuration,
@@ -916,7 +915,6 @@ function calculateGameDuration(introDuration, streamerData, channelId) {
                 (game) => game.gameTimeObj.gameDuration
             )
         );
-        //TODO
         gameDuration = Math.floor(
             ongoingGame +
                 (streamerData.userConfig
