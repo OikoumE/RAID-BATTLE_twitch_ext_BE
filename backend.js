@@ -906,7 +906,7 @@ function calculateIntroDuration(streamerData) {
                 : defaultUserConfig.introDuration.default)
     );
 }
-function calculateGameDuration(introDuration, streamerData) {
+function calculateGameDuration(introDuration, streamerData, channelId) {
     // set gameDuration on gameTimeObj
     // if there are more than 0 games in the list use extendGameDuration
     if (channelRaiders[channelId] && channelRaiders[channelId].length > 1) {
