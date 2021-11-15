@@ -895,9 +895,6 @@ function constructGameTimeObject(streamerData, channelId) {
             gameDuration,
             streamerData
         );
-    console.log("[backend:897]: introDuration", introDuration);
-    console.log("[backend:898]: gameDuration", gameDuration);
-    console.log("[backend:899]: gameResultDuration", gameResultDuration);
     return { introDuration, gameDuration, gameResultDuration };
 }
 function calculateIntroDuration(streamerData) {
