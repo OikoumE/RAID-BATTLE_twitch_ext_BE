@@ -888,11 +888,7 @@ function constructGameTimeObject(streamerData) {
             gameDuration,
             streamerData
         );
-    console.log("introDuration");
-    console.log(introDuration);
-    console.log(gameDuration);
-    console.log(gameResultDuration);
-    console.log("gameResultDuration");
+
     return { introDuration, gameDuration, gameResultDuration };
 }
 function calculateIntroDuration(streamerData) {
