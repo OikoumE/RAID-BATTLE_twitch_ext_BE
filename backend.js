@@ -596,7 +596,7 @@ async function stopTestRaidHandler(req) {
     const payload = verifyAndDecode(req.headers.authorization);
     const { channel_id: channelId, opaque_user_id: opaqueUserId } = payload;
     clearInterval(timeLeftBroadcast);
-    channelCooldowns[channelId].length = 0;
+    channelRaiders[channelId].length = 0;
     return JSON.stringify({
         result: `Stopped all raid-games on channel: ${channelId}`,
     });
