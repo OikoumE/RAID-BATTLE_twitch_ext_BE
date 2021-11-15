@@ -832,10 +832,10 @@ async function startRaid(channel, username, viewers) {
     }
     attemptRaidBroadcast(channelId);
     //! TEST CHAT!
-    sendChatMessageToChannel(
-        `Starting RAID-BATTLE on channel: ${channel}, started by: ${username}`,
-        channelId
-    );
+    // sendChatMessageToChannel(
+    //     `Starting RAID-BATTLE on channel: ${channel}, started by: ${username}`,
+    //     channelId
+    // );
     //! TEST CHAT!
 
     startBroadcastInterval(channelId);
@@ -862,10 +862,7 @@ async function constructRaidPackage(
         streamerPicUrl = streamerData.profilePicUrl, // HAVE IN DB
         supportRatio = getRatio(raiderAmount, currentViewers),
         //TODO figure out how to add extendGameDuration instead of gameDuration
-        gameTimeObj = constructGameTimeObject(
-            streamerData,
-            streamerData.channelId
-        );
+        gameTimeObj = constructGameTimeObject(streamerData);
 
     return {
         channel: streamerData.channelName,
@@ -883,18 +880,19 @@ async function constructRaidPackage(
 // TODO server stop broadcast if gameDuration.max < Date.now() /1000
 // TODO and remove game(s) from channelRaiders[channelId]
 
-function constructGameTimeObject(streamerData, channelId) {
+function constructGameTimeObject(streamerData) {
     // handles creating the gameTimeObj: {gameDuration, introDuration, gameResultDuration}
     const introDuration = calculateIntroDuration(streamerData),
-        gameDuration = calculateGameDuration(
-            introDuration,
-            streamerData,
-            channelId
-        ),
+        gameDuration = calculateGameDuration(introDuration, streamerData),
         gameResultDuration = calculateGameResultDuration(
             gameDuration,
             streamerData
         );
+    console.log("introDuration");
+    console.log(introDuration);
+    console.log(gameDuration);
+    console.log(gameResultDuration);
+    console.log("gameResultDuration");
     return { introDuration, gameDuration, gameResultDuration };
 }
 function calculateIntroDuration(streamerData) {
@@ -907,10 +905,13 @@ function calculateIntroDuration(streamerData) {
     );
     return introDuration;
 }
-function calculateGameDuration(introDuration, streamerData, channelId) {
+function calculateGameDuration(introDuration, streamerData) {
     // set gameDuration on gameTimeObj
     // if there are more than 0 games in the list use extendGameDuration
-    if (channelRaiders[channelId] && channelRaiders[channelId].length > 1) {
+    if (
+        channelRaiders[streamerData.channelId] &&
+        channelRaiders[streamerData.channelId].length > 1
+    ) {
         // using extendGameDuration if ongoing game
         const ongoingGame = Math.max(
             ...channelRaiders[channelId].map(
@@ -933,7 +934,6 @@ function calculateGameDuration(introDuration, streamerData, channelId) {
                     : defaultUserConfig.gameDuration.default)
         );
     }
-    console.log("[backend:935]: gameDuration", gameDuration);
     return gameDuration;
 }
 function calculateGameResultDuration(gameDuration, streamerData) {
@@ -944,6 +944,5 @@ function calculateGameResultDuration(gameDuration, streamerData) {
                 ? streamerData.userConfig.gameResultDuration
                 : defaultUserConfig.gameResultDuration.default)
     );
-    console.log("[backend:946]: gameResultDuration", gameResultDuration);
     return gameResultDuration;
 }
