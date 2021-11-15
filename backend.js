@@ -908,6 +908,7 @@ function calculateIntroDuration(streamerData) {
                 ? streamerData.userConfig.introDuration
                 : defaultUserConfig.introDuration.default)
     );
+    return introDuration;
 }
 function calculateGameDuration(introDuration, streamerData, channelId) {
     // set gameDuration on gameTimeObj
@@ -935,6 +936,7 @@ function calculateGameDuration(introDuration, streamerData, channelId) {
                     : defaultUserConfig.gameDuration.default)
         );
     }
+    return gameDuration;
 }
 function calculateGameResultDuration(gameDuration, streamerData) {
     // set gameResultDuration on gameTimeObj
@@ -944,4 +946,5 @@ function calculateGameResultDuration(gameDuration, streamerData) {
                 ? streamerData.userConfig.gameResultDuration
                 : defaultUserConfig.gameResultDuration.default)
     );
+    return gameResultDuration;
 }
