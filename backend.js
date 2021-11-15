@@ -693,17 +693,9 @@ function startBroadcastInterval(channelId) {
 }
 
 function checkIfGameExpired(gameArray) {
-    const stateArray = [];
-    console.log("[backend:697]: gameArray", gameArray);
-    for (const game of gameArray) {
-        console.log("[backend:697]: game", game.gameTimeObj.gameDuration);
-        console.log("[backend:697]: game", game);
-        if (Date.now() / 1000 >= game.gameTimeObj.gameDuration) {
-            stateArray.push(true);
-        } else {
-            stateArray.push(false);
-        }
-    }
+    const stateArray = gameArray.map(
+        (game) => Date.now() / 1000 >= game.gameTimeObj.gameDuration
+    );
     for (let i = 0; i < stateArray.length; i++) {
         if (!stateArray[i]) {
             return false;
@@ -892,42 +884,62 @@ async function constructRaidPackage(
 
 function constructGameTimeObject(streamerData, channelId) {
     // handles creating the gameTimeObj: {gameDuration, introDuration, gameResultDuration}
-    const haveConf = streamerData.userConfig ? true : false;
-    let gameResultDuration, introDuration, gameDuration;
+
+    const introDuration = calculateIntroDuration(streamerData),
+        gameDuration = calculateGameDuration(
+            introDuration,
+            streamerData,
+            channelId
+        ),
+        gameResultDuration = calculateGameResultDuration(
+            gameDuration,
+            streamerData
+        );
+    return { introDuration, gameDuration, gameResultDuration };
+}
+function calculateIntroDuration(streamerData) {
     // set introDuration on gameTimeObj
-    introDuration =
+    introDuration = Math.floor(
         Date.now() / 1000 +
-        (haveConf
-            ? streamerData.userConfig.introDuration
-            : defaultUserConfig.introDuration.default);
+            (streamerData.userConfig
+                ? streamerData.userConfig.introDuration
+                : defaultUserConfig.introDuration.default)
+    );
+}
+function calculateGameDuration(introDuration, streamerData) {
     // set gameDuration on gameTimeObj
+    // if there are more than 0 games in the list use extendGameDuration
     if (channelRaiders[channelId] && channelRaiders[channelId].length > 1) {
         // using extendGameDuration if ongoing game
-        gameDuration =
-            introDuration +
-            (haveConf
-                ? streamerData.userConfig.extendGameDuration
-                : defaultUserConfig.extendGameDuration.default);
+        const ongoingGame = Math.max(
+            ...channelRaiders[channelId].map(
+                (game) => game.gameTimeObj.gameDuration
+            )
+        );
+        //TODO
+        gameDuration = Math.floor(
+            ongoingGame +
+                (streamerData.userConfig
+                    ? streamerData.userConfig.extendGameDuration
+                    : defaultUserConfig.extendGameDuration.default)
+        );
     } else {
         // using streamerData if no other games are running
         // or defaultUserConfig if no streamerData.userConfig
-        gameDuration =
+        gameDuration = Math.floor(
             introDuration +
-            (haveConf
-                ? streamerData.userConfig.gameDuration
-                : defaultUserConfig.gameDuration.default);
+                (streamerData.userConfig
+                    ? streamerData.userConfig.gameDuration
+                    : defaultUserConfig.gameDuration.default)
+        );
     }
-
+}
+function calculateGameResultDuration(gameDuration, streamerData) {
     // set gameResultDuration on gameTimeObj
-    gameResultDuration =
+    gameResultDuration = Math.floor(
         gameDuration +
-        (haveConf
-            ? streamerData.userConfig.gameResultDuration
-            : defaultUserConfig.gameResultDuration.default);
-
-    return {
-        gameDuration,
-        introDuration,
-        gameResultDuration,
-    };
+            (streamerData.userConfig
+                ? streamerData.userConfig.gameResultDuration
+                : defaultUserConfig.gameResultDuration.default)
+    );
 }
