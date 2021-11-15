@@ -256,9 +256,7 @@ async function warmHandler(req) {
         const jsonData = JSON.parse(data);
         console.log(jsonData);
         url = `http://matissesprojects.github.io/send/heat/yolkRocks?x=${jsonData.x}&y=${jsonData.y}`;
-
         res = await fetch(url);
-        console.log(res);
         response = await res.text();
         console.log(response);
     } else {
