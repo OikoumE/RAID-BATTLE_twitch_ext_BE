@@ -894,11 +894,17 @@ function constructGameTimeObject(streamerData, channelId) {
     // handles creating the gameTimeObj: {gameDuration, introDuration, gameResultDuration}
     const haveConf = streamerData.userConfig ? true : false;
     let gameResultDuration, introDuration, gameDuration;
+    // set introDuration on gameTimeObj
+    introDuration =
+        Date.now() / 1000 +
+        (haveConf
+            ? streamerData.userConfig.introDuration
+            : defaultUserConfig.introDuration.default);
     // set gameDuration on gameTimeObj
     if (channelRaiders[channelId] && channelRaiders[channelId].length > 1) {
         // using extendGameDuration if ongoing game
         gameDuration =
-            Date.now() / 1000 +
+            introDuration +
             (haveConf
                 ? streamerData.userConfig.extendGameDuration
                 : defaultUserConfig.extendGameDuration.default);
@@ -906,19 +912,18 @@ function constructGameTimeObject(streamerData, channelId) {
         // using streamerData if no other games are running
         // or defaultUserConfig if no streamerData.userConfig
         gameDuration =
-            Date.now() / 1000 +
+            introDuration +
             (haveConf
                 ? streamerData.userConfig.gameDuration
                 : defaultUserConfig.gameDuration.default);
     }
-    // set introDuration on gameTimeObj
-    introDuration = haveConf
-        ? streamerData.userConfig.introDuration
-        : defaultUserConfig.introDuration.default;
+
     // set gameResultDuration on gameTimeObj
-    gameResultDuration = haveconf
-        ? streamerData.userConfig.gameResultDuration
-        : defaultUserConfig.gameResultDuration.default;
+    gameResultDuration =
+        gameDuration +
+        (haveConf
+            ? streamerData.userConfig.gameResultDuration
+            : defaultUserConfig.gameResultDuration.default);
 
     return {
         gameDuration,
