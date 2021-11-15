@@ -646,10 +646,6 @@ async function sendRaidBroadcast(channelId) {
         `Broadcasting to channelId: ${channelId}`,
         `Response: ${res.status}`
     );
-    console.log(
-        "[backend:648]: channelRaiders[channelId]",
-        channelRaiders[channelId]
-    );
 }
 
 //! --------------------------------------------------------- //
@@ -827,7 +823,6 @@ async function startRaid(channel, username, viewers) {
         channelRaiders[channelId] = [];
     }
     const raidPackage = await constructRaidPackage(
-        channelId,
         username,
         viewers,
         streamerData
@@ -856,19 +851,21 @@ async function startRaid(channel, username, viewers) {
 }
 
 async function constructRaidPackage(
-    channelId,
     raiderUserName,
     raiderAmount,
     streamerData
 ) {
-    const streamData = await getStreamById(channelId),
+    const streamData = await getStreamById(streamerData.channelId),
         currentViewers = streamData.viewer_count,
         raiderData = await getUser(`login=${raiderUserName}`),
         raiderPicUrl = raiderData.profile_image_url, //.userPicUrl
         streamerPicUrl = streamerData.profilePicUrl, // HAVE IN DB
         supportRatio = getRatio(raiderAmount, currentViewers),
         //TODO figure out how to add extendGameDuration instead of gameDuration
-        gameTimeObj = constructGameTimeObject(streamerData, channelId);
+        gameTimeObj = constructGameTimeObject(
+            streamerData,
+            streamerData.channelId
+        );
 
     return {
         channel: streamerData.channelName,
@@ -898,6 +895,9 @@ function constructGameTimeObject(streamerData, channelId) {
             gameDuration,
             streamerData
         );
+    console.log("[backend:897]: introDuration", introDuration);
+    console.log("[backend:898]: gameDuration", gameDuration);
+    console.log("[backend:899]: gameResultDuration", gameResultDuration);
     return { introDuration, gameDuration, gameResultDuration };
 }
 function calculateIntroDuration(streamerData) {
