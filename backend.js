@@ -249,7 +249,7 @@ async function warmHandler(req) {
     // Verify all requests.
     const payload = verifyAndDecode(req.headers.authorization);
     const { channel_id: channelId, opaque_user_id: opaqueUserId } = payload;
-    let res;
+    let response;
     if (channelId == 468106723 || channelId == 93645775) {
         const data = req.payload;
         console.log(data);
@@ -258,14 +258,16 @@ async function warmHandler(req) {
         url = `http://matissesprojects.github.io/send/heat/yolkRocks?x=${jsonData.x}&y=${jsonData.y}`;
 
         res = await fetch(url);
-        console.log(await res.text());
+        console.log(res);
+        response = await res.text();
+        console.log(response);
     } else {
-        res = "unauthorized";
+        response = "unauthorized";
     }
     // return `
     // <p id="thing">hello: ${data.chanelId}</p>
     // `;
-    return JSON.stringify({ data: res });
+    return JSON.stringify({ data: response });
 }
 
 function return404(req) {
