@@ -96,15 +96,17 @@ async function printTimeout() {
         ) *
         60 *
         1000;
-    console.log(
-        `ALIVE CHECKER: ${date.toLocaleTimeString()}-  "Heroku timeout for", ${Math.floor(
-            nextTimeout / 1000 / 60
-        )} min`
-    );
+
     console.log();
     setTimeout(async () => {
         fetch("https://raid-battle-twitch-ext.herokuapp.com/").then((res) =>
-            console.log("[backend:107]: Herokupinger returned: ", res.status)
+            console.log(
+                "[backend:107]: Herokupinger returned: ",
+                res.status,
+                `next ping in ${date.toLocaleTimeString()} - ${Math.floor(
+                    nextTimeout / 1000 / 60
+                )} min`
+            )
         );
         printTimeout();
     }, nextTimeout);
