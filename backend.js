@@ -597,7 +597,7 @@ async function stopTestRaidHandler(req) {
     // Verify all requests.
     const payload = verifyAndDecode(req.headers.authorization);
     const { channel_id: channelId, opaque_user_id: opaqueUserId } = payload;
-    clearInterval(timeLeftBroadcast);
+    clearInterval(timeLeftBroadcastInterval);
     channelRaiders[channelId].length = 0;
     return JSON.stringify({
         result: `Stopped all raid-games on channel: ${channelId}`,
@@ -677,36 +677,28 @@ async function sendChatMessageToChannel(message, channelId) {
     );
 }
 
-let timeLeftBroadcast;
+let timeLeftBroadcastInterval;
 function startBroadcastInterval(channelId) {
-    if (timeLeftBroadcast) {
-        clearInterval(timeLeftBroadcast);
+    if (timeLeftBroadcastInterval) {
+        clearInterval(timeLeftBroadcastInterval);
     }
     if (!checkIfGameExpired(channelRaiders[channelId])) {
-        timeLeftBroadcast = setInterval(
+        timeLeftBroadcastInterval = setInterval(
             () => attemptRaidBroadcast(channelId),
             1000
         );
+    } else {
+        clearInterval(timeLeftBroadcastInterval);
     }
-    // timeLeftBroadcast = setTimeout(() => {
-    //     if (!checkIfGameExpired(channelRaiders[channelId])) {
-    //         attemptRaidBroadcast(channelId);
-    //         startBroadcastInterval(channelId);
-    //     } else {
-    //         //broadcast end raid game
-    //     }
-    // }, 1000);
-    // else {
-    //     clearTimeout(timeLeftBroadcast);
-    //     attemptRaidBroadcast(channelId);
-    //     startBroadcastInterval(channelId);
-    // }
 }
 
 function checkIfGameExpired(gameArray) {
     const stateArray = [];
+    console.log("[backend:697]: gameArray", gameArray);
     for (const game of gameArray) {
-        if (Date.now() / 1000 >= game.gameExpireTime) {
+        console.log("[backend:697]: game", game.gameTimeObj.gameDuration);
+        console.log("[backend:697]: game", game);
+        if (Date.now() / 1000 >= game.gameTimeObj.gameDuration) {
             stateArray.push(true);
         } else {
             stateArray.push(false);
@@ -879,11 +871,8 @@ async function constructRaidPackage(
         raiderPicUrl = raiderData.profile_image_url, //.userPicUrl
         streamerPicUrl = streamerData.profilePicUrl, // HAVE IN DB
         supportRatio = getRatio(raiderAmount, currentViewers),
-        gameExpireTime =
-            Date.now() / 1000 +
-            (streamerData.userConfig
-                ? streamerData.userConfig.gameDuration
-                : defaultUserConfig.gameDuration.default);
+        //TODO figure out how to add extendGameDuration instead of gameDuration
+        gameTimeObj = constructGameTimeObject(streamerData);
 
     return {
         channel: streamerData.channelName,
@@ -894,6 +883,46 @@ async function constructRaidPackage(
         supportRatio,
         raiderPicUrl,
         streamerPicUrl,
-        gameExpireTime,
+        gameTimeObj,
+    };
+}
+
+// TODO server stop broadcast if gameDuration.max < Date.now() /1000
+// TODO and remove game(s) from channelRaiders[channelId]
+
+function constructGameTimeObject(streamerData) {
+    // handles creating the gameTimeObj: {gameDuration, introDuration, gameResultDuration}
+    const haveConf = streamerData.userConfig ? true : false;
+    let gameResultDuration, introDuration, gameDuration;
+    // set gameDuration on gameTimeObj
+    if (channelRaiders[channelId].length > 1) {
+        // using extendGameDuration if ongoing game
+        gameDuration =
+            Date.now() / 1000 +
+            (haveConf
+                ? streamerData.userConfig.extendGameDuration
+                : defaultUserConfig.extendGameDuration.default);
+    } else {
+        // using streamerData if no other games are running
+        // or defaultUserConfig if no streamerData.userConfig
+        gameDuration =
+            Date.now() / 1000 +
+            (haveConf
+                ? streamerData.userConfig.gameDuration
+                : defaultUserConfig.gameDuration.default);
+    }
+    // set introDuration on gameTimeObj
+    introDuration = haveConf
+        ? streamerData.userConfig.introDuration
+        : defaultUserConfig.introDuration.default;
+    // set gameResultDuration on gameTimeObj
+    gameResultDuration = haveconf
+        ? streamerData.userConfig.gameResultDuration
+        : defaultUserConfig.gameResultDuration.default;
+
+    return {
+        gameDuration,
+        introDuration,
+        gameResultDuration,
     };
 }
