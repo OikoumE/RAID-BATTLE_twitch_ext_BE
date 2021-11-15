@@ -652,10 +652,6 @@ async function sendRaidBroadcast(channelId) {
 //*                       -- CHAT API --                     //
 //! ------------------------------------------------------- //
 //TODO FIGURE OUT TWITCH BULLSHIT DOCS!!!!!!!!!!!
-//! sendChatMessageToChannel(
-//!     `Starting RAID-BATTLE on channel: ${channel}, started by: ${username}`,
-//!     channelId
-//! );
 
 async function sendChatMessageToChannel(message, channelId) {
     // not more often than every 5sec
@@ -852,6 +848,13 @@ async function startRaid(channel, username, viewers) {
         channelRaiders[channelId].push(raidPackage);
     }
     attemptRaidBroadcast(channelId);
+    //! TEST CHAT!
+    sendChatMessageToChannel(
+        `Starting RAID-BATTLE on channel: ${channel}, started by: ${username}`,
+        channelId
+    );
+    //! TEST CHAT!
+
     startBroadcastInterval(channelId);
     if (channelRaiders[channelId]) {
         console.log(
