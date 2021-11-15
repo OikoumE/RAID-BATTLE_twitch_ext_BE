@@ -910,7 +910,7 @@ function calculateGameDuration(introDuration, streamerData) {
     ) {
         // using extendGameDuration if ongoing game
         const ongoingGame = Math.max(
-            ...channelRaiders[channelId].map(
+            ...channelRaiders[streamerData.channelId].map(
                 (game) => game.gameTimeObj.gameDuration
             )
         );
