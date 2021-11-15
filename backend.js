@@ -646,6 +646,10 @@ async function sendRaidBroadcast(channelId) {
         `Broadcasting to channelId: ${channelId}`,
         `Response: ${res.status}`
     );
+    console.log(
+        "[backend:648]: channelRaiders[channelId]",
+        channelRaiders[channelId]
+    );
 }
 
 //! --------------------------------------------------------- //
