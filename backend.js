@@ -482,13 +482,11 @@ async function ongoingRaidGameQueryHandler(req) {
     if (!result) {
         addNewStreamer(channelId);
     }
-    if (
-        !Array.isArray(channelRaiders[channelId]) //|| channelRaiders[channelId].length == 0
-    ) {
+    if (!Array.isArray(channelRaiders[channelId].games)) {
         console.log("[backend:321]: No active games");
         return null;
     }
-    return JSON.stringify(channelRaiders[channelId]);
+    return JSON.stringify(channelRaiders[channelId].games);
 }
 
 async function addStreamerToChannelsHandler(req) {
@@ -557,8 +555,8 @@ function raiderSupportHandler(req) {
         throw Boom.tooManyRequests(STRINGS.cooldown);
     }
     // increase health on specific raider
-    if (channelRaiders[channelId]) {
-        for (const raiderObj of channelRaiders[channelId]) {
+    if (channelRaiders[channelId].games) {
+        for (const raiderObj of channelRaiders[channelId].games) {
             if (raiderObj.raider == raider) {
                 if (raiderObj.health < 100) {
                     console.log(
@@ -570,7 +568,7 @@ function raiderSupportHandler(req) {
                 break;
             }
         }
-        return channelRaiders[channelId];
+        return channelRaiders[channelId].games;
     }
     console.log("[backend:493]: returning null");
     return "NO ACTIVE GAMES RUNNING; STOP ALL RUNNING GAMES";
@@ -587,17 +585,17 @@ function streamerSupportHandler(req) {
     if (userIsInCooldown(opaqueUserId)) {
         throw Boom.tooManyRequests(STRINGS.cooldown);
     }
-    if (channelRaiders[channelId]) {
+    if (channelRaiders[channelId].games) {
         console.log(
             `reduce health on all raiders in stream: ${channelId}, by ${opaqueUserId}`
         );
-        for (const raiderObj of channelRaiders[channelId]) {
+        for (const raiderObj of channelRaiders[channelId].games) {
             if (raiderObj.health >= 1) {
                 raiderObj.health =
                     raiderObj.health - raiderObj.supportRatio.streamer;
             }
         }
-        return channelRaiders[channelId];
+        return channelRaiders[channelId].games;
     }
     console.log("[backend:520]: returning null");
     return "NO ACTIVE GAMES RUNNING; STOP ALL RUNNING GAMES";
@@ -626,7 +624,7 @@ async function stopTestRaidHandler(req) {
     const payload = verifyAndDecode(req.headers.authorization);
     const { channel_id: channelId, opaque_user_id: opaqueUserId } = payload;
     clearInterval(timeLeftBroadcastInterval);
-    channelRaiders[channelId].length = 0;
+    channelRaiders[channelId].games.length = 0;
     return JSON.stringify({
         result: `Stopped all raid-games on channel: ${channelId}`,
     });
@@ -663,7 +661,7 @@ async function sendRaidBroadcast(channelId) {
     const body = JSON.stringify({
         content_type: "application/json",
         broadcaster_id: channelId,
-        message: JSON.stringify(channelRaiders[channelId]),
+        message: JSON.stringify(channelRaiders[channelId].games),
         target: ["broadcast"],
     });
     // Send the broadcast request to the Twitch API.
@@ -705,23 +703,23 @@ async function sendChatMessageToChannel(message, channelId) {
     );
 }
 
-let timeLeftBroadcastInterval;
+let timeLeftBroadcastIntervals = [];
 function startBroadcastInterval(channelId) {
-    if (timeLeftBroadcastInterval) {
-        clearInterval(timeLeftBroadcastInterval);
+    if (timeLeftBroadcastIntervals) {
+        clearInterval(timeLeftBroadcastIntervals);
     }
-    if (!checkIfGameExpired(channelRaiders[channelId])) {
-        timeLeftBroadcastInterval = setInterval(
+    if (!checkIfGameExpired(channelRaiders[channelId].games)) {
+        timeLeftBroadcastIntervals = setInterval(
             () => attemptRaidBroadcast(channelId),
             1000
         );
     } else {
-        clearInterval(timeLeftBroadcastInterval);
+        clearInterval(timeLeftBroadcastIntervals);
     }
 }
 
-function checkIfGameExpired(gameArray) {
-    const stateArray = gameArray.map(
+function checkIfGameExpired(gamesArray) {
+    const stateArray = gamesArray.map(
         (game) => Date.now() / 1000 >= game.gameTimeObj.gameDuration
     );
     for (let i = 0; i < stateArray.length; i++) {
@@ -847,16 +845,22 @@ async function startRaid(channel, username, viewers) {
     );
     const streamerData = await dataBase.findOne({ channelName: channel }),
         channelId = streamerData.channelId;
-    if (!Array.isArray(channelRaiders[channelId])) {
-        channelRaiders[channelId] = [];
+    if (typeof channelRaiders[channelId] !== "object") {
+        const games = [],
+            interval = null;
+        channelRaiders[channelId] = { games, interval };
     }
     const raidPackage = await constructRaidPackage(
         username,
         viewers,
         streamerData
     );
-    if (!channelRaiders[channelId].some((item) => item.raider === username)) {
-        channelRaiders[channelId].push(raidPackage);
+    if (
+        !channelRaiders[channelId].games.some(
+            (game) => game.raider === username
+        )
+    ) {
+        channelRaiders[channelId].games.push(raidPackage);
     }
     attemptRaidBroadcast(channelId);
     //! TEST CHAT!
@@ -867,11 +871,11 @@ async function startRaid(channel, username, viewers) {
     //! TEST CHAT!
 
     startBroadcastInterval(channelId);
-    if (channelRaiders[channelId]) {
+    if (channelRaiders[channelId].games) {
         console.log(
-            "[backend:844]: StartRaid returned: channelRaiders[channelId]"
+            "[backend:844]: StartRaid returned: channelRaiders[channelId].games"
         );
-        return channelRaiders[channelId];
+        return channelRaiders[channelId].games;
     } else {
         console.log("[backend:850]:StartRaid returned:, Null");
         return null;
@@ -889,7 +893,6 @@ async function constructRaidPackage(
         raiderPicUrl = raiderData.profile_image_url, //.userPicUrl
         streamerPicUrl = streamerData.profilePicUrl, // HAVE IN DB
         supportRatio = getRatio(raiderAmount, currentViewers),
-        //TODO figure out how to add extendGameDuration instead of gameDuration
         gameTimeObj = constructGameTimeObject(streamerData);
 
     return {
@@ -916,7 +919,6 @@ function constructGameTimeObject(streamerData) {
             gameDuration,
             streamerData
         );
-
     return { introDuration, gameDuration, gameResultDuration };
 }
 function calculateIntroDuration(streamerData) {
@@ -932,19 +934,13 @@ function calculateIntroDuration(streamerData) {
 function calculateGameDuration(introDuration, streamerData) {
     // set gameDuration on gameTimeObj
     // if there are more than 0 games in the list use extendGameDuration
-    console.log(channelRaiders[streamerData.channelId]);
-    console.log(channelRaiders[streamerData.channelId].length >= 1);
-    console.log(
-        channelRaiders[streamerData.channelId] &&
-            channelRaiders[streamerData.channelId].length > 1
-    );
     if (
-        channelRaiders[streamerData.channelId] &&
-        channelRaiders[streamerData.channelId].length >= 1
+        channelRaiders[streamerData.channelId].games &&
+        channelRaiders[streamerData.channelId].games.length >= 1
     ) {
         // using extendGameDuration if ongoing game
         const ongoingGame = Math.max(
-            ...channelRaiders[streamerData.channelId].map(
+            ...channelRaiders[streamerData.channelId].games.map(
                 (game) => game.gameTimeObj.gameDuration
             )
         );
