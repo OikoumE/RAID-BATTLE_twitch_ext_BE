@@ -250,17 +250,22 @@ async function warmHandler(req) {
     const payload = verifyAndDecode(req.headers.authorization);
     const { channel_id: channelId, opaque_user_id: opaqueUserId } = payload;
     let response;
-    if (channelId == 468106723 || channelId == 93645775) {
-        const data = req.payload;
-        console.log(data);
-        const jsonData = JSON.parse(data);
-        console.log(jsonData);
-        url = `http://matissesprojects.github.io/send/heat/yolkRocks?x=${jsonData.x}&y=${jsonData.y}`;
-        res = await fetch(url);
-        response = await res.text();
-        console.log(response);
-    } else {
-        response = "unauthorized";
+    try {
+        if (channelId == 468106723 || channelId == 93645775) {
+            const data = req.payload;
+            console.log(data);
+            const jsonData = JSON.parse(data);
+            console.log(jsonData);
+            url = `http://matissesprojects.github.io/send/heat/yolkRocks?x=${jsonData.x}&y=${jsonData.y}`;
+            res = await fetch(url);
+            response = await res.text();
+            console.log(response);
+        } else {
+            response = "unauthorized";
+        }
+    } catch (err) {
+        response = "MatisseNGROK error";
+        console.log("MatisseNGROK error");
     }
     // return `
     // <p id="thing">hello: ${data.chanelId}</p>
@@ -585,7 +590,7 @@ function streamerSupportHandler(req) {
     if (userIsInCooldown(opaqueUserId)) {
         throw Boom.tooManyRequests(STRINGS.cooldown);
     }
-    if (channelRaiders[channelId].games) {
+    if (channelRaiders[channelId] && channelRaiders[channelId].games) {
         console.log(
             `reduce health on all raiders in stream: ${channelId}, by ${opaqueUserId}`
         );
