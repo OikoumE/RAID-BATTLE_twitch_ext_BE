@@ -720,16 +720,26 @@ function startBroadcastInterval(channelId) {
     }
     const gameExpired = checkIfGameExpired(channelRaiders[channelId].games);
     if (!gameExpired) {
-        channelRaiders[channelId].interval = setInterval(
-            () => attemptRaidBroadcast(channelId),
-            1000
-        );
+        channelRaiders[channelId].interval = setInterval(() => {
+            console.log("timeout");
+            checkGameTimeAndBroadcast(channelId);
+        }, 1000);
     } else {
         clearInterval(channelRaiders[channelId].interval);
         //TODO clean up games list
-        if (checkIfGameExpired(gameExpired)) {
+        if (gameExpired) {
+            channelRaiders[channelId].interval = null;
+            channelRaiders[channelId].games.length = 0;
             attemptRaidBroadcast(channelId);
         }
+    }
+}
+
+function checkGameTimeAndBroadcast(channelId) {
+    if (!checkIfGameExpired(channelRaiders[channelId].games)) {
+        attemptRaidBroadcast(channelId);
+    } else {
+        startBroadcastInterval(channelId);
     }
 }
 
