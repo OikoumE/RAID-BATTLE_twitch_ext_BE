@@ -726,7 +726,9 @@ function startBroadcastInterval(channelId) {
     } else {
         clearInterval(channelRaiders[channelId].interval);
         //TODO clean up games list
-        attemptRaidBroadcast(channelId);
+        if (checkIfGameExpired(channelRaiders[channelId].games)) {
+            attemptRaidBroadcast(channelId);
+        }
     }
 }
 
