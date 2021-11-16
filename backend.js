@@ -623,7 +623,7 @@ async function stopTestRaidHandler(req) {
     // Verify all requests.
     const payload = verifyAndDecode(req.headers.authorization);
     const { channel_id: channelId, opaque_user_id: opaqueUserId } = payload;
-    clearInterval(timeLeftBroadcastInterval);
+    clearInterval(channelRaiders[channelId].interval);
     channelRaiders[channelId].games.length = 0;
     return JSON.stringify({
         result: `Stopped all raid-games on channel: ${channelId}`,
@@ -843,6 +843,7 @@ async function startRaid(channel, username, viewers) {
     console.log(
         `[backend:549]: Starting raid on channel: ${channel}, started by: ${username}`
     );
+    //# HERE
     const streamerData = await dataBase.findOne({ channelName: channel }),
         channelId = streamerData.channelId;
     if (typeof channelRaiders[channelId] !== "object") {
