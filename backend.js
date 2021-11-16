@@ -703,18 +703,17 @@ async function sendChatMessageToChannel(message, channelId) {
     );
 }
 
-let timeLeftBroadcastIntervals = [];
 function startBroadcastInterval(channelId) {
-    if (timeLeftBroadcastIntervals) {
-        clearInterval(timeLeftBroadcastIntervals);
+    if (channelRaiders[channelId].interval) {
+        clearInterval(channelRaiders[channelId].interval);
     }
     if (!checkIfGameExpired(channelRaiders[channelId].games)) {
-        timeLeftBroadcastIntervals = setInterval(
+        channelRaiders[channelId].interval = setInterval(
             () => attemptRaidBroadcast(channelId),
             1000
         );
     } else {
-        clearInterval(timeLeftBroadcastIntervals);
+        clearInterval(channelRaiders[channelId].interval);
     }
 }
 
