@@ -739,9 +739,11 @@ function checkIfGameExpired(gamesArray) {
     );
     for (let i = 0; i < stateArray.length; i++) {
         if (!stateArray[i]) {
+            console.log("[backend:742]: checkIfGameExpired return false");
             return false;
         }
     }
+    console.log("[backend:742]: checkIfGameExpired return true");
     return true;
 }
 
