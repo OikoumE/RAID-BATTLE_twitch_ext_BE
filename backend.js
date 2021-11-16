@@ -718,7 +718,8 @@ function startBroadcastInterval(channelId) {
     if (channelRaiders[channelId].interval) {
         clearInterval(channelRaiders[channelId].interval);
     }
-    if (!checkIfGameExpired(channelRaiders[channelId].games)) {
+    const gameExpired = checkIfGameExpired(channelRaiders[channelId].games);
+    if (!gameExpired) {
         channelRaiders[channelId].interval = setInterval(
             () => attemptRaidBroadcast(channelId),
             1000
@@ -726,7 +727,7 @@ function startBroadcastInterval(channelId) {
     } else {
         clearInterval(channelRaiders[channelId].interval);
         //TODO clean up games list
-        if (checkIfGameExpired(channelRaiders[channelId].games)) {
+        if (checkIfGameExpired(gameExpired)) {
             attemptRaidBroadcast(channelId);
         }
     }
