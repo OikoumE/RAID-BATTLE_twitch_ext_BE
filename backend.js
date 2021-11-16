@@ -253,13 +253,17 @@ async function warmHandler(req) {
     try {
         if (channelId == 468106723 || channelId == 93645775) {
             const data = req.payload;
-            console.log(data);
             const jsonData = JSON.parse(data);
-            console.log(jsonData);
             url = `http://matissesprojects.github.io/send/heat/yolkRocks?x=${jsonData.x}&y=${jsonData.y}`;
             res = await fetch(url);
             response = await res.text();
             console.log(response);
+            if (
+                response.includes("not found") &&
+                response.includes("ERR_NGROK")
+            ) {
+                throw "ngrok error";
+            }
         } else {
             response = "unauthorized";
         }
