@@ -640,7 +640,6 @@ async function stopTestRaidHandler(req) {
     });
 }
 
-
 //! --------------------------------------------------------- //
 //*                  -- BROADCAST TO EXT --                  //
 //! ------------------------------------------------------- //
@@ -726,12 +725,15 @@ function startBroadcastInterval(channelId) {
         );
     } else {
         clearInterval(channelRaiders[channelId].interval);
+        //TODO clean up games list
+        attemptRaidBroadcast(channelId);
     }
 }
 
 function checkIfGameExpired(gamesArray) {
+    //
     const stateArray = gamesArray.map(
-        (game) => Date.now() / 1000 >= game.gameTimeObj.gameDuration
+        (game) => Date.now() / 1000 >= game.gameTimeObj.gameResultDuration
     );
     for (let i = 0; i < stateArray.length; i++) {
         if (!stateArray[i]) {
