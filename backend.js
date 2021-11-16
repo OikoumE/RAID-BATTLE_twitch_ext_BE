@@ -625,6 +625,7 @@ async function stopTestRaidHandler(req) {
     const { channel_id: channelId, opaque_user_id: opaqueUserId } = payload;
     clearInterval(channelRaiders[channelId].interval);
     channelRaiders[channelId].games.length = 0;
+    attemptRaidBroadcast(channelId);
     return JSON.stringify({
         result: `Stopped all raid-games on channel: ${channelId}`,
     });
