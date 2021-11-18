@@ -910,14 +910,17 @@ async function constructRaidPackage(
         supportRatio = getRatio(raiderAmount, streamData.viewer_count),
         gameTimeObj = constructGameTimeObject(streamerData),
         gameResult = [];
-    raiderData[viewers] = raiderAmount;
+    raiderData["viewers"] = raiderAmount;
+    raiderData["health"] = initialHealth;
     return {
         streamData,
+        streamerData,
         raiderData,
         supportRatio,
         gameTimeObj,
         gameResult,
     };
+
     //TODO refactor everything else to use this
 
     const raiderData_EXAMPLE = {
@@ -937,7 +940,23 @@ async function constructRaidPackage(
         created_at: "2016-12-14T20:32:28Z",
         viewers: 10,
     };
-
+    const streamData_EXAMPLE_RESPONSE = {
+        id: "40952121085",
+        user_id: "101051819",
+        user_login: "afro",
+        user_name: "Afro",
+        game_id: "32982",
+        game_name: "Grand Theft Auto V",
+        type: "live",
+        title: "Jacob: Digital Den Laptops & Routers | NoPixel | !MAINGEAR !FCF",
+        viewer_count: 1490,
+        started_at: "2021-03-10T03:18:11Z",
+        language: "en",
+        thumbnail_url:
+            "https://static-cdn.jtvnw.net/previews-ttv/live_user_afro-{width}x{height}.jpg",
+        tag_ids: ["6ea6bca4-4712-4ab9-a906-e3336a9d8039"],
+        is_mature: false,
+    };
     // const streamData = await getStreamById(streamerData.channelId),
     //     currentViewers = streamData.viewer_count,
     //     raiderData = await getUser(`login=${raiderUserName}`),
