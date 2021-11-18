@@ -172,7 +172,7 @@ async function onLaunch() {
     const result = parseTmiChannelListFromDb(dataBaseData);
     startTmi(result);
     //! RUN ONCE
-    const result = await dataBase.insertOne(
+    const dbResult = await dataBase.insertOne(
         {
             $set: {
                 config: {
@@ -190,7 +190,7 @@ async function onLaunch() {
         },
         "defaults"
     );
-    console.log("[backend:192]: result", result);
+    console.log("[backend:192]: result", dbResult);
 }
 
 (async () => {
