@@ -171,11 +171,14 @@ async function onLaunch() {
     const dataBaseData = await dataBase.find();
     const result = parseTmiChannelListFromDb(dataBaseData);
     startTmi(result);
-    //! RUN ONCE
-    const dbResult = await dataBase.insertOne(
+    // //! RUN ONCE
+    const dbResult = await dataBase.updateOne(
+        {
+            config: "user",
+        },
         {
             config: {
-                user: {
+                broadcaster: {
                     gameDuration: { default: 120, max: 300, min: 60 },
                     extendGameDuration: { default: 60, max: 180, min: 0 },
                     extendGameDurationEnabled: { default: true },
