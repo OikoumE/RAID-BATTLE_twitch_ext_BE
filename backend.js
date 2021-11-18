@@ -86,21 +86,6 @@ const defaultUserConfig = {
     gameInfoDuration: { default: 10, max: 20, min: 0 },
 };
 
-dataBase.insertOne({
-    $set: {
-        config: {
-            user: {
-                gameDuration: { default: 120, max: 300, min: 60 },
-                extendGameDuration: { default: 60, max: 180, min: 0 },
-                extendGameDurationEnabled: { default: true },
-                introDuration: { default: 30, max: 60, min: 0 },
-                gameResultDuration: { default: 30, max: 60, min: 0 },
-                enableChatOutput: { default: false },
-                gameInfoDuration: { default: 10, max: 20, min: 0 },
-            },
-        },
-    },
-});
 //! -------------------- my vars -------------------- //
 
 async function printTimeout() {
@@ -186,6 +171,22 @@ async function onLaunch() {
     const dataBaseData = await dataBase.find();
     const result = parseTmiChannelListFromDb(dataBaseData);
     startTmi(result);
+    //! RUN ONCE
+    await dataBase.insertOne({
+        $set: {
+            config: {
+                user: {
+                    gameDuration: { default: 120, max: 300, min: 60 },
+                    extendGameDuration: { default: 60, max: 180, min: 0 },
+                    extendGameDurationEnabled: { default: true },
+                    introDuration: { default: 30, max: 60, min: 0 },
+                    gameResultDuration: { default: 30, max: 60, min: 0 },
+                    enableChatOutput: { default: false },
+                    gameInfoDuration: { default: 10, max: 20, min: 0 },
+                },
+            },
+        },
+    });
 }
 
 (async () => {
