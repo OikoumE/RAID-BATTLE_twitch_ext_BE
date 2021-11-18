@@ -57,6 +57,7 @@ const { get } = require("https");
 const tmi = require("tmi.js");
 const fetch = require("node-fetch");
 const { MongoClient } = require("mongodb");
+const ObjectID = require("mongodb").ObjectID;
 const { channel } = require("diagnostics_channel");
 const { stringify } = require("querystring");
 const mongoUri = process.env.MONGODB_URL;
@@ -172,7 +173,7 @@ async function onLaunch() {
     const result = parseTmiChannelListFromDb(dataBaseUserData);
     startTmi(result);
     // //! RUN ONCE
-    var o_id = new MongoClient.ObjectID("61967a961ffcc7b266231e85");
+    var o_id = new ObjectID("61967a961ffcc7b266231e85");
     const dbResult = await dataBase.updateOne(
         {
             _id: o_id,
