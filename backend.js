@@ -868,16 +868,16 @@ async function startRaid(channel, username, viewers) {
             interval = null;
         channelRaiders[channelId] = { games, interval };
     }
-    const raidPackage = await constructRaidPackage(
-        username,
-        viewers,
-        streamerData
-    );
     if (
         !channelRaiders[channelId].games.some(
             (game) => game.raiderData.raider === username
         )
     ) {
+        const raidPackage = await constructRaidPackage(
+            username,
+            viewers,
+            streamerData
+        );
         channelRaiders[channelId].games.push(raidPackage);
         setResult(channelId, username, parse(strings.intro1, username));
     }
@@ -1002,7 +1002,7 @@ function parse(str) {
 
 // setResult(channelId, raider, parse(strings.intro1, raider));
 
-function specialCondition(){
+function specialCondition() {
     //is met?
     // TODO check if gametime
     // TODO check if each raider.health < 50 + !gametime
@@ -1010,7 +1010,6 @@ function specialCondition(){
     // TODO check if each raider.health < 1
     // TODO PLACEHOLDER
     // TODO PLACEHOLDER
-    
 }
 
 function setResult(channelId, raider, string) {
@@ -1030,7 +1029,7 @@ function setResult(channelId, raider, string) {
                     ? streamerData.userConfig.gameInfoDuration //TODO add user config "Result during game"
                     : defaultUserConfig.gameInfoDuration.default) * //TODO add user config "Result during game"
                     1000;
-            channelRaiders[channelId].gameResult.push({
+            channelRaiders[channelId][i].gameResult.push({
                 resultExpires,
                 string,
             });
