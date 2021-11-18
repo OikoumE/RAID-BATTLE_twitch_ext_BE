@@ -63,7 +63,7 @@ const mongoUri = process.env.MONGODB_URL;
 
 //* twitch api auth
 const APP_CLIENT_ID =
-        process.env.APP_CLIENT_ID || "cr20njfkgll4okyrhag7xxph270sqk", //! CHANGE WITH OWN EXT SPECIFIC APP CLIENT ID!
+        process.env.APP_CLIENT_ID || "epcjd8cqin8efwuwgs9m8ubpjnbw90",
     APP_CLIENT_SECRET = process.env.APP_CLIENT_SECRET || "",
     // CURRENT_VERSION = process.env.CURRENT_VERSION || "0.0.4";
     CURRENT_VERSION = "0.0.4";
@@ -167,9 +167,6 @@ async function onLaunch() {
     await dataBase.connect();
     //this is ran when server starts up
     console.log("[backend:130]: Server starting");
-    // const data = readJsonFile(streamersFilePath); //! REDO TO DB
-    // channelsToJoin = data.channels; //! REDO TO DB
-    // channelIds = data.channelIds; //! REDO TO DB
     const dataBaseData = await dataBase.find();
     const result = parseTmiChannelListFromDb(dataBaseData);
     startTmi(result);
@@ -322,19 +319,7 @@ function verifyAndDecode(header) {
 }
 // ! -------------------- SERVER STUFF -------------------- //
 // Create and return a JWT for use by this service.
-function makeLegacyServerToken(channelId) {
-    const payload = {
-        exp: Math.floor(Date.now() / 1000) + serverTokenDurationSec,
-        user_id: ownerId, // extension owner ID for the call to Twitch PubSub
-        role: "external",
-        channel_id: channelId,
-        pubsub_perms: {
-            send: ["broadcast"],
-        },
-    };
-    return jsonwebtoken.sign(payload, secret, { algorithm: "HS256" });
-}
-function makeHelixServerToken(channelId) {
+function makeServerToken(channelId) {
     const payload = {
         exp: Math.floor(Date.now() / 1000) + serverTokenDurationSec,
         user_id: ownerId, // extension owner ID for the call to Twitch PubSub
@@ -522,7 +507,6 @@ async function requestUserConfigHandler(req) {
 
 async function updateUserConfigHandler(req) {
     // Verify all requests.
-
     const payload = verifyAndDecode(req.headers.authorization);
     const { channel_id: channelId, opaque_user_id: opaqueUserId } = payload;
     const jsonUpdateDocument = JSON.parse(req.payload),
@@ -581,10 +565,6 @@ function raiderSupportHandler(req) {
     }
     console.log("[backend:493]: returning null");
     return "NO ACTIVE GAMES RUNNING; STOP ALL RUNNING GAMES";
-
-    // Broadcast the health change to all other extension instances on this channel.
-    // attemptHealthBroadcast(channelId);
-    // attemptRaidBroadcast(channelId)
 }
 function streamerSupportHandler(req) {
     // Verify all requests.
@@ -599,7 +579,12 @@ function streamerSupportHandler(req) {
             `reduce health on all raiders in stream: ${channelId}, by ${opaqueUserId}`
         );
         for (const raiderObj of channelRaiders[channelId].games) {
-            if (raiderObj.health >= 1) {
+            if (raiderObj.health > 0) {
+                //! TEST
+                if (channelId == 93645775) {
+                    raiderObj.health = raiderObj.health - 20;
+                }
+                //! TEST
                 raiderObj.health =
                     raiderObj.health - raiderObj.supportRatio.streamer;
             }
@@ -608,10 +593,6 @@ function streamerSupportHandler(req) {
     }
     console.log("[backend:520]: returning null");
     return "NO ACTIVE GAMES RUNNING; STOP ALL RUNNING GAMES";
-
-    // Broadcast the health change to all other extension instances on this channel.
-    // attemptHealthBroadcast(channelId);
-    // attemptRaidBroadcast(channelId)
 }
 async function startTestRaidHandler(req) {
     // Verify all requests.
@@ -666,7 +647,7 @@ async function sendRaidBroadcast(channelId) {
     const headers = {
         "Client-ID": clientId,
         "Content-Type": "application/json",
-        Authorization: bearerPrefix + makeLegacyServerToken(channelId),
+        Authorization: bearerPrefix + makeServerToken(channelId),
     };
     // Create the POST body for the Twitch API request.
     const body = JSON.stringify({
@@ -688,18 +669,17 @@ async function sendRaidBroadcast(channelId) {
 //! --------------------------------------------------------- //
 //*                       -- CHAT API --                     //
 //! ------------------------------------------------------- //
-//TODO FIGURE OUT TWITCH BULLSHIT DOCS!!!!!!!!!!!
+//TODO wait for API to get fixed!!!!!!!!!!!
 
 async function sendChatMessageToChannel(message, channelId) {
     // not more often than every 5sec
     // Maximum: 280 characters.
-
     console.log(`sending message: "${message}" to channel: "${channelId}"`);
-    const bullshitToken = makeHelixServerToken(channelId);
+    const jwtToken = makeServerToken(channelId);
     const url = `https://api.twitch.tv/helix/extensions/chat?broadcaster_id=${channelId}`,
         headers = {
             "Client-ID": clientId,
-            Authorization: "Bearer " + bullshitToken,
+            Authorization: "Bearer " + jwtToken,
             "Content-Type": "application/json",
         },
         body = JSON.stringify({
@@ -713,6 +693,9 @@ async function sendChatMessageToChannel(message, channelId) {
         `[backend:532]: Broadcast chat message result: ${res.status}: ${res.statusText}`
     );
 }
+//! --------------------------------------------------------- //
+//*                      -- BROADCAST --                     //
+//! ------------------------------------------------------- //
 
 function startBroadcastInterval(channelId) {
     if (channelRaiders[channelId].interval) {
@@ -721,7 +704,6 @@ function startBroadcastInterval(channelId) {
     const gameExpired = checkIfGameExpired(channelRaiders[channelId].games);
     if (!gameExpired) {
         channelRaiders[channelId].interval = setInterval(() => {
-            console.log("timeout");
             checkGameTimeAndBroadcast(channelId);
         }, 1000);
     } else {
@@ -741,21 +723,6 @@ function checkGameTimeAndBroadcast(channelId) {
     } else {
         startBroadcastInterval(channelId);
     }
-}
-
-function checkIfGameExpired(gamesArray) {
-    //
-    const stateArray = gamesArray.map(
-        (game) => Date.now() / 1000 >= game.gameTimeObj.gameResultDuration
-    );
-    for (let i = 0; i < stateArray.length; i++) {
-        if (!stateArray[i]) {
-            console.log("[backend:742]: checkIfGameExpired return false");
-            return false;
-        }
-    }
-    console.log("[backend:742]: checkIfGameExpired return true");
-    return true;
 }
 
 //! --------------------------------------------------------- //
@@ -898,7 +865,6 @@ async function startRaid(channel, username, viewers) {
     //     channelId
     // );
     //! TEST CHAT!
-
     startBroadcastInterval(channelId);
     if (channelRaiders[channelId].games) {
         console.log(
@@ -922,8 +888,8 @@ async function constructRaidPackage(
         raiderPicUrl = raiderData.profile_image_url, //.userPicUrl
         streamerPicUrl = streamerData.profilePicUrl, // HAVE IN DB
         supportRatio = getRatio(raiderAmount, currentViewers),
-        gameTimeObj = constructGameTimeObject(streamerData);
-
+        gameTimeObj = constructGameTimeObject(streamerData),
+        gameResult = [null];
     return {
         channel: streamerData.channelName,
         raider: raiderUserName,
@@ -934,12 +900,24 @@ async function constructRaidPackage(
         raiderPicUrl,
         streamerPicUrl,
         gameTimeObj,
+        gameResult,
     };
 }
-
-// TODO server stop broadcast if gameDuration.max < Date.now() /1000
-// TODO and remove game(s) from channelRaiders[channelId]
-
+//! --------------------------------------------------------- //
+//*                      -- TIMEKEEPER --                    //
+//! ------------------------------------------------------- //
+function checkIfGameExpired(gamesArray) {
+    //
+    const stateArray = gamesArray.map(
+        (game) => Date.now() / 1000 >= game.gameTimeObj.gameResultDuration
+    );
+    for (let i = 0; i < stateArray.length; i++) {
+        if (!stateArray[i]) {
+            return false;
+        }
+    }
+    return true;
+}
 function constructGameTimeObject(streamerData) {
     // handles creating the gameTimeObj: {gameDuration, introDuration, gameResultDuration}
     const introDuration = calculateIntroDuration(streamerData),
