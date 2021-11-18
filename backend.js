@@ -1017,6 +1017,11 @@ function setResult(channelId, raider, string) {
     // channelRaiders[channelId] == Array
     for (let i = 0; i < channelRaiders[channelId].length; i++) {
         const raiderGame = channelRaiders[channelId][i];
+        console.log(
+            "[backend:1019]: ",
+            raiderGame.raiderData.display_name.toLowerCase() ==
+                raider.toLowerCase()
+        );
         if (
             raiderGame.raiderData.display_name.toLowerCase() ==
             raider.toLowerCase()
