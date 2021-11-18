@@ -906,14 +906,18 @@ async function constructRaidPackage(
 ) {
     //TODO refactor everything else to use this
     const streamData = await getStreamById(streamerData.channelId),
-        raiderData = await getUser(`login=${raiderUserName}`),
+        raiderUserData = await getUser(`login=${raiderUserName}`),
+        raiderData = {
+            display_name: raiderUserData.display_name,
+            profile_image_url: raiderUserData.profile_image_url,
+            viewers: raiderAmount,
+            health: initialHealth,
+        },
         supportRatio = getRatio(raiderAmount, streamData.viewer_count),
         gameTimeObj = constructGameTimeObject(streamerData),
         gameResult = [];
-    raiderData["viewers"] = raiderAmount;
-    raiderData["health"] = initialHealth;
+
     return {
-        streamData,
         streamerData,
         raiderData,
         supportRatio,
@@ -923,7 +927,7 @@ async function constructRaidPackage(
 
     //TODO refactor everything else to use this
 
-    const raiderData_EXAMPLE = {
+    const raiderUserData_EXAMPLE = {
         id: "141981764",
         login: "twitchdev",
         display_name: "TwitchDev",
