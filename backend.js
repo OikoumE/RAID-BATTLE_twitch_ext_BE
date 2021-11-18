@@ -879,6 +879,7 @@ async function startRaid(channel, username, viewers) {
         )
     ) {
         channelRaiders[channelId].games.push(raidPackage);
+        setResult(channelId, username, parse(strings.intro1, username));
     }
     attemptRaidBroadcast(channelId);
     //! TEST CHAT!
@@ -998,10 +999,23 @@ function parse(str) {
         i = 0;
     return str.replace(/%s/g, () => args[i++]);
 }
-function setResult(channelId, raider, result) {
+
+// setResult(channelId, raider, parse(strings.intro1, raider));
+
+function specialCondition(){
+    //is met?
+    // TODO check if gametime
+    // TODO check if each raider.health < 50 + !gametime
+    // TODO check if ANY raider.health < 1
+    // TODO check if each raider.health < 1
+    // TODO PLACEHOLDER
+    // TODO PLACEHOLDER
+    
+}
+
+function setResult(channelId, raider, string) {
     // sets a result on a game if a special condition is met
     // channelRaiders[channelId] == Array
-
     for (let i = 0; i < channelRaiders[channelId].length; i++) {
         const raiderGame = channelRaiders[channelId][i];
         if (
@@ -1009,19 +1023,17 @@ function setResult(channelId, raider, result) {
             raider.toLowerCase()
         ) {
             // TODO
-            const streamData = channelRaiders[channelId][i].streamData;
+            const streamerData = channelRaiders[channelId][i].streamerData;
             const resultExpires =
                 Date.now() +
-                (streamData.userConfig
-                    ? streamData.userConfig.gameInfoDuration //TODO add user config "Result during game"
+                (streamerData.userConfig
+                    ? streamerData.userConfig.gameInfoDuration //TODO add user config "Result during game"
                     : defaultUserConfig.gameInfoDuration.default) * //TODO add user config "Result during game"
                     1000;
-
-            // add resultPackage to game
-            channelRaiders[channelId].gameResult[resultExpires] = string;
-
-            // const result = { resultExpires, string };
-            // channelRaiders[channelId].gameResult.push(result);
+            channelRaiders[channelId].gameResult.push({
+                resultExpires,
+                string,
+            });
         }
     }
 }
