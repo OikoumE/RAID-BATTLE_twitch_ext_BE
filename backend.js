@@ -177,15 +177,17 @@ async function onLaunch() {
             config: "user",
         },
         {
-            config: {
-                broadcaster: {
-                    gameDuration: { default: 120, max: 300, min: 60 },
-                    extendGameDuration: { default: 60, max: 180, min: 0 },
-                    extendGameDurationEnabled: { default: true },
-                    introDuration: { default: 30, max: 60, min: 0 },
-                    gameResultDuration: { default: 30, max: 60, min: 0 },
-                    enableChatOutput: { default: false },
-                    gameInfoDuration: { default: 10, max: 20, min: 0 },
+            $set: {
+                config: {
+                    broadcaster: {
+                        gameDuration: { default: 120, max: 300, min: 60 },
+                        extendGameDuration: { default: 60, max: 180, min: 0 },
+                        extendGameDurationEnabled: { default: true },
+                        introDuration: { default: 30, max: 60, min: 0 },
+                        gameResultDuration: { default: 30, max: 60, min: 0 },
+                        enableChatOutput: { default: false },
+                        gameInfoDuration: { default: 10, max: 20, min: 0 },
+                    },
                 },
             },
         },
