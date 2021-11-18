@@ -83,8 +83,24 @@ const defaultUserConfig = {
     introDuration: { default: 30, max: 60, min: 0 },
     gameResultDuration: { default: 30, max: 60, min: 0 },
     enableChatOutput: { default: false },
+    gameInfoDuration: { default: 10, max: 20, min: 0 },
 };
 
+dataBase.insertOne({
+    $set: {
+        config: {
+            user: {
+                gameDuration: { default: 120, max: 300, min: 60 },
+                extendGameDuration: { default: 60, max: 180, min: 0 },
+                extendGameDurationEnabled: { default: true },
+                introDuration: { default: 30, max: 60, min: 0 },
+                gameResultDuration: { default: 30, max: 60, min: 0 },
+                enableChatOutput: { default: false },
+                gameInfoDuration: { default: 10, max: 20, min: 0 },
+            },
+        },
+    },
+});
 //! -------------------- my vars -------------------- //
 
 async function printTimeout() {
@@ -853,7 +869,7 @@ async function startRaid(channel, username, viewers) {
     );
     if (
         !channelRaiders[channelId].games.some(
-            (game) => game.raider === username
+            (game) => game.raiderData.raider === username
         )
     ) {
         channelRaiders[channelId].games.push(raidPackage);
@@ -882,27 +898,105 @@ async function constructRaidPackage(
     raiderAmount,
     streamerData
 ) {
+    //TODO refactor everything else to use this
     const streamData = await getStreamById(streamerData.channelId),
-        currentViewers = streamData.viewer_count,
         raiderData = await getUser(`login=${raiderUserName}`),
-        raiderPicUrl = raiderData.profile_image_url, //.userPicUrl
-        streamerPicUrl = streamerData.profilePicUrl, // HAVE IN DB
-        supportRatio = getRatio(raiderAmount, currentViewers),
+        supportRatio = getRatio(raiderAmount, streamData.viewer_count),
         gameTimeObj = constructGameTimeObject(streamerData),
-        gameResult = [null];
+        gameResult = [];
+    raiderData[viewers] = raiderAmount;
     return {
-        channel: streamerData.channelName,
-        raider: raiderUserName,
-        health: initialHealth,
-        viewers: raiderAmount,
-        currentViewers,
+        streamData,
+        raiderData,
         supportRatio,
-        raiderPicUrl,
-        streamerPicUrl,
         gameTimeObj,
         gameResult,
     };
+    //TODO refactor everything else to use this
+
+    const raiderData_EXAMPLE = {
+        id: "141981764",
+        login: "twitchdev",
+        display_name: "TwitchDev",
+        type: "",
+        broadcaster_type: "partner",
+        description:
+            "Supporting third-party developers building Twitch integrations from chatbots to game integrations.",
+        profile_image_url:
+            "https://static-cdn.jtvnw.net/jtv_user_pictures/8a6381c7-d0c0-4576-b179-38bd5ce1d6af-profile_image-300x300.png",
+        offline_image_url:
+            "https://static-cdn.jtvnw.net/jtv_user_pictures/3f13ab61-ec78-4fe6-8481-8682cb3b0ac2-channel_offline_image-1920x1080.png",
+        view_count: 5980557,
+        email: "not-real@email.com",
+        created_at: "2016-12-14T20:32:28Z",
+        viewers: 10,
+    };
+
+    // const streamData = await getStreamById(streamerData.channelId),
+    //     currentViewers = streamData.viewer_count,
+    //     raiderData = await getUser(`login=${raiderUserName}`),
+    //     raiderPicUrl = raiderData.profile_image_url, //.userPicUrl
+    //     streamerPicUrl = streamerData.profilePicUrl, // HAVE IN DB
+    //     supportRatio = getRatio(raiderAmount, currentViewers),
+    //     gameTimeObj = constructGameTimeObject(streamerData),
+    //     gameResult = [];
+    // return {
+    //     channel: streamerData.channelName,
+    //     raider: raiderUserName,
+    //     health: initialHealth,
+    //     viewers: raiderAmount,
+    //     currentViewers,
+    //     supportRatio,
+    //     raiderPicUrl,
+    //     streamerPicUrl,
+    //     gameTimeObj,
+    //     gameResult,
+    // };
 }
+const strings = {
+    //TODO rework strings
+    intro1: "Incoming Raid from: %s",
+    intro2: "Get ready to Battle!",
+    help: "Use !raidbattle for help on how to battle",
+    defenderWin: "%s's team of %s, was victorious over %s, raiders Win!",
+    raiderWin: "%s's team of %s, was victorious over %s, defenders Win!",
+    draw: "%s met their equal in %s, its a draw!",
+    dead: "%s has been defeated!",
+    gameOver: "GAME OVER",
+};
+function parse(str) {
+    var args = [].slice.call(arguments, 1),
+        i = 0;
+    return str.replace(/%s/g, () => args[i++]);
+}
+function setResult(channelId, raider, result) {
+    // sets a result on a game if a special condition is met
+    // channelRaiders[channelId] == Array
+
+    for (let i = 0; i < channelRaiders[channelId].length; i++) {
+        const raiderGame = channelRaiders[channelId][i];
+        if (
+            raiderGame.raiderData.display_name.toLowerCase() ==
+            raider.toLowerCase()
+        ) {
+            // TODO
+            const streamData = channelRaiders[channelId][i].streamData;
+            const resultExpires =
+                Date.now() +
+                (streamData.userConfig
+                    ? streamData.userConfig.gameInfoDuration //TODO add user config "Result during game"
+                    : defaultUserConfig.gameInfoDuration.default) * //TODO add user config "Result during game"
+                    1000;
+
+            // add resultPackage to game
+            channelRaiders[channelId].gameResult[resultExpires] = string;
+
+            // const result = { resultExpires, string };
+            // channelRaiders[channelId].gameResult.push(result);
+        }
+    }
+}
+
 //! --------------------------------------------------------- //
 //*                      -- TIMEKEEPER --                    //
 //! ------------------------------------------------------- //
