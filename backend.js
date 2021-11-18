@@ -168,13 +168,14 @@ async function onLaunch() {
     await dataBase.connect();
     //this is ran when server starts up
     console.log("[backend:130]: Server starting");
-    const dataBaseData = await dataBase.find();
-    const result = parseTmiChannelListFromDb(dataBaseData);
+    const dataBaseUserData = await dataBase.find();
+    const result = parseTmiChannelListFromDb(dataBaseUserData);
     startTmi(result);
     // //! RUN ONCE
+    var o_id = new MongoClient.ObjectID("61967a961ffcc7b266231e85");
     const dbResult = await dataBase.updateOne(
         {
-            _id: ObjectId("61967a961ffcc7b266231e85"),
+            _id: o_id,
         },
         {
             $set: {
