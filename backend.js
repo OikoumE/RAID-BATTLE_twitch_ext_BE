@@ -57,7 +57,7 @@ const { get } = require("https");
 const tmi = require("tmi.js");
 const fetch = require("node-fetch");
 const { MongoClient } = require("mongodb");
-const ObjectID = require("mongodb").ObjectID;
+const ObjectId = require("mongodb").ObjectId;
 const { channel } = require("diagnostics_channel");
 const { stringify } = require("querystring");
 const mongoUri = process.env.MONGODB_URL;
@@ -77,7 +77,9 @@ const initialHealth = 100,
     KEEP_HEROKU_ALIVE_INTERVAL = 15;
 var dataBase, tmiClient;
 
-const defaultUserConfig = {
+const defaults = {
+    // is set as defaults in the DB every server launch
+    // change here if need to change naywhere
     gameDuration: { default: 120, max: 300, min: 60 },
     extendGameDuration: { default: 60, max: 180, min: 0 },
     extendGameDurationEnabled: { default: true },
@@ -86,7 +88,6 @@ const defaultUserConfig = {
     enableChatOutput: { default: false },
     gameInfoDuration: { default: 10, max: 20, min: 0 },
 };
-
 //! -------------------- my vars -------------------- //
 
 async function printTimeout() {
@@ -173,7 +174,7 @@ async function onLaunch() {
     const result = parseTmiChannelListFromDb(dataBaseUserData);
     startTmi(result);
     // //! RUN ONCE
-    var o_id = new ObjectID("61967a961ffcc7b266231e85");
+    var o_id = new ObjectId("61967a961ffcc7b266231e85");
     const dbResult = await dataBase.updateOne(
         {
             _id: o_id,
@@ -181,15 +182,7 @@ async function onLaunch() {
         {
             $set: {
                 config: {
-                    broadcaster: {
-                        gameDuration: { default: 120, max: 300, min: 60 },
-                        extendGameDuration: { default: 60, max: 180, min: 0 },
-                        extendGameDurationEnabled: { default: true },
-                        introDuration: { default: 30, max: 60, min: 0 },
-                        gameResultDuration: { default: 30, max: 60, min: 0 },
-                        enableChatOutput: { default: false },
-                        gameInfoDuration: { default: 10, max: 20, min: 0 },
-                    },
+                    broadcaster: defaults,
                 },
             },
         },
@@ -523,11 +516,14 @@ async function requestUserConfigHandler(req) {
     const { channel_id: channelId, opaque_user_id: opaqueUserId } = payload;
     const result = await dataBase.findOne({ channelId });
     if (result) {
-        return JSON.stringify({ result: "Loaded user config", data: result });
+        return JSON.stringify({
+            result: "Loaded user config",
+            data: { result, defaults },
+        });
     }
     return JSON.stringify({
         result: "Did not find config, hit save to store config",
-        data: null,
+        data: { defaults },
     });
 }
 
