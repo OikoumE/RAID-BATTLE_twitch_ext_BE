@@ -174,7 +174,7 @@ async function onLaunch() {
     // //! RUN ONCE
     const dbResult = await dataBase.updateOne(
         {
-            config: "user",
+            _id: ObjectId("61967a961ffcc7b266231e85"),
         },
         {
             $set: {
