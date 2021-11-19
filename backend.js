@@ -1017,25 +1017,8 @@ function specialCondition() {
 function setResult(channelId, raider, string) {
     // sets a result on a game if a special condition is met
     // channelRaiders[channelId] == Array
-    console.log("ARE WE HERE!?=!?!?!");
-
-    console.log(
-        "[backend:1021]: channelRaiders[channelId]",
-        channelRaiders[channelId]
-    );
-    console.log(
-        "[backend:1022]: channelRaiders[channelId].games.length",
-        channelRaiders[channelId].games.length
-    );
-
     for (let i = 0; i < channelRaiders[channelId].games.length; i++) {
         const raiderGame = channelRaiders[channelId].games[i];
-        console.log(
-            "[backend:1019]: ",
-            raiderGame.raiderData.display_name.toLowerCase() ==
-                raider.toLowerCase()
-        );
-        console.log("[backend:1019]: ", raiderGame.raiderData.display_name);
         if (
             raiderGame.raiderData.display_name.toLowerCase() ==
             raider.toLowerCase()
@@ -1049,11 +1032,11 @@ function setResult(channelId, raider, string) {
                     ? streamerData.userConfig.gameInfoDuration //TODO add user config "Result during game"
                     : defaultUserConfig.gameInfoDuration.default) * //TODO add user config "Result during game"
                     1000;
-            console.log(channelRaiders[channelId].games[i]);
             channelRaiders[channelId].games[i].gameResult.push({
                 resultExpires,
                 string,
             });
+            console.log("Setting gameresult on game");
         }
     }
 }
