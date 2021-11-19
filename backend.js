@@ -982,7 +982,12 @@ function parse(str) {
 }
 
 // setResult(channelId, raider, parse(strings.intro1, raider));
-
+function checkForExistingGameResult(testArray, testKey, testValue) {
+    return testArray.some(function (o) {
+        return o[testKey] === testValue;
+    });
+    // will be true if pair is found, otherwise false.
+}
 function specialCondition(channelId) {
     const gamesArray = channelRaiders[channelId].games;
     //is met?
@@ -993,7 +998,9 @@ function specialCondition(channelId) {
     for (const game of gamesArray) {
         if (
             game.raiderData.health <= 50 &&
-            !game.gameResult.contains(
+            !checkForExistingGameResult(
+                game.gameResult,
+                string,
                 parse(strings.halfHealth, game.raiderData.display_name)
             )
         ) {
@@ -1004,7 +1011,14 @@ function specialCondition(channelId) {
                 parse(strings.halfHealth, game.raiderData.display_name)
             );
         }
-        if (game.raiderData.health < 1) {
+        if (
+            game.raiderData.health < 1 &&
+            !checkForExistingGameResult(
+                game.gameResult,
+                string,
+                parse(strings.dead, game.raiderData.display_name)
+            )
+        ) {
             setResult(
                 channelId,
                 game.raiderData.display_name,
