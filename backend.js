@@ -51,6 +51,10 @@ const { get } = require("https");
 // TODO FE: clean up
 // TODO fine tune timer, add to timer, multiraid
 // TODO sending gameOverState: win/defeated raiderX/loose
+
+// TODO fix full cleanup happening before gameResultDuration instead of fater like intended
+// TODO if raider == dead && timeLeft > 1 {gameResultDuration (timestamp) is NOW+gameResultDuration}
+
 //! --------------------------------------------------------- //
 //*                      -- MY VARS --                       //
 //! ------------------------------------------------------- //
@@ -87,6 +91,20 @@ const defaults = {
     gameResultDuration: { default: 30, max: 60, min: 0 },
     enableChatOutput: { default: false },
     gameInfoDuration: { default: 10, max: 20, min: 0 },
+};
+const strings = {
+    //TODO rework strings
+    intro1: "Incoming Raid from: %s",
+    intro2: "Get ready to Battle!",
+    help: "Use !raidbattle for help on how to battle",
+    defenderWin: "%s's team was victorious over %s, raiders Win!",
+    raiderWin: "%s's team was victorious over %s, defenders Win!",
+    draw: "%s met their equal in %s, its a draw!",
+    halfHealth: "%s has around 50% left!",
+    dead: "%s has been defeated!",
+    gameOver: "GAME OVER",
+    // both raiders must be below 50% for streamer to win
+    // if any raider above 50%, team raider wins
 };
 //! -------------------- my vars -------------------- //
 
@@ -963,18 +981,7 @@ async function constructRaidPackage(
     //     gameResult,
     // };
 }
-const strings = {
-    //TODO rework strings
-    intro1: "Incoming Raid from: %s",
-    intro2: "Get ready to Battle!",
-    help: "Use !raidbattle for help on how to battle",
-    defenderWin: "%s's team of %s, was victorious over %s, raiders Win!",
-    raiderWin: "%s's team of %s, was victorious over %s, defenders Win!",
-    draw: "%s met their equal in %s, its a draw!",
-    halfHealth: "%s only has 50% left!",
-    dead: "%s has been defeated!",
-    gameOver: "GAME OVER",
-};
+
 function parse(str) {
     var args = [].slice.call(arguments, 1),
         i = 0;
@@ -1035,32 +1042,27 @@ function specialCondition(channelId) {
     const gameDuration = Math.max(
         ...gamesArray.map((game) => game.gameTimeObj.gameDuration)
     );
-    console.log("[backend:1034]: gameDuration: ", gameDuration);
-    console.log("[backend:1034]: Date.now() / 1000: ", Date.now() / 1000);
     if (gameDuration < Date.now() / 1000) {
         // gametime has run out
         // get survivers at/above 50hp, deads below 50hp
         const survivers = gamesArray.map((game) => {
                 if (game.raiderData.health >= 50) {
-                    return game;
+                    return game.raiderData.display_name;
                 }
             }),
             deads = gamesArray.map((game) => {
                 if (game.raiderData.health < 50) {
-                    return game;
+                    return game.raiderData.display_name;
                 }
             });
-        console.log(survivers);
-        console.log(deads);
+        console.log("[backend:1054]: survivers", survivers);
+        console.log("[backend:1055]: deads", deads);
     }
-    console.log("[backend:1054]: gamesArray.length", gamesArray.length);
-    console.log("[backend:1054]: deathCount ", deathCount);
     if (deathCount == gamesArray.length) {
         // no more players
-        // TODO
-        // clearInterval(channelRaiders[channelId].interval);
-        // gamesArray.length = 0;
-        // attemptRaidBroadcast(channelId);
+        clearInterval(channelRaiders[channelId].interval);
+        channelRaiders[channelId].games.length = 0;
+        attemptRaidBroadcast(channelId);
         console.log(
             "[backend:1013]: No more players, stopping broadcast and cleaning up"
         );
