@@ -1024,12 +1024,12 @@ function setResult(channelId, raider, string) {
         channelRaiders[channelId]
     );
     console.log(
-        "[backend:1022]: channelRaiders[channelId].length",
+        "[backend:1022]: channelRaiders[channelId].games.length",
         channelRaiders[channelId].games.length
     );
 
     for (let i = 0; i < channelRaiders[channelId].games.length; i++) {
-        const raiderGame = channelRaiders[channelId][i];
+        const raiderGame = channelRaiders[channelId].games[i];
         console.log(
             "[backend:1019]: ",
             raiderGame.raiderData.display_name.toLowerCase() ==
