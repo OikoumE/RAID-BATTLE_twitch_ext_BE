@@ -902,7 +902,6 @@ async function constructRaidPackage(
     raiderAmount,
     streamerData
 ) {
-    //TODO refactor everything else to use this
     const streamData = await getStreamById(streamerData.channelId),
         raiderUserData = await getUser(`login=${raiderUserName}`),
         raiderData = {
@@ -914,7 +913,6 @@ async function constructRaidPackage(
         supportRatio = getRatio(raiderAmount, streamData.viewer_count),
         gameTimeObj = constructGameTimeObject(streamerData),
         gameResult = [];
-
     return {
         streamerData,
         raiderData,
@@ -922,63 +920,6 @@ async function constructRaidPackage(
         gameTimeObj,
         gameResult,
     };
-
-    //TODO refactor everything else to use this
-
-    const raiderUserData_EXAMPLE = {
-        id: "141981764",
-        login: "twitchdev",
-        display_name: "TwitchDev",
-        type: "",
-        broadcaster_type: "partner",
-        description:
-            "Supporting third-party developers building Twitch integrations from chatbots to game integrations.",
-        profile_image_url:
-            "https://static-cdn.jtvnw.net/jtv_user_pictures/8a6381c7-d0c0-4576-b179-38bd5ce1d6af-profile_image-300x300.png",
-        offline_image_url:
-            "https://static-cdn.jtvnw.net/jtv_user_pictures/3f13ab61-ec78-4fe6-8481-8682cb3b0ac2-channel_offline_image-1920x1080.png",
-        view_count: 5980557,
-        email: "not-real@email.com",
-        created_at: "2016-12-14T20:32:28Z",
-        viewers: 10,
-    };
-    const streamData_EXAMPLE_RESPONSE = {
-        id: "40952121085",
-        user_id: "101051819",
-        user_login: "afro",
-        user_name: "Afro",
-        game_id: "32982",
-        game_name: "Grand Theft Auto V",
-        type: "live",
-        title: "Jacob: Digital Den Laptops & Routers | NoPixel | !MAINGEAR !FCF",
-        viewer_count: 1490,
-        started_at: "2021-03-10T03:18:11Z",
-        language: "en",
-        thumbnail_url:
-            "https://static-cdn.jtvnw.net/previews-ttv/live_user_afro-{width}x{height}.jpg",
-        tag_ids: ["6ea6bca4-4712-4ab9-a906-e3336a9d8039"],
-        is_mature: false,
-    };
-    // const streamData = await getStreamById(streamerData.channelId),
-    //     currentViewers = streamData.viewer_count,
-    //     raiderData = await getUser(`login=${raiderUserName}`),
-    //     raiderPicUrl = raiderData.profile_image_url, //.userPicUrl
-    //     streamerPicUrl = streamerData.profilePicUrl, // HAVE IN DB
-    //     supportRatio = getRatio(raiderAmount, currentViewers),
-    //     gameTimeObj = constructGameTimeObject(streamerData),
-    //     gameResult = [];
-    // return {
-    //     channel: streamerData.channelName,
-    //     raider: raiderUserName,
-    //     health: initialHealth,
-    //     viewers: raiderAmount,
-    //     currentViewers,
-    //     supportRatio,
-    //     raiderPicUrl,
-    //     streamerPicUrl,
-    //     gameTimeObj,
-    //     gameResult,
-    // };
 }
 
 function parse(str) {
@@ -1099,9 +1040,20 @@ function specialCondition(channelId) {
         // no more players
         //! ALL raiders hp == 0
         clearInterval(channelRaiders[channelId].interval);
-        channelRaiders[channelId].games.length = 0;
-        // TODO set winstate for streamer
+        // set endResult
+        setResult(
+            channelId,
+            gameEndResult[0].name,
+            parse(
+                // make result string
+                strings.win,
+                gameEndResult[0].name,
+                gamesArray[0].streamerData.displayName
+            )
+        );
+        // do final broadcast
         attemptRaidBroadcast(channelId);
+        channelRaiders[channelId].games.length = 0;
         console.log(
             "[backend:1013]: No more players, stopping broadcast and cleaning up"
         );
