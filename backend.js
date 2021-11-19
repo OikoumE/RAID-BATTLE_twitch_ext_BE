@@ -881,7 +881,6 @@ async function startRaid(channel, username, viewers) {
             streamerData
         );
         channelRaiders[channelId].games.push(raidPackage);
-        console.log("SET RESULT ARE WE HERE!?=!?!?!");
         setResult(channelId, username, parse(strings.intro1, username));
     }
     attemptRaidBroadcast(channelId);
@@ -1019,6 +1018,16 @@ function setResult(channelId, raider, string) {
     // sets a result on a game if a special condition is met
     // channelRaiders[channelId] == Array
     console.log("ARE WE HERE!?=!?!?!");
+
+    console.log(
+        "[backend:1021]: channelRaiders[channelId]",
+        channelRaiders[channelId]
+    );
+    console.log(
+        "[backend:1022]: channelRaiders[channelId].length",
+        channelRaiders[channelId].length
+    );
+
     for (let i = 0; i < channelRaiders[channelId].length; i++) {
         const raiderGame = channelRaiders[channelId][i];
         console.log(
