@@ -1070,11 +1070,11 @@ function specialCondition(channelId) {
             gameEndResult;
             setResult(
                 channelId,
-                gameEndResult[0].display_name,
+                gameEndResult[0].name,
                 parse(
                     strings.defenderWin,
                     gamesArray[0].streamerData.displayName,
-                    gameEndResult[0].display_name
+                    gameEndResult[0].name
                 )
             );
         } else if (alive) {
@@ -1083,10 +1083,10 @@ function specialCondition(channelId) {
             console.log("[backend:1078]: gameEndResult", gameEndResult);
             setResult(
                 channelId,
-                gameEndResult[0].display_name,
+                gameEndResult[0].name,
                 parse(
                     strings.raiderWin,
-                    gameEndResult[0].display_name,
+                    gameEndResult[0].name,
                     gamesArray[0].streamerData.displayName
                 )
             );
