@@ -613,8 +613,7 @@ function streamerSupportHandler(req) {
                 }
                 //! TEST
                 gameObj.raiderData.health =
-                    gameObj.raiderData.health -
-                    gameObj.raiderData.supportRatio.streamer;
+                    gameObj.raiderData.health - gameObj.supportRatio.streamer;
             }
         }
         return channelRaiders[channelId].games;
