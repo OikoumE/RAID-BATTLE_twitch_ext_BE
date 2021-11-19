@@ -97,8 +97,7 @@ const strings = {
     intro1: "Incoming Raid from: %s",
     intro2: "Get ready to Battle!",
     help: "Use !raidbattle for help on how to battle",
-    defenderWin: "%s's team was victorious over %s, defenders Win!",
-    raiderWin: "%s's team was victorious over %s, raiders Win!",
+    win: "%s was victorious over %s!",
     draw: "%s met their equal in %s, its a draw!",
     halfHealth: "%s has around 50% left!",
     dead: "%s has been defeated!",
@@ -1072,7 +1071,7 @@ function specialCondition(channelId) {
                 channelId,
                 gameEndResult[0].name,
                 parse(
-                    strings.defenderWin,
+                    strings.win,
                     gamesArray[0].streamerData.displayName,
                     gameEndResult[0].name
                 )
@@ -1085,7 +1084,7 @@ function specialCondition(channelId) {
                 channelId,
                 gameEndResult[0].name,
                 parse(
-                    strings.raiderWin,
+                    strings.win,
                     gameEndResult[0].name,
                     gamesArray[0].streamerData.displayName
                 )
