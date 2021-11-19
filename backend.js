@@ -1059,6 +1059,11 @@ function specialCondition(channelId) {
                 alive--;
             }
         }
+        console.log("[backend:1061]: alive", alive);
+        console.log(
+            "[backend:1062]: gameEndResult.length",
+            gameEndResult.length
+        );
         if (alive == -gameEndResult.length) {
             // TODO streamer win
             //! if all had less than 50%
@@ -1075,7 +1080,7 @@ function specialCondition(channelId) {
         } else if (alive) {
             //! if any raider > 50%, raiders win
             // TODO raiders win
-            gameEndResult;
+            console.log("[backend:1078]: gameEndResult", gameEndResult);
             setResult(
                 channelId,
                 gameEndResult[0].display_name,
