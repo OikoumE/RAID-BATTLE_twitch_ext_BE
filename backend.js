@@ -1149,11 +1149,11 @@ function calculateGameDuration(introDuration, streamerData) {
                     ? streamerData.userConfig.extendGameDuration
                     : defaults.extendGameDuration.default)
         );
-    } else if (
-        streamerData.userConfig &&
-        !streamerData.userConfig.extendGameDurationEnabled
-    ) {
-        return 0;
+        // } else if (
+        //     streamerData.userConfig &&
+        //     !streamerData.userConfig.extendGameDurationEnabled
+        // ) {
+        //     return 0;
     } else {
         // using streamerData if no other games are running
         // or defaults if no streamerData.userConfig
