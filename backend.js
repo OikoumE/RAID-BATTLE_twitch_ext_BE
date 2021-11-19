@@ -1026,11 +1026,17 @@ function setResult(channelId, raider, string) {
             // TODO
             const streamerData =
                 channelRaiders[channelId].games[i].streamerData;
+            let defaultExpire = defaultUserConfig.gameInfoDuration.default,
+                streamerExpire = streamerData.userConfig.gameInfoDuration;
+            console.log("[backend:1030]: defaultExpire", defaultExpire);
+            console.log("[backend:1031]: streamerExpire", streamerExpire);
+            console.log(
+                "[backend:1032]: streamerData.userConfig ? streamerExpire : defaultExpire",
+                streamerData.userConfig ? streamerExpire : defaultExpire
+            );
             const resultExpires =
                 Date.now() +
-                (streamerData.userConfig
-                    ? streamerData.userConfig.gameInfoDuration //TODO add user config "Result during game"
-                    : defaultUserConfig.gameInfoDuration.default) * //TODO add user config "Result during game"
+                (streamerData.userConfig ? streamerExpire : defaultExpire) *
                     1000;
             channelRaiders[channelId].games[i].gameResult.push({
                 resultExpires,
