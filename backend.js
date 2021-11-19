@@ -1041,15 +1041,16 @@ function setResult(channelId, raider, string) {
             raider.toLowerCase()
         ) {
             // TODO
-            const streamerData = channelRaiders[channelId][i].streamerData;
+            const streamerData =
+                channelRaiders[channelId].games[i].streamerData;
             const resultExpires =
                 Date.now() +
                 (streamerData.userConfig
                     ? streamerData.userConfig.gameInfoDuration //TODO add user config "Result during game"
                     : defaultUserConfig.gameInfoDuration.default) * //TODO add user config "Result during game"
                     1000;
-            console.log(channelRaiders[channelId][i]);
-            channelRaiders[channelId][i].gameResult.push({
+            console.log(channelRaiders[channelId].games[i]);
+            channelRaiders[channelId].games[i].gameResult.push({
                 resultExpires,
                 string,
             });
