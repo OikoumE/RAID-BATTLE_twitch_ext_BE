@@ -549,8 +549,8 @@ async function updateUserConfigHandler(req) {
 function parseUserConfigUpdateDocument(document) {
     const parsedDoc = {};
     for (const [key, value] of Object.entries(document)) {
-        const max = defaultUserConfig[key].max,
-            min = defaultUserConfig[key].min;
+        const max = defaults[key].max,
+            min = defaults[key].min;
         if (!key.toLowerCase().includes("enable")) {
             parsedDoc[key] = parseInt(
                 value > max ? max : value < min ? min : value
@@ -1026,7 +1026,7 @@ function setResult(channelId, raider, string) {
             // TODO
             const streamerData =
                 channelRaiders[channelId].games[i].streamerData;
-            let defaultExpire = defaultUserConfig.gameInfoDuration.default,
+            let defaultExpire = defaults.gameInfoDuration.default,
                 streamerExpire = streamerData.userConfig.gameInfoDuration;
             console.log("[backend:1030]: defaultExpire", defaultExpire);
             console.log("[backend:1031]: streamerExpire", streamerExpire);
@@ -1081,7 +1081,7 @@ function calculateIntroDuration(streamerData) {
         Date.now() / 1000 +
             (streamerData.userConfig
                 ? streamerData.userConfig.introDuration
-                : defaultUserConfig.introDuration.default)
+                : defaults.introDuration.default)
     );
     return introDuration;
 }
@@ -1102,16 +1102,16 @@ function calculateGameDuration(introDuration, streamerData) {
             ongoingGame +
                 (streamerData.userConfig
                     ? streamerData.userConfig.extendGameDuration
-                    : defaultUserConfig.extendGameDuration.default)
+                    : defaults.extendGameDuration.default)
         );
     } else {
         // using streamerData if no other games are running
-        // or defaultUserConfig if no streamerData.userConfig
+        // or defaults if no streamerData.userConfig
         gameDuration = Math.floor(
             introDuration +
                 (streamerData.userConfig
                     ? streamerData.userConfig.gameDuration
-                    : defaultUserConfig.gameDuration.default)
+                    : defaults.gameDuration.default)
         );
     }
     return gameDuration;
@@ -1122,7 +1122,7 @@ function calculateGameResultDuration(gameDuration, streamerData) {
         gameDuration +
             (streamerData.userConfig
                 ? streamerData.userConfig.gameResultDuration
-                : defaultUserConfig.gameResultDuration.default)
+                : defaults.gameResultDuration.default)
     );
     return gameResultDuration;
 }
