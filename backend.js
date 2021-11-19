@@ -1032,6 +1032,10 @@ function specialCondition(channelId) {
     const gameDuration = Math.max(
         ...gamesArray.map((game) => game.gameTimeObj.gameDuration)
     );
+    console.log(
+        "[backend:1034]: gameDuration < Date.now() / 1000",
+        gameDuration < Date.now() / 1000
+    );
     if (gameDuration < Date.now() / 1000) {
         // gametime has run out
         // get survivers at/above 50hp, deads below 50hp
@@ -1048,6 +1052,12 @@ function specialCondition(channelId) {
         console.log(survivers);
         console.log(deads);
     }
+    console.log("[backend:1054]: gamesArray.length", gamesArray.length);
+    console.log("[backend:1054]: deathCount ", deathCount);
+    console.log(
+        "[backend:1054]: deathCount == gamesArray.length",
+        deathCount == gamesArray.length
+    );
     if (deathCount == gamesArray.length) {
         // no more players
         clearInterval(channelRaiders[channelId].interval);
@@ -1128,6 +1138,8 @@ function calculateGameDuration(introDuration, streamerData) {
     // set gameDuration on gameTimeObj
     // if there are more than 0 games in the list use extendGameDuration
     if (
+        streamerData.userConfig &&
+        streamerData.userConfig.extendGameDurationEnabled &&
         channelRaiders[streamerData.channelId].games &&
         channelRaiders[streamerData.channelId].games.length >= 1
     ) {
@@ -1143,6 +1155,11 @@ function calculateGameDuration(introDuration, streamerData) {
                     ? streamerData.userConfig.extendGameDuration
                     : defaults.extendGameDuration.default)
         );
+    } else if (
+        streamerData.userConfig &&
+        !streamerData.userConfig.extendGameDurationEnabled
+    ) {
+        return 0;
     } else {
         // using streamerData if no other games are running
         // or defaults if no streamerData.userConfig
