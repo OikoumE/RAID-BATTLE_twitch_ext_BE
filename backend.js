@@ -1000,7 +1000,7 @@ function specialCondition(channelId) {
             game.raiderData.health <= 50 &&
             !checkForExistingGameResult(
                 game.gameResult,
-                string,
+                "string",
                 parse(strings.halfHealth, game.raiderData.display_name)
             )
         ) {
@@ -1015,7 +1015,7 @@ function specialCondition(channelId) {
             game.raiderData.health < 1 &&
             !checkForExistingGameResult(
                 game.gameResult,
-                string,
+                "string",
                 parse(strings.dead, game.raiderData.display_name)
             )
         ) {
