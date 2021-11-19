@@ -1031,6 +1031,10 @@ function setResult(channelId, raider, string) {
             console.log("[backend:1030]: defaultExpire", defaultExpire);
             console.log("[backend:1031]: streamerExpire", streamerExpire);
             console.log(
+                "[backend:1031]: streamerData.userConfig",
+                streamerData.userConfig
+            );
+            console.log(
                 "[backend:1032]: streamerData.userConfig ? streamerExpire : defaultExpire",
                 streamerData.userConfig ? streamerExpire : defaultExpire
             );
