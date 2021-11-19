@@ -649,8 +649,36 @@ async function stopTestRaidHandler(req) {
 }
 
 //! --------------------------------------------------------- //
-//*                  -- BROADCAST TO EXT --                  //
+//*                      -- BROADCAST --                     //
 //! ------------------------------------------------------- //
+
+function startBroadcastInterval(channelId) {
+    if (channelRaiders[channelId].interval) {
+        clearInterval(channelRaiders[channelId].interval);
+    }
+    const gameExpired = checkIfGameExpired(channelRaiders[channelId].games);
+    if (!gameExpired) {
+        channelRaiders[channelId].interval = setInterval(() => {
+            checkGameTimeAndBroadcast(channelId);
+        }, 1000);
+    } else {
+        clearInterval(channelRaiders[channelId].interval);
+        //TODO clean up games list
+        if (gameExpired) {
+            channelRaiders[channelId].interval = null;
+            channelRaiders[channelId].games.length = 0;
+            attemptRaidBroadcast(channelId);
+        }
+    }
+}
+
+function checkGameTimeAndBroadcast(channelId) {
+    if (!checkIfGameExpired(channelRaiders[channelId].games)) {
+        attemptRaidBroadcast(channelId);
+    } else {
+        startBroadcastInterval(channelId);
+    }
+}
 function attemptRaidBroadcast(channelId) {
     // Check the cool-down to determine if it's okay to send now.
     const now = Date.now();
@@ -691,65 +719,6 @@ async function sendRaidBroadcast(channelId) {
         `Broadcasting to channelId: ${channelId}`,
         `Response: ${res.status}`
     );
-}
-
-//! --------------------------------------------------------- //
-//*                       -- CHAT API --                     //
-//! ------------------------------------------------------- //
-//TODO wait for API to get fixed!!!!!!!!!!!
-
-async function sendChatMessageToChannel(message, channelId) {
-    // not more often than every 5sec
-    // Maximum: 280 characters.
-    console.log(`sending message: "${message}" to channel: "${channelId}"`);
-    const jwtToken = makeServerToken(channelId);
-    const url = `https://api.twitch.tv/helix/extensions/chat?broadcaster_id=${channelId}`,
-        headers = {
-            "Client-ID": clientId,
-            Authorization: "Bearer " + jwtToken,
-            "Content-Type": "application/json",
-        },
-        body = JSON.stringify({
-            // text: message,
-            text: "Test Message",
-            extension_id: clientId,
-            extension_version: CURRENT_VERSION,
-        });
-    const res = await fetch(url, { method: "POST", headers, body });
-    console.log(
-        `[backend:532]: Broadcast chat message result: ${res.status}: ${res.statusText}`
-    );
-}
-//! --------------------------------------------------------- //
-//*                      -- BROADCAST --                     //
-//! ------------------------------------------------------- //
-
-function startBroadcastInterval(channelId) {
-    if (channelRaiders[channelId].interval) {
-        clearInterval(channelRaiders[channelId].interval);
-    }
-    const gameExpired = checkIfGameExpired(channelRaiders[channelId].games);
-    if (!gameExpired) {
-        channelRaiders[channelId].interval = setInterval(() => {
-            checkGameTimeAndBroadcast(channelId);
-        }, 1000);
-    } else {
-        clearInterval(channelRaiders[channelId].interval);
-        //TODO clean up games list
-        if (gameExpired) {
-            channelRaiders[channelId].interval = null;
-            channelRaiders[channelId].games.length = 0;
-            attemptRaidBroadcast(channelId);
-        }
-    }
-}
-
-function checkGameTimeAndBroadcast(channelId) {
-    if (!checkIfGameExpired(channelRaiders[channelId].games)) {
-        attemptRaidBroadcast(channelId);
-    } else {
-        startBroadcastInterval(channelId);
-    }
 }
 
 //! --------------------------------------------------------- //
@@ -1001,6 +970,7 @@ const strings = {
     defenderWin: "%s's team of %s, was victorious over %s, raiders Win!",
     raiderWin: "%s's team of %s, was victorious over %s, defenders Win!",
     draw: "%s met their equal in %s, its a draw!",
+    halfHealth: "%s only has 50% left!",
     dead: "%s has been defeated!",
     gameOver: "GAME OVER",
 };
@@ -1012,14 +982,39 @@ function parse(str) {
 
 // setResult(channelId, raider, parse(strings.intro1, raider));
 
-function specialCondition() {
+function specialCondition(channelId) {
+    const gamesArray = channelRaiders[channelId].games;
     //is met?
     // TODO check if gametime
-    // TODO check if each raider.health < 50 + !gametime
     // TODO check if ANY raider.health < 1
-    // TODO check if each raider.health < 1
-    // TODO PLACEHOLDER
-    // TODO PLACEHOLDER
+    // TODO check if ALL raider.health < 1
+    let deathCount = 0;
+    for (const game of gamesArray) {
+        if (game.raiderData.health <= 50) {
+            setResult(
+                channelId,
+                game.raiderData.display_name,
+                parse(strings.halfHealth, game.raiderData.display_name)
+            );
+        }
+        if (game.raiderData.health < 1) {
+            setResult(
+                channelId,
+                game.raiderData.display_name,
+                parse(strings.dead, game.raiderData.display_name)
+            );
+            deathCount++;
+        }
+        // if (game.raiderData.health < 1){}
+    }
+    if (deathCount == gamesArray.length) {
+        // no more players
+        clearInterval(channelRaiders[channelId].interval);
+        gamesArray.length = 0;
+        console.log(
+            "[backend:1013]: No more players, stopping broadcast and cleaning up"
+        );
+    }
 }
 
 function setResult(channelId, raider, string) {
@@ -1036,16 +1031,6 @@ function setResult(channelId, raider, string) {
                 channelRaiders[channelId].games[i].streamerData;
             let defaultExpire = defaults.gameInfoDuration.default,
                 streamerExpire = streamerData.userConfig.gameInfoDuration;
-            console.log("[backend:1030]: defaultExpire", defaultExpire);
-            console.log("[backend:1031]: streamerExpire", streamerExpire);
-            console.log(
-                "[backend:1031]: streamerData.userConfig",
-                streamerData.userConfig
-            );
-            console.log(
-                "[backend:1032]: streamerData.userConfig ? streamerExpire : defaultExpire",
-                streamerExpire ? streamerExpire : defaultExpire
-            );
             const resultExpires =
                 Date.now() +
                 (streamerExpire ? streamerExpire : defaultExpire) * 1000;
@@ -1136,4 +1121,32 @@ function calculateGameResultDuration(gameDuration, streamerData) {
                 : defaults.gameResultDuration.default)
     );
     return gameResultDuration;
+}
+
+//! --------------------------------------------------------- //
+//*                       -- CHAT API --                     //
+//! ------------------------------------------------------- //
+//TODO wait for API to get fixed!!!!!!!!!!!
+
+async function sendChatMessageToChannel(message, channelId) {
+    // not more often than every 5sec
+    // Maximum: 280 characters.
+    console.log(`sending message: "${message}" to channel: "${channelId}"`);
+    const jwtToken = makeServerToken(channelId);
+    const url = `https://api.twitch.tv/helix/extensions/chat?broadcaster_id=${channelId}`,
+        headers = {
+            "Client-ID": clientId,
+            Authorization: "Bearer " + jwtToken,
+            "Content-Type": "application/json",
+        },
+        body = JSON.stringify({
+            // text: message,
+            text: "Test Message",
+            extension_id: clientId,
+            extension_version: CURRENT_VERSION,
+        });
+    const res = await fetch(url, { method: "POST", headers, body });
+    console.log(
+        `[backend:532]: Broadcast chat message result: ${res.status}: ${res.statusText}`
+    );
 }
