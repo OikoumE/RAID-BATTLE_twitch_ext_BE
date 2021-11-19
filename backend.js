@@ -1054,13 +1054,13 @@ function specialCondition(channelId) {
     console.log("[backend:1054]: deathCount ", deathCount);
     if (deathCount == gamesArray.length) {
         // no more players
-        clearInterval(channelRaiders[channelId].interval);
-        gamesArray.length = 0;
+        // clearInterval(channelRaiders[channelId].interval);
+        // gamesArray.length = 0;
+        // attemptRaidBroadcast(channelId);
         console.log(
             "[backend:1013]: No more players, stopping broadcast and cleaning up"
         );
         console.log("[backend:1014]: sending final broadcast");
-        attemptRaidBroadcast(channelId);
     }
 }
 
