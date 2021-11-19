@@ -991,7 +991,13 @@ function specialCondition(channelId) {
     // TODO check if ALL raider.health < 1
     let deathCount = 0;
     for (const game of gamesArray) {
-        if (game.raiderData.health <= 50) {
+        if (
+            game.raiderData.health <= 50 &&
+            !game.gameResult.contains(
+                parse(strings.halfHealth, game.raiderData.display_name)
+            )
+        ) {
+            console.log("raider under 50% and not in resultqueue");
             setResult(
                 channelId,
                 game.raiderData.display_name,
