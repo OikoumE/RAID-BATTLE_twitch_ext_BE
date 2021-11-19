@@ -172,12 +172,14 @@ async function onLaunch() {
     console.log("[backend:130]: Server starting");
     const dataBaseUserData = await dataBase.find();
     const result = parseTmiChannelListFromDb(dataBaseUserData);
+    await setDefaultUserConfigInDatabase();
     startTmi(result);
-    // //! RUN ONCE
-    var o_id = new ObjectId("61967a961ffcc7b266231e85");
+}
+
+async function setDefaultUserConfigInDatabase() {
     const dbResult = await dataBase.updateOne(
         {
-            _id: o_id,
+            _id: new ObjectId("61967a961ffcc7b266231e85"),
         },
         {
             $set: {
@@ -188,7 +190,7 @@ async function onLaunch() {
         },
         "defaults"
     );
-    console.log("[backend:192]: result", dbResult);
+    // console.log("[backend:192]: result", dbResult);
 }
 
 (async () => {
@@ -1022,6 +1024,7 @@ function setResult(channelId, raider, string) {
             raiderGame.raiderData.display_name.toLowerCase() ==
                 raider.toLowerCase()
         );
+        console.log("[backend:1019]: ", raiderGame.raiderData.display_name);
         if (
             raiderGame.raiderData.display_name.toLowerCase() ==
             raider.toLowerCase()
@@ -1034,6 +1037,7 @@ function setResult(channelId, raider, string) {
                     ? streamerData.userConfig.gameInfoDuration //TODO add user config "Result during game"
                     : defaultUserConfig.gameInfoDuration.default) * //TODO add user config "Result during game"
                     1000;
+            console.log(channelRaiders[channelId][i]);
             channelRaiders[channelId][i].gameResult.push({
                 resultExpires,
                 string,
