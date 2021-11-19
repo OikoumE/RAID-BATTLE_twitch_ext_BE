@@ -573,14 +573,17 @@ function raiderSupportHandler(req) {
     }
     // increase health on specific raider
     if (channelRaiders[channelId].games) {
-        for (const raiderObj of channelRaiders[channelId].games) {
-            if (raiderObj.raider == raider) {
-                if (raiderObj.health < 100) {
+        for (const gameObj of channelRaiders[channelId].games) {
+            if (
+                gameObj.raiderData.display_name.toLowerCase() ==
+                raider.toLowerCase()
+            ) {
+                if (gameObj.raiderData.health < 100) {
                     console.log(
                         `increase health on : ${raider} in stream: ${channelId}, by ${opaqueUserId}`
                     );
-                    raiderObj.health =
-                        raiderObj.health + raiderObj.supportRatio.raider;
+                    gameObj.raiderData.health =
+                        gameObj.raiderData.health + gameObj.supportRatio.raider;
                 }
                 break;
             }
@@ -602,15 +605,16 @@ function streamerSupportHandler(req) {
         console.log(
             `reduce health on all raiders in stream: ${channelId}, by ${opaqueUserId}`
         );
-        for (const raiderObj of channelRaiders[channelId].games) {
-            if (raiderObj.health > 0) {
+        for (const gameObj of channelRaiders[channelId].games) {
+            if (gameObj.raiderData.health > 0) {
                 //! TEST
                 if (channelId == 93645775) {
-                    raiderObj.health = raiderObj.health - 20;
+                    gameObj.raiderData.health = gameObj.raiderData.health - 20;
                 }
                 //! TEST
-                raiderObj.health =
-                    raiderObj.health - raiderObj.supportRatio.streamer;
+                gameObj.raiderData.health =
+                    gameObj.raiderData.health -
+                    gameObj.raiderData.supportRatio.streamer;
             }
         }
         return channelRaiders[channelId].games;
