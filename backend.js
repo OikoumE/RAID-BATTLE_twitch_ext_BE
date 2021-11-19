@@ -1035,10 +1035,16 @@ function specialCondition(channelId) {
     if (gameDuration < Date.now()) {
         // gametime has run out
         // get survivers at/above 50hp, deads below 50hp
-        const survivers = gamesArray.map(
-                (game) => game.raiderData.health >= 50
-            ),
-            deads = gamesArray.map((game) => game.raiderData.health < 50);
+        const survivers = gamesArray.map((game) => {
+                if (game.raiderData.health >= 50) {
+                    return game;
+                }
+            }),
+            deads = gamesArray.map((game) => {
+                if (game.raiderData.health < 50) {
+                    return game;
+                }
+            });
         console.log(survivers);
         console.log(deads);
     }
