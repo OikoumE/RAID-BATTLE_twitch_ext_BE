@@ -88,7 +88,7 @@ const defaults = {
     extendGameDuration: { default: 60, max: 180, min: 0 },
     extendGameDurationEnabled: { default: true },
     introDuration: { default: 30, max: 60, min: 0 },
-    gameResultDuration: { default: 30, max: 60, min: 0 },
+    gameResultDuration: { default: 15, max: 30, min: 0 },
     enableChatOutput: { default: false },
     gameInfoDuration: { default: 10, max: 20, min: 0 },
 };
@@ -1061,7 +1061,7 @@ function specialCondition(channelId) {
     }
 }
 
-function setResult(channelId, raider, string) {
+function setResult(channelId, raider, string, finalResult = false) {
     // sets a result on a game if a special condition is met
     // channelRaiders[channelId] == Array
     for (let i = 0; i < channelRaiders[channelId].games.length; i++) {
@@ -1074,10 +1074,20 @@ function setResult(channelId, raider, string) {
             const streamerData =
                 channelRaiders[channelId].games[i].streamerData;
             let defaultExpire = defaults.gameInfoDuration.default,
-                streamerExpire = streamerData.userConfig.gameInfoDuration;
-            const resultExpires =
-                Date.now() +
-                (streamerExpire ? streamerExpire : defaultExpire) * 1000;
+                gameResultDuration = defaults.gameResultDuration.default,
+                streamerExpire = streamerData.userConfig.gameInfoDuration,
+                streamerResultDuration =
+                    streamerData.userConfig.gameResultDuration;
+            let addedTime = 0;
+            if (finalResult) {
+                // check if streamer result duration is set if not use default
+                addedTime = streamerResultDuration
+                    ? streamerResultDuration
+                    : gameResultDuration;
+            } else {
+                addedTime = streamerExpire ? streamerExpire : defaultExpire;
+            }
+            const resultExpires = Date.now() + addedTime * 1000;
             channelRaiders[channelId].games[i].gameResult.push({
                 resultExpires,
                 string,
