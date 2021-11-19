@@ -1133,9 +1133,8 @@ function calculateIntroDuration(streamerData) {
 function calculateGameDuration(introDuration, streamerData) {
     // set gameDuration on gameTimeObj
     // if there are more than 0 games in the list use extendGameDuration
+    const userConfig = streamerData.userConfig;
     if (
-        streamerData.userConfig &&
-        streamerData.userConfig.extendGameDurationEnabled &&
         channelRaiders[streamerData.channelId].games &&
         channelRaiders[streamerData.channelId].games.length >= 1
     ) {
@@ -1145,17 +1144,13 @@ function calculateGameDuration(introDuration, streamerData) {
                 (game) => game.gameTimeObj.gameDuration
             )
         );
-        gameDuration = Math.floor(
-            ongoingGame +
-                (streamerData.userConfig
-                    ? streamerData.userConfig.extendGameDuration
-                    : defaults.extendGameDuration.default)
-        );
-        // } else if (
-        //     streamerData.userConfig &&
-        //     !streamerData.userConfig.extendGameDurationEnabled
-        // ) {
-        //     return 0;
+        let extraTime = 0;
+        if (userConfig && userConfig.extendGameDurationEnabled) {
+            extraTime = streamerData.userConfig
+                ? streamerData.userConfig.extendGameDuration
+                : defaults.extendGameDuration.default;
+        }
+        gameDuration = Math.floor(ongoingGame + extraTime);
     } else {
         // using streamerData if no other games are running
         // or defaults if no streamerData.userConfig
