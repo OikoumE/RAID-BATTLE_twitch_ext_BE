@@ -1025,10 +1025,10 @@ function setResult(channelId, raider, string) {
     );
     console.log(
         "[backend:1022]: channelRaiders[channelId].length",
-        channelRaiders[channelId].length
+        channelRaiders[channelId].games.length
     );
 
-    for (let i = 0; i < channelRaiders[channelId].length; i++) {
+    for (let i = 0; i < channelRaiders[channelId].games.length; i++) {
         const raiderGame = channelRaiders[channelId][i];
         console.log(
             "[backend:1019]: ",
