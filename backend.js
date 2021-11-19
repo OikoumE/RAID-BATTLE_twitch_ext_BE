@@ -996,6 +996,7 @@ function specialCondition(channelId) {
     // TODO check if ALL raider.health < 1
     let deathCount = 0;
     for (const game of gamesArray) {
+        // check if raider is at 50% health
         if (
             game.raiderData.health <= 50 &&
             !checkForExistingGameResult(
@@ -1011,6 +1012,7 @@ function specialCondition(channelId) {
                 parse(strings.halfHealth, game.raiderData.display_name)
             );
         }
+        // check if raider is below 1hp
         if (
             game.raiderData.health < 1 &&
             !checkForExistingGameResult(
@@ -1026,7 +1028,19 @@ function specialCondition(channelId) {
             );
             deathCount++;
         }
-        // if (game.raiderData.health < 1){}
+    }
+    const gameDuration = Math.max(
+        ...gamesArray.map((game) => game.gameTimeObj.gameDuration)
+    );
+    if (gameDuration < Date.now()) {
+        // gametime has run out
+        // get survivers at/above 50hp, deads below 50hp
+        const survivers = gamesArray.map(
+                (game) => game.raiderData.health >= 50
+            ),
+            deads = gamesArray.map((game) => game.raiderData.health < 50);
+        console.log(survivers);
+        console.log(deads);
     }
     if (deathCount == gamesArray.length) {
         // no more players
