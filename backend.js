@@ -97,8 +97,8 @@ const strings = {
     intro1: "Incoming Raid from: %s",
     intro2: "Get ready to Battle!",
     help: "Use !raidbattle for help on how to battle",
-    defenderWin: "%s's team was victorious over %s, raiders Win!",
-    raiderWin: "%s's team was victorious over %s, defenders Win!",
+    defenderWin: "%s's team was victorious over %s, defenders Win!",
+    raiderWin: "%s's team was victorious over %s, raiders Win!",
     draw: "%s met their equal in %s, its a draw!",
     halfHealth: "%s has around 50% left!",
     dead: "%s has been defeated!",
@@ -1035,9 +1035,6 @@ function specialCondition(channelId) {
             );
         }
     }
-    gamesArray.map((game) =>
-        game.raiderData.health < 1 ? deathCount++ : null
-    );
 
     const gameDuration = Math.max(
         ...gamesArray.map((game) => game.gameTimeObj.gameDuration)
@@ -1045,23 +1042,61 @@ function specialCondition(channelId) {
     if (gameDuration < Date.now() / 1000) {
         // gametime has run out
         // get survivers at/above 50hp, deads below 50hp
-        const survivers = gamesArray.map((game) => {
-                if (game.raiderData.health >= 50) {
-                    return game.raiderData.display_name;
-                }
-            }),
-            deads = gamesArray.map((game) => {
-                if (game.raiderData.health < 50) {
-                    return game.raiderData.display_name;
-                }
-            });
-        console.log("[backend:1054]: survivers", survivers);
-        console.log("[backend:1055]: deads", deads);
+        var alive = 0;
+        const gameEndResult = gamesArray.map((game) => {
+            if (game.raiderData.health >= 50) {
+                alive++;
+                return { name: game.raiderData.display_name, alive: true };
+            } else if (game.raiderData.health < 50) {
+                alive--;
+                return { name: game.raiderData.display_name, alive: false };
+            }
+        });
+        for (const result of gameEndResult) {
+            if (result.alive) {
+                alive++;
+            } else {
+                alive--;
+            }
+        }
+        if (alive == -gameEndResult.length) {
+            // TODO streamer win
+            //! if all had less than 50%
+            gameEndResult;
+            setResult(
+                channelId,
+                gameEndResult[0].display_name,
+                parse(
+                    strings.defenderWin,
+                    gamesArray[0].streamerData.displayName,
+                    gameEndResult[0].display_name
+                )
+            );
+        } else if (alive) {
+            //! if any raider > 50%, raiders win
+            // TODO raiders win
+            gameEndResult;
+            setResult(
+                channelId,
+                gameEndResult[0].display_name,
+                parse(
+                    strings.raiderWin,
+                    gameEndResult[0].display_name,
+                    gamesArray[0].streamerData.displayName
+                )
+            );
+        }
+        console.log("[backend:1054]: gameEndResult", gameEndResult);
     }
+    gamesArray.map((game) =>
+        game.raiderData.health < 1 ? deathCount++ : null
+    );
     if (deathCount == gamesArray.length) {
         // no more players
+        //! ALL raiders hp == 0
         clearInterval(channelRaiders[channelId].interval);
         channelRaiders[channelId].games.length = 0;
+        // TODO set winstate for streamer
         attemptRaidBroadcast(channelId);
         console.log(
             "[backend:1013]: No more players, stopping broadcast and cleaning up"
