@@ -674,7 +674,7 @@ function startBroadcastInterval(channelId) {
 
 function checkGameTimeAndBroadcast(channelId) {
     if (!checkIfGameExpired(channelRaiders[channelId].games)) {
-        // specialCondition(channelId);
+        specialCondition(channelId);
         attemptRaidBroadcast(channelId);
     } else {
         startBroadcastInterval(channelId);
