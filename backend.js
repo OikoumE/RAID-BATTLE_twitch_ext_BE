@@ -1091,10 +1091,6 @@ function setResult(channelId, raider, string) {
                 resultExpires,
                 string,
             });
-            console.log(
-                "[backend:1038]: Setting gameresult on game: ",
-                channelRaiders[channelId].games[i].gameResult
-            );
         }
     }
 }
