@@ -674,7 +674,7 @@ function startBroadcastInterval(channelId) {
 
 function checkGameTimeAndBroadcast(channelId) {
     if (!checkIfGameExpired(channelRaiders[channelId].games)) {
-        specialCondition(channelId);
+        // specialCondition(channelId);
         attemptRaidBroadcast(channelId);
     } else {
         startBroadcastInterval(channelId);
@@ -1026,9 +1026,12 @@ function specialCondition(channelId) {
                 game.raiderData.display_name,
                 parse(strings.dead, game.raiderData.display_name)
             );
-            deathCount++;
         }
     }
+    gamesArray.map((game) =>
+        game.raiderData.health < 1 ? deathCount++ : null
+    );
+
     const gameDuration = Math.max(
         ...gamesArray.map((game) => game.gameTimeObj.gameDuration)
     );
@@ -1054,6 +1057,7 @@ function specialCondition(channelId) {
     console.log("[backend:1054]: deathCount ", deathCount);
     if (deathCount == gamesArray.length) {
         // no more players
+        // TODO
         // clearInterval(channelRaiders[channelId].interval);
         // gamesArray.length = 0;
         // attemptRaidBroadcast(channelId);
