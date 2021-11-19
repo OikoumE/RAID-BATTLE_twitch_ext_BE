@@ -885,6 +885,11 @@ async function startRaid(channel, username, viewers) {
         );
         channelRaiders[channelId].games.push(raidPackage);
         setResult(channelId, username, parse(strings.intro1, username));
+        //! TEST
+        setTimeout(() => {
+            setResult(channelId, username, parse(strings.intro1, username));
+        }, 30 * 1000);
+        //! TEST
     }
     attemptRaidBroadcast(channelId);
     //! TEST CHAT!
