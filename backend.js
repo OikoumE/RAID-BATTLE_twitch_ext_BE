@@ -979,19 +979,19 @@ function specialCondition(channelId) {
     const gameDuration = Math.max(
         ...gamesArray.map((game) => game.gameTimeObj.gameDuration)
     );
+    // gametime has run out
+    // get survivers at/above 50hp, deads below 50hp
+    var alive = 0;
+    const gameEndResult = gamesArray.map((game) => {
+        if (game.raiderData.health >= 50) {
+            alive++;
+            return { name: game.raiderData.display_name, alive: true };
+        } else if (game.raiderData.health < 50) {
+            alive--;
+            return { name: game.raiderData.display_name, alive: false };
+        }
+    });
     if (gameDuration < Date.now() / 1000) {
-        // gametime has run out
-        // get survivers at/above 50hp, deads below 50hp
-        var alive = 0;
-        const gameEndResult = gamesArray.map((game) => {
-            if (game.raiderData.health >= 50) {
-                alive++;
-                return { name: game.raiderData.display_name, alive: true };
-            } else if (game.raiderData.health < 50) {
-                alive--;
-                return { name: game.raiderData.display_name, alive: false };
-            }
-        });
         for (const result of gameEndResult) {
             if (result.alive) {
                 alive++;
