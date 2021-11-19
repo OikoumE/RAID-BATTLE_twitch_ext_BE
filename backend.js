@@ -1032,7 +1032,7 @@ function specialCondition(channelId) {
     const gameDuration = Math.max(
         ...gamesArray.map((game) => game.gameTimeObj.gameDuration)
     );
-    if (gameDuration < Date.now()) {
+    if (gameDuration < Date.now() / 1000) {
         // gametime has run out
         // get survivers at/above 50hp, deads below 50hp
         const survivers = gamesArray.map((game) => {
