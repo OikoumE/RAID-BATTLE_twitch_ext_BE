@@ -1032,10 +1032,8 @@ function specialCondition(channelId) {
     const gameDuration = Math.max(
         ...gamesArray.map((game) => game.gameTimeObj.gameDuration)
     );
-    console.log(
-        "[backend:1034]: gameDuration < Date.now() / 1000",
-        gameDuration < Date.now() / 1000
-    );
+    console.log("[backend:1034]: gameDuration: ", gameDuration);
+    console.log("[backend:1034]: Date.now() / 1000: ", Date.now() / 1000);
     if (gameDuration < Date.now() / 1000) {
         // gametime has run out
         // get survivers at/above 50hp, deads below 50hp
@@ -1054,10 +1052,6 @@ function specialCondition(channelId) {
     }
     console.log("[backend:1054]: gamesArray.length", gamesArray.length);
     console.log("[backend:1054]: deathCount ", deathCount);
-    console.log(
-        "[backend:1054]: deathCount == gamesArray.length",
-        deathCount == gamesArray.length
-    );
     if (deathCount == gamesArray.length) {
         // no more players
         clearInterval(channelRaiders[channelId].interval);
