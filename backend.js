@@ -674,6 +674,7 @@ function startBroadcastInterval(channelId) {
 
 function checkGameTimeAndBroadcast(channelId) {
     if (!checkIfGameExpired(channelRaiders[channelId].games)) {
+        specialCondition(channelId);
         attemptRaidBroadcast(channelId);
     } else {
         startBroadcastInterval(channelId);
@@ -855,9 +856,9 @@ async function startRaid(channel, username, viewers) {
         channelRaiders[channelId].games.push(raidPackage);
         setResult(channelId, username, parse(strings.intro1, username));
         //! TEST
-        setTimeout(() => {
-            setResult(channelId, username, parse(strings.intro1, username));
-        }, 30 * 1000);
+        // setTimeout(() => {
+        //     setResult(channelId, username, parse(strings.intro1, username));
+        // }, 30 * 1000);
         //! TEST
     }
     attemptRaidBroadcast(channelId);
@@ -1014,6 +1015,8 @@ function specialCondition(channelId) {
         console.log(
             "[backend:1013]: No more players, stopping broadcast and cleaning up"
         );
+        console.log("[backend:1014]: sending final broadcast");
+        attemptRaidBroadcast(channelId);
     }
 }
 
