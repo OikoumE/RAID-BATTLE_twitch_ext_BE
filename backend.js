@@ -519,6 +519,10 @@ async function ongoingRaidGameQueryHandler(req) {
         addNewStreamer(channelId);
     }
     console.log(
+        "[backend:520]: typeof channelRaiders[channelId]",
+        typeof channelRaiders[channelId]
+    );
+    console.log(
         '[backend:520]: typeof channelRaiders[channelId] === "undefined"',
         typeof channelRaiders[channelId] === "undefined"
     );
