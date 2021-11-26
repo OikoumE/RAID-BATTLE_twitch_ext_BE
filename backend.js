@@ -107,31 +107,35 @@ const strings = {
 };
 //! -------------------- my vars -------------------- //
 
-async function printTimeout() {
-    var date = new Date();
+function herokuPingerTimerouter() {
     let nextTimeout =
         Math.floor(
-            Math.random() *
+            Math.random() * 5 +
                 Math.floor(Math.random() * KEEP_HEROKU_ALIVE_INTERVAL)
         ) *
         60 *
         1000;
+    // nextTimeout < 5 ? herokuPingerTimerouter() : nextTimeout;
+    return nextTimeout;
+}
 
-    console.log();
+async function herokuPinger() {
+    var date = new Date();
+    let nextTimeout = herokuPingerTimerouter();
     setTimeout(async () => {
         fetch("https://raid-battle-twitch-ext.herokuapp.com/").then((res) =>
             console.log(
-                "[backend:107]: Herokupinger returned: ",
+                "[backend:107]: HerokuPinger returned: ",
                 res.status,
                 `next ping in ${date.toLocaleTimeString()} - ${Math.floor(
                     nextTimeout / 1000 / 60
                 )} min`
             )
         );
-        printTimeout();
+        herokuPinger();
     }, nextTimeout);
 }
-printTimeout();
+herokuPinger();
 
 const STRINGS = {
     secretEnv: usingValue("secret"),
@@ -848,6 +852,7 @@ function restartTmi(channelList) {
         startTmi(channelList);
     });
 }
+
 async function startRaid(channel, username, viewers) {
     console.log(
         `[backend:549]: Starting raid on channel: ${channel}, started by: ${username}`
