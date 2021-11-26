@@ -711,6 +711,9 @@ function startBroadcastInterval(channelId) {
                 channelRaiders[channelId].interval = null;
                 channelRaiders[channelId].games.length = 0;
                 attemptRaidBroadcast(channelId);
+                console.log(
+                    "[backend:713]: GameTime has expired, sending final broadcast"
+                );
             }, timeout * 1000);
         }
     }
@@ -1076,9 +1079,8 @@ function specialCondition(channelId) {
         attemptRaidBroadcast(channelId);
         channelRaiders[channelId].games.length = 0;
         console.log(
-            "[backend:1013]: No more players, stopping broadcast and cleaning up"
+            "[backend:1014]: all players dead, sending final broadcast"
         );
-        console.log("[backend:1014]: sending final broadcast");
     }
 }
 
