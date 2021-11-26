@@ -55,6 +55,8 @@ const { get } = require("https");
 // TODO fix full cleanup happening before gameResultDuration instead of fater like intended
 // TODO if raider == dead && timeLeft > 1 {gameResultDuration (timestamp) is NOW+gameResultDuration}
 
+// TODO figure out a way to remove channels from channels to monitor list.
+
 //! --------------------------------------------------------- //
 //*                      -- MY VARS --                       //
 //! ------------------------------------------------------- //
@@ -105,7 +107,7 @@ const strings = {
     // both raiders must be below 50% for streamer to win
     // if any raider above 50%, team raider wins
 };
-//! -------------------- my vars -------------------- //
+//! -------------------- /my_vars -------------------- //
 
 function herokuPingerTimerouter() {
     let nextTimeout =
@@ -1096,7 +1098,7 @@ function setResult(channelId, raider, string, finalResult = false) {
 function checkIfGameExpired(gamesArray) {
     //
     const stateArray = gamesArray.map(
-        (game) => Date.now() / 1000 >= game.gameTimeObj.gameResultDuration
+        (game) => Date.now() / 1000 >= game.gameTimeObj.gameDuration
     );
     for (let i = 0; i < stateArray.length; i++) {
         if (!stateArray[i]) {
