@@ -875,10 +875,12 @@ async function startRaid(channel, username, viewers) {
     }
     attemptRaidBroadcast(channelId);
     //! TEST CHAT!
-    sendChatMessageToChannel(
-        `Starting RAID-BATTLE on channel: ${channel}, started by: ${username}`,
-        channelId
-    );
+    if (streamerData.userConfig.enableChatOutput) {
+        sendChatMessageToChannel(
+            `Starting RAID-BATTLE on channel: ${channel}, started by: ${username}`,
+            channelId
+        );
+    }
     //! TEST CHAT!
     startBroadcastInterval(channelId);
     if (channelRaiders[channelId].games) {
@@ -1170,8 +1172,6 @@ function calculateGameResultDuration(gameDuration, streamerData) {
 //! --------------------------------------------------------- //
 //*                       -- CHAT API --                     //
 //! ------------------------------------------------------- //
-//TODO wait for API to get fixed!!!!!!!!!!!
-
 async function sendChatMessageToChannel(message, channelId) {
     // not more often than every 5sec
     // Maximum: 280 characters.
