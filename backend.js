@@ -57,6 +57,7 @@ const { get } = require("https");
 
 // TODO figure out a way to remove channels from channels to monitor list.
 
+// TODO set
 //! --------------------------------------------------------- //
 //*                      -- MY VARS --                       //
 //! ------------------------------------------------------- //
@@ -129,7 +130,7 @@ async function herokuPinger() {
             console.log(
                 "[backend:107]: HerokuPinger returned: ",
                 res.status,
-                `next ping in ${date.toLocaleTimeString()} - ${Math.floor(
+                `, PINGED@: ${date.toLocaleTimeString()}, next ping in  - ${Math.floor(
                     nextTimeout / 1000 / 60
                 )} min`
             )
@@ -641,7 +642,7 @@ function streamerSupportHandler(req) {
         for (const gameObj of channelRaiders[channelId].games) {
             if (gameObj.raiderData.health > 0) {
                 //! TEST
-                if (channelId == 93645775) {
+                if (opaqueUserId == "U93645775") {
                     gameObj.raiderData.health = gameObj.raiderData.health - 20;
                 }
                 //! TEST
@@ -983,7 +984,7 @@ function specialCondition(channelId) {
     // TODO check if ANY raider.health < 1
     // TODO check if ALL raider.health < 1
     let deathCount = 0;
-    // get raiders at/above 50hp and set result
+    // get raiders at/below 50hp and set result
     checkRaiderHealthAndSetResult(channelId, gamesArray, 50, "halfHealth");
     // get raiders below 1hp and set result
     checkRaiderHealthAndSetResult(channelId, gamesArray, 1, "dead");
@@ -1192,9 +1193,13 @@ function calculateGameResultDuration(gameDuration, streamerData) {
 //! --------------------------------------------------------- //
 //*                       -- CHAT API --                     //
 //! ------------------------------------------------------- //
+
 async function sendChatMessageToChannel(message, channelId) {
-    // not more often than every 5sec
+    // not more often than every 5sec pr channel
     // Maximum: 280 characters.
+
+    // TODO make timestamp and queue system for sending msg's
+
     console.log(`sending message: "${message}" to channel: "${channelId}"`);
     const jwtToken = makeServerToken(channelId);
     const url = `https://api.twitch.tv/helix/extensions/chat?broadcaster_id=${channelId}`,
@@ -1205,7 +1210,7 @@ async function sendChatMessageToChannel(message, channelId) {
         },
         body = JSON.stringify({
             // text: message,
-            text: "Test Message",
+            text: message,
             extension_id: clientId,
             extension_version: CURRENT_VERSION,
         });
