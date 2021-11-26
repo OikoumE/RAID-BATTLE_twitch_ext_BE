@@ -940,6 +940,7 @@ function checkForExistingGameResult(testArray, testKey, testValue) {
     // will be true if pair is found, otherwise false.
 }
 function checkRaiderHealthAndSetResult(
+    channelId,
     gamesArray,
     healthThreshold,
     stringName
@@ -971,9 +972,9 @@ function specialCondition(channelId) {
     // TODO check if ALL raider.health < 1
     let deathCount = 0;
     // get raiders at/above 50hp and set result
-    checkRaiderHealthAndSetResult(gamesArray, 50, "halfHealth");
+    checkRaiderHealthAndSetResult(channelId, gamesArray, 50, "halfHealth");
     // get raiders below 1hp and set result
-    checkRaiderHealthAndSetResult(gamesArray, 1, "dead");
+    checkRaiderHealthAndSetResult(channelId, gamesArray, 1, "dead");
     // gametime has run out
     var alive = 0;
     const gameEndResult = gamesArray.map((game) => {
