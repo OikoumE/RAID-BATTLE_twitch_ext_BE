@@ -81,7 +81,8 @@ let APP_ACCESS_TOKEN = null,
 
 const initialHealth = 100,
     channelRaiders = {},
-    KEEP_HEROKU_ALIVE_INTERVAL = 15;
+    KEEP_HEROKU_ALIVE_INTERVAL = 15,
+    CHAT_MSG_COOLDOWN = 6;
 var dataBase, tmiClient;
 
 const defaults = {
@@ -887,9 +888,12 @@ async function startRaid(channel, username, viewers) {
     const streamerData = await dataBase.findOne({ channelName: channel }),
         channelId = streamerData.channelId;
     if (typeof channelRaiders[channelId] !== "object") {
-        const games = [],
-            interval = null;
-        channelRaiders[channelId] = { games, interval };
+        channelRaiders[channelId] = {
+            games: [],
+            interval: null,
+            msgQueue: [],
+            msgCooldown: 0,
+        };
     }
     if (
         !channelRaiders[channelId].games.some(
@@ -907,10 +911,12 @@ async function startRaid(channel, username, viewers) {
     attemptRaidBroadcast(channelId);
     //! TEST CHAT!
     if (streamerData.userConfig.enableChatOutput) {
-        sendChatMessageToChannel(
+        attemptSendChatMessageToChannel(
             `Starting RAID-BATTLE on channel: ${channel}, started by: ${username}`,
             channelId
         );
+        attemptSendChatMessageToChannel(`timeout msg 1`, channelId);
+        attemptSendChatMessageToChannel(`timeout msg 2`, channelId);
     }
     //! TEST CHAT!
     startBroadcastInterval(channelId);
@@ -1205,13 +1211,29 @@ function calculateGameResultDuration(gameDuration, streamerData) {
 //! --------------------------------------------------------- //
 //*                       -- CHAT API --                     //
 //! ------------------------------------------------------- //
+async function attemptSendChatMessageToChannel(message, channelId) {
+    // TODO make timestamp and queue system for sending msg's
+    const cooldown = channelRaiders[channelId].msgCooldown,
+        now = Date.now() / 1000,
+        remainingCooldown = cooldown - now;
+    if (cooldown > now) {
+        // we are in cooldown
+        // TODO queue
+        setTimeout(() => {
+            sendChatMessageToChannel(message, channelId);
+            channelRaiders[channelId].msgCooldown =
+                now + CHAT_MSG_COOLDOWN + remainingCooldown;
+        }, remainingCooldown * 1000);
+    } else {
+        // we are not in cooldown
+        channelRaiders[channelId].msgCooldown = now + CHAT_MSG_COOLDOWN;
+        sendChatMessageToChannel(message, channelId);
+    }
+}
 
 async function sendChatMessageToChannel(message, channelId) {
     // not more often than every 5sec pr channel
     // Maximum: 280 characters.
-
-    // TODO make timestamp and queue system for sending msg's
-
     console.log(`sending message: "${message}" to channel: "${channelId}"`);
     const jwtToken = makeServerToken(channelId);
     const url = `https://api.twitch.tv/helix/extensions/chat?broadcaster_id=${channelId}`,
