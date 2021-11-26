@@ -518,17 +518,19 @@ async function ongoingRaidGameQueryHandler(req) {
     if (!result) {
         addNewStreamer(channelId);
     }
-    console.log(
-        "[backend:520]: typeof channelRaiders[channelId]",
-        typeof channelRaiders[channelId]
-    );
-    console.log(
-        '[backend:520]: typeof channelRaiders[channelId] === "undefined"',
-        typeof channelRaiders[channelId] === "undefined"
-    );
     if (typeof channelRaiders[channelId] === "undefined") {
-        // ||
-        // !Array.isArray(channelRaiders[channelId].games)
+        console.log("[backend:321]: No active games");
+        return null;
+    } else if (
+        channelRaiders[channelId] &&
+        typeof channelRaiders[channelId].games === "undefined"
+    ) {
+        console.log("[backend:321]: No active games");
+        return null;
+    } else if (
+        channelRaiders[channelId] &&
+        channelRaiders[channelId].games.length < 1
+    ) {
         console.log("[backend:321]: No active games");
         return null;
     }
