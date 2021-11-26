@@ -701,9 +701,17 @@ function startBroadcastInterval(channelId) {
         specialCondition(channelId);
         attemptRaidBroadcast(channelId);
         if (gameExpired) {
-            channelRaiders[channelId].interval = null;
-            channelRaiders[channelId].games.length = 0;
-            attemptRaidBroadcast(channelId);
+            let timeout = defaults.gameResultDuration.default;
+            if (channelRaiders[channelId].games[0].streamerData) {
+                timeout =
+                    channelRaiders[channelId].games[0].streamerData
+                        .streamerResultDuration;
+            }
+            setTimeout(() => {
+                channelRaiders[channelId].interval = null;
+                channelRaiders[channelId].games.length = 0;
+                attemptRaidBroadcast(channelId);
+            }, timeout * 1000);
         }
     }
 }
