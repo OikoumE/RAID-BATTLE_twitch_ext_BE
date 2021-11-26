@@ -44,20 +44,19 @@ const { get } = require("https");
 //! --------------------------------------------------------- //
 //*                      -- TODO's --                        //
 //! ------------------------------------------------------- //
-// TODO Make a logger that logs critical errors to DB
-// TODO log pr channelID: timestamp, error, scriptLocation
+// TODO DB:
+// Make a logger that logs critical errors to DB
+// log pr channelID: timestamp, error, scriptLocation
+
 // TODO broadcast endgame state from EBS to EXT, with game result
 // TODO calculate game result
-// TODO FE: clean up
-// TODO fine tune timer, add to timer, multiraid
 // TODO sending gameOverState: win/defeated raiderX/loose
 
-// TODO fix full cleanup happening before gameResultDuration instead of fater like intended
-// TODO if raider == dead && timeLeft > 1 {gameResultDuration (timestamp) is NOW+gameResultDuration}
+//! TODO fix full cleanup happening before gameResultDuration instead of later like intended
+//! TODO if raider == dead && timeLeft > 1 {gameResultDuration (timestamp) is NOW+gameResultDuration}
 
 // TODO figure out a way to remove channels from channels to monitor list.
 
-// TODO set
 //! --------------------------------------------------------- //
 //*                      -- MY VARS --                       //
 //! ------------------------------------------------------- //
@@ -1219,10 +1218,10 @@ async function attemptSendChatMessageToChannel(message, channelId) {
     if (cooldown > now) {
         // we are in cooldown
         // TODO queue
+        channelRaiders[channelId].msgCooldown =
+            now + CHAT_MSG_COOLDOWN + remainingCooldown;
         setTimeout(() => {
             sendChatMessageToChannel(message, channelId);
-            channelRaiders[channelId].msgCooldown =
-                now + CHAT_MSG_COOLDOWN + remainingCooldown;
         }, remainingCooldown * 1000);
     } else {
         // we are not in cooldown
