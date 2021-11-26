@@ -310,11 +310,9 @@ async function warmHandler(req) {
         }
     } catch (err) {
         response = "MatisseNGROK error";
-        console.log("MatisseNGROK error");
+        console.log("[backend:312]: ", response);
     }
-    // return `
-    // <p id="thing">hello: ${data.chanelId}</p>
-    // `;
+
     return JSON.stringify({ data: response });
 }
 
@@ -626,7 +624,7 @@ function streamerSupportHandler(req) {
     }
     if (channelRaiders[channelId] && channelRaiders[channelId].games) {
         console.log(
-            `reduce health on all raiders in stream: ${channelId}, by ${opaqueUserId}`
+            `[backend:627]: reduce health on all raiders in stream: ${channelId}, by ${opaqueUserId}`
         );
         for (const gameObj of channelRaiders[channelId].games) {
             if (gameObj.raiderData.health > 0) {
@@ -955,7 +953,9 @@ function checkRaiderHealthAndSetResult(
                 parse(strings[stringName], game.raiderData.display_name)
             )
         ) {
-            console.log("raider under 50% and not in resultqueue");
+            console.log(
+                "[backend:957]: raider under 50% and not in resultqueue"
+            );
             setResult(
                 channelId,
                 game.raiderData.display_name,
