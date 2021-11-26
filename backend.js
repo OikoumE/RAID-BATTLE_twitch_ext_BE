@@ -872,18 +872,13 @@ async function startRaid(channel, username, viewers) {
         );
         channelRaiders[channelId].games.push(raidPackage);
         setResult(channelId, username, parse(strings.intro1, username));
-        //! TEST
-        // setTimeout(() => {
-        //     setResult(channelId, username, parse(strings.intro1, username));
-        // }, 30 * 1000);
-        //! TEST
     }
     attemptRaidBroadcast(channelId);
     //! TEST CHAT!
-    // sendChatMessageToChannel(
-    //     `Starting RAID-BATTLE on channel: ${channel}, started by: ${username}`,
-    //     channelId
-    // );
+    sendChatMessageToChannel(
+        `Starting RAID-BATTLE on channel: ${channel}, started by: ${username}`,
+        channelId
+    );
     //! TEST CHAT!
     startBroadcastInterval(channelId);
     if (channelRaiders[channelId].games) {
@@ -935,6 +930,30 @@ function checkForExistingGameResult(testArray, testKey, testValue) {
     });
     // will be true if pair is found, otherwise false.
 }
+function checkRaiderHealthAndSetResult(
+    gamesArray,
+    healthThreshold,
+    stringName
+) {
+    for (const game of gamesArray) {
+        // check if raider is at 50% health
+        if (
+            game.raiderData.health <= healthThreshold &&
+            !checkForExistingGameResult(
+                game.gameResult,
+                "string",
+                parse(strings[stringName], game.raiderData.display_name)
+            )
+        ) {
+            console.log("raider under 50% and not in resultqueue");
+            setResult(
+                channelId,
+                game.raiderData.display_name,
+                parse(strings[stringName], game.raiderData.display_name)
+            );
+        }
+    }
+}
 function specialCondition(channelId) {
     const gamesArray = channelRaiders[channelId].games;
     //is met?
@@ -942,45 +961,11 @@ function specialCondition(channelId) {
     // TODO check if ANY raider.health < 1
     // TODO check if ALL raider.health < 1
     let deathCount = 0;
-    for (const game of gamesArray) {
-        // check if raider is at 50% health
-        if (
-            game.raiderData.health <= 50 &&
-            !checkForExistingGameResult(
-                game.gameResult,
-                "string",
-                parse(strings.halfHealth, game.raiderData.display_name)
-            )
-        ) {
-            console.log("raider under 50% and not in resultqueue");
-            setResult(
-                channelId,
-                game.raiderData.display_name,
-                parse(strings.halfHealth, game.raiderData.display_name)
-            );
-        }
-        // check if raider is below 1hp
-        if (
-            game.raiderData.health < 1 &&
-            !checkForExistingGameResult(
-                game.gameResult,
-                "string",
-                parse(strings.dead, game.raiderData.display_name)
-            )
-        ) {
-            setResult(
-                channelId,
-                game.raiderData.display_name,
-                parse(strings.dead, game.raiderData.display_name)
-            );
-        }
-    }
-
-    const gameDuration = Math.max(
-        ...gamesArray.map((game) => game.gameTimeObj.gameDuration)
-    );
+    // get raiders at/above 50hp and set result
+    checkRaiderHealthAndSetResult(gamesArray, 50, "halfHealth");
+    // get raiders below 1hp and set result
+    checkRaiderHealthAndSetResult(gamesArray, 1, "dead");
     // gametime has run out
-    // get survivers at/above 50hp, deads below 50hp
     var alive = 0;
     const gameEndResult = gamesArray.map((game) => {
         if (game.raiderData.health >= 50) {
@@ -991,20 +976,23 @@ function specialCondition(channelId) {
             return { name: game.raiderData.display_name, alive: false };
         }
     });
+    const gameDuration = Math.max(
+        ...gamesArray.map((game) => game.gameTimeObj.gameDuration)
+    );
     if (gameDuration < Date.now() / 1000) {
-        for (const result of gameEndResult) {
-            if (result.alive) {
-                alive++;
-            } else {
-                alive--;
-            }
-        }
+        // for (const result of gameEndResult) {
+        //     if (result.alive) {
+        //         alive++;
+        //     } else {
+        //         alive--;
+        //     }
+        // }
         console.log("[backend:1061]: alive", alive);
         console.log(
             "[backend:1062]: gameEndResult.length",
             gameEndResult.length
         );
-        if (alive == -gameEndResult.length) {
+        if (gameEndResult.length + alive == 0) {
             // TODO streamer win
             //! if all had less than 50%
             gameEndResult;
@@ -1033,7 +1021,7 @@ function specialCondition(channelId) {
         }
         console.log("[backend:1054]: gameEndResult", gameEndResult);
     }
-    gamesArray.map((game) =>
+    gamesArray.forEach((game) =>
         game.raiderData.health < 1 ? deathCount++ : null
     );
     if (deathCount == gamesArray.length) {
@@ -1070,7 +1058,6 @@ function setResult(channelId, raider, string, finalResult = false) {
             raiderGame.raiderData.display_name.toLowerCase() ==
             raider.toLowerCase()
         ) {
-            // TODO
             const streamerData =
                 channelRaiders[channelId].games[i].streamerData;
             let defaultExpire = defaults.gameInfoDuration.default,
@@ -1166,12 +1153,17 @@ function calculateGameDuration(introDuration, streamerData) {
 }
 function calculateGameResultDuration(gameDuration, streamerData) {
     // set gameResultDuration on gameTimeObj
-    gameResultDuration = Math.floor(
-        gameDuration +
-            (streamerData.userConfig
-                ? streamerData.userConfig.gameResultDuration
-                : defaults.gameResultDuration.default)
-    );
+    //! TIMESTAMP
+    // gameResultDuration = Math.floor(
+    //     gameDuration +
+    //         (streamerData.userConfig
+    //             ? streamerData.userConfig.gameResultDuration
+    //             : defaults.gameResultDuration.default)
+    // );
+    //! TIME IN SEC
+    gameResultDuration = streamerData.userConfig
+        ? streamerData.userConfig.gameResultDuration
+        : defaults.gameResultDuration.default;
     return gameResultDuration;
 }
 
