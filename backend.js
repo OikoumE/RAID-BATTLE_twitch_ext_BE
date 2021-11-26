@@ -711,6 +711,8 @@ function startBroadcastInterval(channelId) {
                 channelRaiders[channelId].interval = null;
                 channelRaiders[channelId].games.length = 0;
                 attemptRaidBroadcast(channelId);
+                // TODO make this send result FE will ahndle cleaning up game
+
                 console.log(
                     "[backend:713]: GameTime has expired, sending final broadcast"
                 );
@@ -890,7 +892,6 @@ async function startRaid(channel, username, viewers) {
         channelRaiders[channelId] = {
             games: [],
             interval: null,
-            msgQueue: [],
             msgCooldown: 0,
         };
     }
@@ -914,8 +915,6 @@ async function startRaid(channel, username, viewers) {
             `Starting RAID-BATTLE on channel: ${channel}, started by: ${username}`,
             channelId
         );
-        attemptSendChatMessageToChannel(`timeout msg 1`, channelId);
-        attemptSendChatMessageToChannel(`timeout msg 2`, channelId);
     }
     //! TEST CHAT!
     startBroadcastInterval(channelId);
@@ -1081,8 +1080,20 @@ function specialCondition(channelId) {
             )
         );
         // do final broadcast
-        attemptRaidBroadcast(channelId);
-        channelRaiders[channelId].games.length = 0;
+        setTimeout(() => {
+            channelRaiders[channelId].interval = null;
+            channelRaiders[channelId].games.length = 0;
+            attemptRaidBroadcast(channelId);
+            // TODO make this send result FE will ahndle cleaning up game
+
+            console.log(
+                "[backend:713]: GameTime has expired, sending final broadcast"
+            );
+        }, timeout * 1000);
+
+        // attemptRaidBroadcast(channelId);
+        // // TODO make this send result FE will ahndle cleaning up game
+        // channelRaiders[channelId].games.length = 0;
         console.log(
             "[backend:1014]: all players dead, sending final broadcast"
         );
@@ -1192,15 +1203,6 @@ function calculateGameDuration(introDuration, streamerData) {
     return gameDuration;
 }
 function calculateGameResultDuration(gameDuration, streamerData) {
-    // set gameResultDuration on gameTimeObj
-    //! TIMESTAMP
-    // gameResultDuration = Math.floor(
-    //     gameDuration +
-    //         (streamerData.userConfig
-    //             ? streamerData.userConfig.gameResultDuration
-    //             : defaults.gameResultDuration.default)
-    // );
-    //! TIME IN SEC
     gameResultDuration = streamerData.userConfig
         ? streamerData.userConfig.gameResultDuration
         : defaults.gameResultDuration.default;
@@ -1211,13 +1213,11 @@ function calculateGameResultDuration(gameDuration, streamerData) {
 //*                       -- CHAT API --                     //
 //! ------------------------------------------------------- //
 async function attemptSendChatMessageToChannel(message, channelId) {
-    // TODO make timestamp and queue system for sending msg's
     const cooldown = channelRaiders[channelId].msgCooldown,
         now = Date.now() / 1000,
         remainingCooldown = cooldown - now;
     if (cooldown > now) {
         // we are in cooldown
-        // TODO queue
         channelRaiders[channelId].msgCooldown =
             now + CHAT_MSG_COOLDOWN + remainingCooldown;
         setTimeout(() => {
