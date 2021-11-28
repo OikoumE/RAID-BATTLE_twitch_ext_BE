@@ -555,12 +555,12 @@ async function requestUserConfigHandler(req) {
     if (result) {
         return JSON.stringify({
             result: "Loaded user config",
-            data: { result, DEFAULTS },
+            data: { result, defaults: DEFAULTS },
         });
     }
     return JSON.stringify({
         result: "Did not find config, hit save to store config",
-        data: { DEFAULTS },
+        data: { defaults: DEFAULTS },
     });
 }
 
