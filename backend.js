@@ -700,24 +700,26 @@ function startBroadcastInterval(channelId) {
         //TODO clean up games list
         specialCondition(channelId);
         attemptRaidBroadcast(channelId);
-        if (gameExpired) {
-            let timeout = defaults.gameResultDuration.default;
-            if (channelRaiders[channelId].games[0].streamerData) {
-                timeout =
-                    channelRaiders[channelId].games[0].streamerData
-                        .streamerResultDuration;
-            }
-            setTimeout(() => {
-                channelRaiders[channelId].interval = null;
-                channelRaiders[channelId].games.length = 0;
-                attemptRaidBroadcast(channelId);
-                // TODO make this send result FE will ahndle cleaning up game
+    }
+}
 
-                console.log(
-                    "[backend:713]: GameTime has expired, sending final broadcast"
-                );
-            }, timeout * 1000);
+function sendFinalBroadcastTimeout(channelId) {
+    if (gameExpired) {
+        let timeout = defaults.gameResultDuration.default;
+        if (channelRaiders[channelId].games[0].streamerData) {
+            timeout =
+                channelRaiders[channelId].games[0].streamerData
+                    .streamerResultDuration;
         }
+        setTimeout(() => {
+            channelRaiders[channelId].interval = null;
+            channelRaiders[channelId].games.length = 0;
+            attemptRaidBroadcast(channelId);
+            // TODO make this send result FE will ahndle cleaning up game
+            console.log(
+                "[backend:713]: GameTime has expired, sending final broadcast"
+            );
+        }, timeout * 1000);
     }
 }
 
@@ -1080,16 +1082,21 @@ function specialCondition(channelId) {
             )
         );
         // do final broadcast
-        setTimeout(() => {
-            channelRaiders[channelId].interval = null;
-            channelRaiders[channelId].games.length = 0;
-            attemptRaidBroadcast(channelId);
-            // TODO make this send result FE will ahndle cleaning up game
+        // TODO PLACEHOLDER
+        // TODO PLACEHOLDER
+        // TODO PLACEHOLDER
+        // TODO PLACEHOLDER
+        // TODO PLACEHOLDER
 
-            console.log(
-                "[backend:713]: GameTime has expired, sending final broadcast"
-            );
-        }, timeout * 1000);
+        sendFinalBroadcastTimeout(channelId);
+
+        // setTimeout(() => {
+        //     channelRaiders[channelId].interval = null;
+        //     channelRaiders[channelId].games.length = 0;
+        //     attemptRaidBroadcast(channelId);
+        //     // TODO make this send result FE will ahndle cleaning up game
+
+        // }, timeout * 1000);
 
         // attemptRaidBroadcast(channelId);
         // // TODO make this send result FE will ahndle cleaning up game
