@@ -861,7 +861,7 @@ function startTmi(channels) {
     tmiClient.connect().then(() => {
         console.log(`[backend:529]: Listening for messages on ${channels}`);
     });
-    tmiClient.on("raided", (channel, username, viewers) => {
+    tmiClient.on("raided", async (channel, username, viewers) => {
         // channel: String - Channel name being raided
         // username: String - Username raiding the channel
         // viewers: Integer - Viewers count
