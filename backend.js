@@ -33,6 +33,7 @@ const verboseLog = verboseLogging ? console.log.bind(console) : () => {};
 // Service state variables
 const serverTokenDurationSec = 30; // our tokens for pubsub expire after 30 seconds
 const userCooldownMs = 100; // maximum input rate per user to prevent bot abuse
+const userSkipCooldownMs = 10; // maximum input rate per user to prevent bot abuse
 const userCooldownClearIntervalMs = 60000; // interval to reset our tracking object
 const channelCooldownMs = 1000; // maximum broadcast rate per channel
 const bearerPrefix = "Bearer "; // HTTP authorization headers have this prefix
@@ -345,7 +346,8 @@ function userIsInCooldown(opaqueUserId, skipCooldown = false) {
         return true;
     }
     // Voting extensions must also track per-user votes to prevent skew.
-    userCooldowns[opaqueUserId] = now + skipCooldown ? 0 : userCooldownMs;
+    userCooldowns[opaqueUserId] =
+        now + skipCooldown ? userSkipCooldownMs : userCooldownMs;
     return false;
 }
 
@@ -439,15 +441,15 @@ async function requestUserConfigHandler(req) {
         throw Boom.tooManyRequests(STRINGS.cooldown);
     }
     const result = await dataBase.findOne({ channelId });
-    if (result) {
+    if (result.userConfig) {
         return JSON.stringify({
             result: "Loaded user config",
-            data: { result, defaults: DEFAULTS },
+            data: { result: result.userConfig, defaults: DEFAULTS },
         });
     }
     return JSON.stringify({
         result: "Did not find config, hit save to store config",
-        data: { defaults: DEFAULTS },
+        data: { result: null, defaults: DEFAULTS },
     });
 }
 //! ---- UPDATECONFIG ---- //
@@ -834,7 +836,12 @@ async function startRaid(channel, username, viewers) {
         )
     ) {
         await constructRaidPackage(username, viewers, streamerData, channelId);
-        setResult(channelId, username, parse(strings.intro1, username));
+        setResult(
+            channelId,
+            username,
+            parse(strings.intro1, username),
+            "introDuration"
+        );
         //! TEST CHAT!
         attemptSendChatMessageToChannel(
             streamerData,
@@ -851,6 +858,18 @@ async function startRaid(channel, username, viewers) {
         }:`
     );
     return result;
+}
+
+function getUserConfigOrDefaultValue(channelId, configName) {
+    const userConfig =
+        channelRaiders[channelId].games[0].streamerData.userConfig;
+    if (userConfig) {
+        // we have userconfig
+        return userConfig[`${configName}`];
+    } else {
+        // we dont have userconfig
+        return DEFAULTS[`${configName}`].default;
+    }
 }
 
 async function constructRaidPackage(
@@ -918,7 +937,8 @@ function checkRaiderHealthAndSetResult(
             setResult(
                 channelId,
                 game.raiderData.display_name,
-                parse(strings[stringName], game.raiderData.display_name)
+                parse(strings[stringName], game.raiderData.display_name),
+                "gameInfoDuration"
             );
         }
     }
@@ -949,10 +969,12 @@ function setGameExpiredResult(gamesArray, channelId, gameEnd) {
             winner = gameEnd.result[0].name;
             defeated = gamesArray[0].streamerData.displayName;
         }
+
         setResult(
             channelId,
             gameEnd.result[0].name,
-            parse(strings.win, winner, defeated)
+            parse(strings.win, winner, defeated),
+            "gameResultDuration"
         );
         sendFinalBroadcastTimeout(channelId);
         console.log("[backend:1054]: gameEnd.result", gameEnd.result);
@@ -974,7 +996,8 @@ function setAllRaiderDeadCondition(gamesArray, channelId, gameEnd) {
                 strings.win,
                 gameEnd.result[0].name,
                 gamesArray[0].streamerData.displayName
-            )
+            ),
+            gameResultDuration
         );
         // do final broadcast
         // TODO continue broadcasting, with all players at 0 health, and final gameResult
@@ -992,14 +1015,14 @@ function parse(str) {
     return str.replace(/%s/g, () => args[i++]);
 }
 
-// setResult(channelId, raider, parse(strings.intro1, raider));
 function checkForExistingGameResult(testArray, testKey, testValue) {
     return testArray.some(function (o) {
         return o[testKey] === testValue;
     });
     // will be true if pair is found, otherwise false.
 }
-function setResult(channelId, raider, string, finalResult = false) {
+// function setResult(channelId, raider, string, finalResult = false) {
+function setResult(channelId, raider, string, durationName) {
     // sets a result on a game if a special condition is met
     // channelRaiders[channelId] == Array
     for (let i = 0; i < channelRaiders[channelId].games.length; i++) {
@@ -1008,32 +1031,35 @@ function setResult(channelId, raider, string, finalResult = false) {
             raiderGame.raiderData.display_name.toLowerCase() ==
             raider.toLowerCase()
         ) {
-            let gameInfoDuration,
-                gameResultDuration,
-                addedTime = 0;
-            try {
-                const userConfig =
-                    channelRaiders[channelId].games[i].streamerData.userConfig;
-                if (userConfig) {
-                    // we have userconfig
-                    gameInfoDuration = userConfig.gameInfoDuration;
-                    gameResultDuration = userConfig.gameResultDuration;
-                } else {
-                    // we dont have userconfig
-                    gameInfoDuration = DEFAULTS.gameInfoDuration.default;
-                    gameResultDuration = DEFAULTS.gameResultDuration.default;
-                }
-            } catch (err) {
-                console.log("[backend:1135]: err", err);
-                gameInfoDuration = DEFAULTS.gameInfoDuration.default;
-                gameResultDuration = DEFAULTS.gameResultDuration.default;
-            }
-            addedTime = finalResult ? gameResultDuration : gameInfoDuration;
+            const addedTime = getUserConfigOrDefaultValue(
+                channelId,
+                durationName
+            );
+            // let introDuration,
+            //     gameInfoDuration,
+            //     gameResultDuration,
+            //     addedTime = 0;
+            // const userConfig =
+            //     channelRaiders[channelId].games[i].streamerData.userConfig;
+            // if (userConfig) {
+            //     // we have userconfig
+            //     introDuration = userConfig.introDuration;
+            //     gameInfoDuration = userConfig.gameInfoDuration;
+            //     gameResultDuration = userConfig.gameResultDuration;
+            // } else {
+            //     // we dont have userconfig
+            //     introDuration = DEFAULTS.introDuration.default;
+            //     gameInfoDuration = DEFAULTS.gameInfoDuration.default;
+            //     gameResultDuration = DEFAULTS.gameResultDuration.default;
+            // }
+            // addedTime = finalResult ? gameResultDuration : gameInfoDuration;
+            // const resultExpires = Date.now() + addedTime * 1000;
             const resultExpires = Date.now() + addedTime * 1000;
             channelRaiders[channelId].games[i].gameResult.push({
                 resultExpires,
                 string,
             });
+            break;
         }
     }
 }
