@@ -1120,11 +1120,14 @@ function setResult(channelId, raider, string, finalResult = false) {
             const streamerData =
                 channelRaiders[channelId].games[i].streamerData;
             //TODO " Cannot read property 'gameInfoDuration' of undefined"
-            let defaultExpire = DEFAULTS.gameInfoDuration.default,
-                gameResultDuration = DEFAULTS.gameResultDuration.default,
-                streamerExpire = streamerData.userConfig.gameInfoDuration,
-                streamerResultDuration =
-                    streamerData.userConfig.gameResultDuration;
+            // let defaultExpire = DEFAULTS.gameInfoDuration.default,
+            //     gameResultDuration = DEFAULTS.gameResultDuration.default,
+            const streamerExpire =
+                streamerData.userConfig.gameInfoDuration ||
+                DEFAULTS.gameResultDuration.default;
+            const streamerResultDuration =
+                streamerData.userConfig.gameResultDuration ||
+                DEFAULTS.gameResultDuration.default;
             let addedTime = 0;
             if (finalResult) {
                 // check if streamer result duration is set if not use default
