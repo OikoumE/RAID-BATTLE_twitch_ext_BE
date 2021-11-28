@@ -337,7 +337,7 @@ async function setDefaultUserConfigInDatabase() {
 //*                   -- ROUTE HANDLERS --                   //
 //! ------------------------------------------------------- //
 
-function userIsInCooldown(opaqueUserId) {
+function userIsInCooldown(opaqueUserId, skipCooldown = false) {
     // Check if the user is in cool-down.
     const cooldown = userCooldowns[opaqueUserId];
     const now = Date.now();
@@ -345,7 +345,7 @@ function userIsInCooldown(opaqueUserId) {
         return true;
     }
     // Voting extensions must also track per-user votes to prevent skew.
-    userCooldowns[opaqueUserId] = now + userCooldownMs;
+    userCooldowns[opaqueUserId] = now + skipCooldown ? 0 : userCooldownMs;
     return false;
 }
 
@@ -423,7 +423,7 @@ async function addStreamerToChannelsHandler(req) {
     const payload = verifyAndDecode(req.headers.authorization);
     const { channel_id: channelId, opaque_user_id: opaqueUserId } = payload;
     // Bot abuse prevention:  don't allow a user to spam the button.
-    if (userIsInCooldown(opaqueUserId)) {
+    if (userIsInCooldown(opaqueUserId, true)) {
         throw Boom.tooManyRequests(STRINGS.cooldown);
     }
     const result = await addNewStreamer(channelId);
@@ -435,7 +435,7 @@ async function requestUserConfigHandler(req) {
     const payload = verifyAndDecode(req.headers.authorization);
     const { channel_id: channelId, opaque_user_id: opaqueUserId } = payload;
     // Bot abuse prevention:  don't allow a user to spam the button.
-    if (userIsInCooldown(opaqueUserId)) {
+    if (userIsInCooldown(opaqueUserId, true)) {
         throw Boom.tooManyRequests(STRINGS.cooldown);
     }
     const result = await dataBase.findOne({ channelId });
