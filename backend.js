@@ -913,7 +913,7 @@ async function startRaid(channel, username, viewers) {
     }
     attemptRaidBroadcast(channelId);
     //! TEST CHAT!
-    if (streamerData.userConfig.enableChatOutput) {
+    if (streamerData.userConfig && streamerData.userConfig.enableChatOutput) {
         attemptSendChatMessageToChannel(
             `Starting RAID-BATTLE on channel: ${channel}, started by: ${username}`,
             channelId
