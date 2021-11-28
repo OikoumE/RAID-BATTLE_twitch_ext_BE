@@ -92,7 +92,7 @@ const defaults = {
     extendGameDurationEnabled: { default: true },
     introDuration: { default: 30, max: 60, min: 0 },
     gameResultDuration: { default: 15, max: 30, min: 0 },
-    enableChatOutput: { default: false },
+    enableChatOutput: { default: true },
     gameInfoDuration: { default: 10, max: 20, min: 0 },
 };
 const strings = {
