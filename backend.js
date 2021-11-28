@@ -266,7 +266,7 @@ async function setDefaultUserConfigInDatabase() {
     });
     // Handle broadcaster requesting userConfig
     server.route({
-        method: "POST",
+        method: "GET",
         path: "/requestUserConfig/",
         handler: requestUserConfigHandler, //
     });
@@ -810,6 +810,9 @@ function restartTmi(channelList) {
     });
 }
 
+//! --------------------------------------------------------- //
+//*                  -- GAME CONDITION --                    //
+//! ------------------------------------------------------- //
 async function startRaid(channel, username, viewers) {
     console.log(
         `[backend:549]: Starting raid on channel: ${channel}, started by: ${username}`
@@ -878,9 +881,6 @@ async function constructRaidPackage(
     return raidPackage;
 }
 
-//! --------------------------------------------------------- //
-//*                  -- GAME CONDITION --                    //
-//! ------------------------------------------------------- //
 function conditionHandler(channelId) {
     // Checks if certain conditions are met and
     // perform required tasks accodringly
