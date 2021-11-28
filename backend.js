@@ -705,12 +705,13 @@ function startBroadcastInterval(channelId) {
 }
 
 function sendFinalBroadcastTimeout(channelId) {
+    const gameExpired = checkIfGameExpired(channelRaiders[channelId].games);
     if (gameExpired) {
         let timeout = DEFAULTS.gameResultDuration.default;
-        if (channelRaiders[channelId].games[0].streamerData) {
+        if (channelRaiders[channelId].games[0].streamerData.userConfig) {
             timeout =
-                channelRaiders[channelId].games[0].streamerData
-                    .streamerResultDuration;
+                channelRaiders[channelId].games[0].streamerData.userConfig
+                    .gameResultDuration;
         }
         setTimeout(() => {
             channelRaiders[channelId].interval = null;
@@ -913,7 +914,15 @@ async function startRaid(channel, username, viewers) {
     }
     attemptRaidBroadcast(channelId);
     //! TEST CHAT!
-    if (streamerData.userConfig && streamerData.userConfig.enableChatOutput) {
+    if (streamerData.userConfig) {
+        if (streamerData.userConfig.enableChatOutput) {
+            attemptSendChatMessageToChannel(
+                streamerData,
+                `Starting RAID-BATTLE on channel: ${channel}, started by: ${username}`,
+                channelId
+            );
+        }
+    } else {
         attemptSendChatMessageToChannel(
             `Starting RAID-BATTLE on channel: ${channel}, started by: ${username}`,
             channelId
@@ -1166,10 +1175,7 @@ function constructGameTimeObject(streamerData) {
     // handles creating the gameTimeObj: {gameDuration, introDuration, gameResultDuration}
     const introDuration = calculateIntroDuration(streamerData),
         gameDuration = calculateGameDuration(introDuration, streamerData),
-        gameResultDuration = calculateGameResultDuration(
-            gameDuration,
-            streamerData
-        );
+        gameResultDuration = calculateGameResultDuration(streamerData);
     return { introDuration, gameDuration, gameResultDuration };
 }
 function calculateIntroDuration(streamerData) {
@@ -1215,7 +1221,7 @@ function calculateGameDuration(introDuration, streamerData) {
     }
     return gameDuration;
 }
-function calculateGameResultDuration(gameDuration, streamerData) {
+function calculateGameResultDuration(streamerData) {
     gameResultDuration = streamerData.userConfig
         ? streamerData.userConfig.gameResultDuration
         : DEFAULTS.gameResultDuration.default;
@@ -1225,7 +1231,21 @@ function calculateGameResultDuration(gameDuration, streamerData) {
 //! --------------------------------------------------------- //
 //*                       -- CHAT API --                     //
 //! ------------------------------------------------------- //
-async function attemptSendChatMessageToChannel(message, channelId) {
+async function attemptSendChatMessageToChannel(
+    streamerData,
+    message,
+    channelId
+) {
+    if (streamerData.userConfig) {
+        if (!streamerData.userConfig.enableChatOutput) {
+            // dont send message if user has disabled chat output in config
+            return;
+        }
+    }
+    checkCooldownAndSendChatMessage(message, channelId);
+}
+
+async function checkCooldownAndSendChatMessage(message, channelId) {
     const cooldown = channelRaiders[channelId].msgCooldown,
         now = Date.now() / 1000,
         remainingCooldown = cooldown - now;
@@ -1246,7 +1266,9 @@ async function attemptSendChatMessageToChannel(message, channelId) {
 async function sendChatMessageToChannel(message, channelId) {
     // not more often than every 5sec pr channel
     // Maximum: 280 characters.
-    console.log(`sending message: "${message}" to channel: "${channelId}"`);
+    console.log(
+        `[backend:1270]: sending message: "${message}" to channel: "${channelId}"`
+    );
     const jwtToken = makeServerToken(channelId);
     const url = `https://api.twitch.tv/helix/extensions/chat?broadcaster_id=${channelId}`,
         headers = {
