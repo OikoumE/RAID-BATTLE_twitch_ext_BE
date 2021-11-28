@@ -1117,26 +1117,27 @@ function setResult(channelId, raider, string, finalResult = false) {
             raiderGame.raiderData.display_name.toLowerCase() ==
             raider.toLowerCase()
         ) {
-            const streamerData =
-                channelRaiders[channelId].games[i].streamerData;
-            //TODO " Cannot read property 'gameInfoDuration' of undefined"
-            // let defaultExpire = DEFAULTS.gameInfoDuration.default,
-            //     gameResultDuration = DEFAULTS.gameResultDuration.default,
-            const streamerExpire =
-                streamerData.userConfig.gameInfoDuration ||
-                DEFAULTS.gameResultDuration.default;
-            const streamerResultDuration =
-                streamerData.userConfig.gameResultDuration ||
-                DEFAULTS.gameResultDuration.default;
-            let addedTime = 0;
-            if (finalResult) {
-                // check if streamer result duration is set if not use default
-                addedTime = streamerResultDuration
-                    ? streamerResultDuration
-                    : gameResultDuration;
-            } else {
-                addedTime = streamerExpire ? streamerExpire : defaultExpire;
+            let gameInfoDuration,
+                gameResultDuration,
+                addedTime = 0;
+            try {
+                const userConfig =
+                    channelRaiders[channelId].games[i].streamerData.userConfig;
+                if (userConfig) {
+                    // we have userconfig
+                    gameInfoDuration = userConfig.gameInfoDuration;
+                    gameResultDuration = userConfig.gameResultDuration;
+                } else {
+                    // we dont have userconfig
+                    gameInfoDuration = DEFAULTS.gameInfoDuration.default;
+                    gameResultDuration = DEFAULTS.gameResultDuration.default;
+                }
+            } catch (err) {
+                console.log("[backend:1135]: err", err);
+                gameInfoDuration = DEFAULTS.gameInfoDuration.default;
+                gameResultDuration = DEFAULTS.gameResultDuration.default;
             }
+            addedTime = finalResult ? gameResultDuration : gameInfoDuration;
             const resultExpires = Date.now() + addedTime * 1000;
             channelRaiders[channelId].games[i].gameResult.push({
                 resultExpires,
