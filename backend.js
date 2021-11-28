@@ -870,7 +870,7 @@ function startTmi(channels) {
         );
         channel = channel.replace("#", "");
         viewers = parseInt(viewers);
-        startRaid(channel, username, viewers);
+        await startRaid(channel, username, viewers);
     });
 }
 function restartTmi(channelList) {
@@ -911,34 +911,32 @@ async function startRaid(channel, username, viewers) {
         );
         channelRaiders[channelId].games.push(raidPackage);
         setResult(channelId, username, parse(strings.intro1, username));
-    }
-    attemptRaidBroadcast(channelId);
-    //! TEST CHAT!
-    if (streamerData.userConfig) {
-        if (streamerData.userConfig.enableChatOutput) {
-            attemptSendChatMessageToChannel(
-                streamerData,
-                `Starting RAID-BATTLE on channel: ${channel}, started by: ${username}`,
-                channelId
-            );
-        }
-    } else {
+        //! TEST CHAT!
         attemptSendChatMessageToChannel(
+            streamerData,
             `Starting RAID-BATTLE on channel: ${channel}, started by: ${username}`,
             channelId
         );
+        //! TEST CHAT!
+        startBroadcastInterval(channelId);
+        // if (channelRaiders[channelId].games) {
+        //     console.log(
+        //         "[backend:844]: StartRaid returned: channelRaiders[channelId].games"
+        //     );
+        //     return channelRaiders[channelId].games;
+        // } else {
+        //     console.log("[backend:850]:StartRaid returned:, Null");
+        //     return null;
+        // }
     }
-    //! TEST CHAT!
-    startBroadcastInterval(channelId);
-    if (channelRaiders[channelId].games) {
-        console.log(
-            "[backend:844]: StartRaid returned: channelRaiders[channelId].games"
-        );
-        return channelRaiders[channelId].games;
-    } else {
-        console.log("[backend:850]:StartRaid returned:, Null");
-        return null;
-    }
+    const result = channelRaiders[channelId].games || null;
+    console.log(
+        `:StartRaid returned:, ${
+            result == null ? "" : "channelRaiders[channelId].games"
+        }:`,
+        result
+    );
+    return result;
 }
 
 async function constructRaidPackage(
@@ -1231,11 +1229,7 @@ function calculateGameResultDuration(streamerData) {
 //! --------------------------------------------------------- //
 //*                       -- CHAT API --                     //
 //! ------------------------------------------------------- //
-async function attemptSendChatMessageToChannel(
-    streamerData,
-    message,
-    channelId
-) {
+function attemptSendChatMessageToChannel(streamerData, message, channelId) {
     if (streamerData.userConfig) {
         if (!streamerData.userConfig.enableChatOutput) {
             // dont send message if user has disabled chat output in config
@@ -1245,7 +1239,7 @@ async function attemptSendChatMessageToChannel(
     checkCooldownAndSendChatMessage(message, channelId);
 }
 
-async function checkCooldownAndSendChatMessage(message, channelId) {
+function checkCooldownAndSendChatMessage(message, channelId) {
     const cooldown = channelRaiders[channelId].msgCooldown,
         now = Date.now() / 1000,
         remainingCooldown = cooldown - now;
