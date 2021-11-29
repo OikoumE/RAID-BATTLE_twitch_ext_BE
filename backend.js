@@ -969,7 +969,6 @@ function setGameExpiredResult(gamesArray, channelId, gameEnd) {
             winner = gameEnd.result[0].name;
             defeated = gamesArray[0].streamerData.displayName;
         }
-
         setResult(
             channelId,
             gameEnd.result[0].name,
@@ -985,7 +984,8 @@ function setAllRaiderDeadCondition(gamesArray, channelId, gameEnd) {
     const maxHealth = Math.max(
         ...gamesArray.map((game) => game.raiderData.health)
     );
-    if (maxHealth < 1 && channelRaiders[channelId].hasRunningGame) {
+    console.log("[backend:986]: maxHealth", maxHealth);
+    if (maxHealth[0] < 1 && channelRaiders[channelId].hasRunningGame) {
         // no more players
         // set endResult
         setResult(
