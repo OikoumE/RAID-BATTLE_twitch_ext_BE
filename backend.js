@@ -984,8 +984,7 @@ function setAllRaiderDeadCondition(gamesArray, channelId, gameEnd) {
     const maxHealth = Math.max(
         ...gamesArray.map((game) => game.raiderData.health)
     );
-    console.log("[backend:986]: maxHealth", maxHealth);
-    if (maxHealth[0] < 1 && channelRaiders[channelId].hasRunningGame) {
+    if (maxHealth < 1 && channelRaiders[channelId].hasRunningGame) {
         // no more players
         // set endResult
         setResult(
