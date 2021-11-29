@@ -1157,12 +1157,12 @@ function handleBroadcastInterval(channelId) {
     }, 1000);
 }
 function broadcastInterval(channelId) {
-    //TODO we need stop condition for interval
     conditionHandler(channelId);
     attemptRaidBroadcast(channelId);
-    if (condition) {
-        clearInterval(channelRaiders[channelId].interval);
-    }
+    //TODO we need stop condition for interval
+    // if (condition) {
+    //     clearInterval(channelRaiders[channelId].interval);
+    // }
 }
 //! ---- FINAL ---- //
 function sendFinalBroadcastTimeout(channelId) {
