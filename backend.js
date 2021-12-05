@@ -1017,7 +1017,7 @@ function setAllRaiderDeadCondition(gamesArray, channelId, gameEnd) {
                 gameEnd.result[0].name,
                 gamesArray[0].streamerData.displayName
             ),
-            gameResultDuration
+            "gameResultDuration"
         );
         // do final broadcast
         sendFinalBroadcastTimeout(channelId);
@@ -1178,7 +1178,9 @@ function sendFinalBroadcastTimeout(channelId) {
 function cleanUpChannelRaiderAndDoBroadcast(channelId) {
     // cleans up channelraider list, ends game and attempts a broadcast
     console.log("[backend:685]: cleaning up and sending final broadcast");
-    clearInterval(channelRaiders[channelId].interval);
+    if (channelRaiders[channelId].interval) {
+        clearInterval(channelRaiders[channelId].interval);
+    }
     channelRaiders[channelId].interval = null;
     channelRaiders[channelId].games.length = 0;
     channelRaiders[channelId].hasRunningGame = false;
