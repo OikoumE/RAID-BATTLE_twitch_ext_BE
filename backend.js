@@ -1199,10 +1199,10 @@ function cleanUpChannelRaiderAndDoBroadcast(channelId) {
     if (channelRaiders[channelId]) {
         console.log("[backend:685]: cleaning up and sending final broadcast");
         clearInterval(channelRaiders[channelId].interval);
-        // channelRaiders[channelId].interval = null;
-        // channelRaiders[channelId].hasRunningGame = false;
-        // channelRaiders[channelId].finalBroadcastTimeout = null;
-        // channelRaiders[channelId].games.length = 0;
+        channelRaiders[channelId].interval = null;
+        channelRaiders[channelId].hasRunningGame = false;
+        channelRaiders[channelId].finalBroadcastTimeout = null;
+        channelRaiders[channelId].games.length = 0;
         channelRaiders[channelId].games.push("GAME OVER");
         attemptRaidBroadcast(channelId);
         channelRaiders[channelId] = {};
