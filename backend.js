@@ -82,7 +82,9 @@ let APP_ACCESS_TOKEN = null,
 const initialHealth = 100,
     channelRaiders = {},
     KEEP_HEROKU_ALIVE_INTERVAL = 15,
-    CHAT_MSG_COOLDOWN = 6;
+    CHAT_MSG_COOLDOWN_MS = 6000,
+    channelMessageCooldown = {};
+
 var dataBase, tmiClient;
 
 const DEFAULTS = {
@@ -106,6 +108,8 @@ const strings = {
     halfHealth: "%s has around 50% left!",
     dead: "%s has been defeated!",
     gameOver: "GAME OVER",
+    RAIDBATTLE_CHAT_INFO_TEXT:
+        "RAID BATTLE is a game that is triggered when a channel that has the extension installed is being raided. The raiders & viewers can choose to support either the {RAIDER} or the {STREAMER} by clicking the respective buttons on screen",
     // both raiders must be below 50% for streamer to win
     // if any raider above 50%, team raider wins
 };
@@ -828,23 +832,18 @@ async function chatMessageHandler(channel, userstate, message, self) {
             message.startsWith("!") &&
             message.toLowerCase().includes("raidbattle")
         ) {
-            console.log("[backend:820]: message", message);
             const streamerData = await dataBase.findOne({
                 channelName: channel.toLowerCase().replace("#", ""),
             });
-            const RAIDBATTLE_CHAT_INFO_TEXT = "test";
             // send message to chat
             if (streamerData) {
                 attemptSendChatMessageToChannel(
                     streamerData,
-                    RAIDBATTLE_CHAT_INFO_TEXT
+                    strings.RAIDBATTLE_CHAT_INFO_TEXT
                 );
             }
         }
     }
-    console.log("[backend:818]: channel", channel);
-    console.log("[backend:819]: userstate", userstate);
-    console.log("[backend:821]: self", self);
 }
 
 function restartTmi(channelList) {
@@ -875,7 +874,6 @@ async function startRaid(channel, username, viewers) {
         channelRaiders[channelId] = {
             games: [],
             interval: null,
-            msgCooldown: 0,
             hasRunningGame: true,
             finalBroadcastTimeout: null,
         };
@@ -1308,20 +1306,20 @@ function attemptSendChatMessageToChannel(streamerData, message) {
 
 function checkCooldownAndSendChatMessage(message, channelId) {
     // checks if there is timeout for sending message, adds message to queue if is in cooldown
-    const cooldown = channelRaiders[channelId].msgCooldown,
-        now = Date.now() / 1000,
-        remainingCooldown = cooldown - now;
-    if (cooldown > now) {
-        // we are in cooldown
-        channelRaiders[channelId].msgCooldown =
-            now + CHAT_MSG_COOLDOWN + remainingCooldown;
-        setTimeout(() => {
-            sendChatMessageToChannel(message, channelId);
-        }, remainingCooldown * 1000);
-    } else {
+    const cooldown = channelMessageCooldown[channelId],
+        now = Date.now();
+    if (!cooldown || cooldown.time < now) {
         // we are not in cooldown
-        channelRaiders[channelId].msgCooldown = now + CHAT_MSG_COOLDOWN;
+        // we can send message
         sendChatMessageToChannel(message, channelId);
+        channelMessageCooldown[channelId] = {
+            time: now + CHAT_MSG_COOLDOWN_MS,
+        };
+    } else if (!cooldown.trigger) {
+        // we queue a message to be sent
+        cooldown.trigger = setTimeout(() => {
+            sendChatMessageToChannel(message, channelId);
+        }, now - cooldown.time);
     }
 }
 
