@@ -800,8 +800,7 @@ function startTmi(channels) {
     tmiClient.connect().then(() => {
         console.log(`[backend:529]: Listening for messages on ${channels}`);
     });
-    tmiClient.on(
-        "message",
+    tmiClient.on("message", (channel, userstate, message, self) =>
         chatMessageHandler(channel, userstate, message, self)
     );
 
@@ -824,17 +823,18 @@ async function chatMessageHandler(channel, userstate, message, self) {
     // TODO ? add "chat command prefix" in config
     // Don't listen to my own messages..
     if (self) return;
+    // if message is of type chat and is a command
     if (userstate["message-type"] === "chat") {
         if (
             message.startsWith("!") &&
             message.toLowerCase().includes("raidbattle")
         ) {
-            // todo .............
             console.log("[backend:820]: message", message);
             const streamerData = await dataBase.findOne({
                 channelName: channel.toLowerCase(),
             });
             const RAIDBATTLE_CHAT_INFO_TEXT = "test";
+            // send message to chat
             attemptSendChatMessageToChannel(
                 streamerData,
                 RAIDBATTLE_CHAT_INFO_TEXT
