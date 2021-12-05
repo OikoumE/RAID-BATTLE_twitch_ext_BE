@@ -1048,29 +1048,9 @@ function setResult(channelId, raider, string, durationName) {
             raiderGame.raiderData.display_name.toLowerCase() ==
             raider.toLowerCase()
         ) {
-            const addedTime = getUserConfigOrDefaultValue(
-                channelId,
-                durationName
-            );
-            // let introDuration,
-            //     gameInfoDuration,
-            //     gameResultDuration,
-            //     addedTime = 0;
-            // const userConfig =
-            //     channelRaiders[channelId].games[i].streamerData.userConfig;
-            // if (userConfig) {
-            //     // we have userconfig
-            //     introDuration = userConfig.introDuration;
-            //     gameInfoDuration = userConfig.gameInfoDuration;
-            //     gameResultDuration = userConfig.gameResultDuration;
-            // } else {
-            //     // we dont have userconfig
-            //     introDuration = DEFAULTS.introDuration.default;
-            //     gameInfoDuration = DEFAULTS.gameInfoDuration.default;
-            //     gameResultDuration = DEFAULTS.gameResultDuration.default;
-            // }
-            // addedTime = finalResult ? gameResultDuration : gameInfoDuration;
-            // const resultExpires = Date.now() + addedTime * 1000;
+            const addedTime =
+                0 || getUserConfigOrDefaultValue(channelId, durationName);
+            console.log(addedTime);
             const resultExpires = Date.now() + addedTime * 1000;
             channelRaiders[channelId].games[i].gameResult.push({
                 resultExpires,
