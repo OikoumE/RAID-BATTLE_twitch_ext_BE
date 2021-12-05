@@ -842,6 +842,7 @@ async function startRaid(channel, username, viewers) {
             interval: null,
             msgCooldown: 0,
             hasRunningGame: true,
+            finalBroadcastTimeout: null,
         };
     }
     if (
@@ -849,7 +850,7 @@ async function startRaid(channel, username, viewers) {
             (game) => game.raiderData.raider === username
         )
     ) {
-        await constructRaidPackage(username, viewers, streamerData, channelId);
+        await constructGamePackage(username, viewers, streamerData, channelId);
         setResult(
             channelId,
             username,
@@ -887,7 +888,7 @@ function getUserConfigOrDefaultValue(channelId, configName) {
     }
 }
 
-async function constructRaidPackage(
+async function constructGamePackage(
     raiderUserName,
     raiderAmount,
     streamerData,
@@ -1186,14 +1187,25 @@ function broadcastInterval(channelId) {
     attemptRaidBroadcast(channelId);
 }
 //! ---- FINAL ---- //
+
 function sendFinalBroadcastTimeout(channelId) {
-    // sends a final broadcast after a timeOut(USER_CONFIG.gameResultDuration)
-    let timeout = getUserConfigOrDefaultValue(channelId, "gameResultDuration");
-    console.log("[backend:713]:sending final broadcast in: ", timeout, " sec!");
-    setTimeout(() => {
-        cleanUpChannelRaiderAndDoBroadcast(channelId);
-    }, timeout * 1000);
+    if (!channelRaiders[channelId].finalBroadcastTimeout) {
+        // sends a final broadcast after a timeOut(USER_CONFIG.gameResultDuration)
+        const timeout = getUserConfigOrDefaultValue(
+            channelId,
+            "gameResultDuration"
+        );
+        console.log(
+            "[backend:713]:sending final broadcast in: ",
+            timeout,
+            " sec!"
+        );
+        channelRaiders[channelId].finalBroadcastTimeout = setTimeout(() => {
+            cleanUpChannelRaiderAndDoBroadcast(channelId);
+        }, timeout * 1000);
+    }
 }
+///////////////
 //! ---- CLEAN ---- //
 function cleanUpChannelRaiderAndDoBroadcast(channelId) {
     // cleans up channelraider list, ends game and attempts a broadcast
@@ -1202,6 +1214,7 @@ function cleanUpChannelRaiderAndDoBroadcast(channelId) {
     channelRaiders[channelId].interval = null;
     channelRaiders[channelId].games.length = 0;
     channelRaiders[channelId].hasRunningGame = false;
+    channelRaiders[channelId].finalBroadcastTimeout = null;
     attemptRaidBroadcast(channelId);
 }
 //! ---- QUEUE ---- //
