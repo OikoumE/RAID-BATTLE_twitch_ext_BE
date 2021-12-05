@@ -1206,7 +1206,7 @@ function cleanUpChannelRaiderAndDoBroadcast(channelId) {
         channelRaiders[channelId].games.push("GAME OVER");
         attemptRaidBroadcast(channelId);
         setTimeout(() => {
-            channelRaiders[channelId] = null;
+            channelRaiders[channelId] = "null";
         }, 2000);
     }
 }
