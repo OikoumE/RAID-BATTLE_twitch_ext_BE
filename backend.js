@@ -927,10 +927,10 @@ function conditionHandler(channelId) {
     checkRaiderHealthAndSetResult(channelId, gamesArray, 1, "dead");
     // gametime has run out
     const gameEndResult = calculateGameEndResult(gamesArray);
-    // check if game is expired and set result
-    setGameExpiredResult(gamesArray, channelId, gameEndResult);
     // check if all raiders are dead and set result
     setAllRaiderDeadCondition(gamesArray, channelId, gameEndResult);
+    // check if game is expired and set result
+    setGameExpiredResult(gamesArray, channelId, gameEndResult);
 }
 function checkRaiderHealthAndSetResult(
     channelId,
@@ -1186,6 +1186,7 @@ function sendFinalBroadcastTimeout(channelId) {
             timeout,
             " sec!"
         );
+        conditionHandler(channelId);
         channelRaiders[channelId].finalBroadcastTimeout = setTimeout(() => {
             cleanUpChannelRaiderAndDoBroadcast(channelId);
         }, timeout * 1000);
