@@ -989,12 +989,20 @@ function setGameExpiredResult(gamesArray, channelId, gameEnd) {
             winner = gameEnd.result[0].name;
             defeated = gamesArray[0].streamerData.displayName;
         }
-        setResult(
-            channelId,
-            gameEnd.result[0].name,
-            parse(strings.win, winner, defeated),
-            "gameResultDuration"
-        );
+        if (
+            !checkForExistingGameResult(
+                gamesArray[0].gameResult,
+                "string",
+                parse(strings.win, winner, defeated)
+            )
+        ) {
+            setResult(
+                channelId,
+                gameEnd.result[0].name,
+                parse(strings.win, winner, defeated),
+                "gameResultDuration"
+            );
+        }
         sendFinalBroadcastTimeout(channelId);
         console.log("[backend:1054]: gameEnd.result", gameEnd.result);
     }
@@ -1008,17 +1016,28 @@ function setAllRaiderDeadCondition(gamesArray, channelId, gameEnd) {
     if (maxHealth < 1 && channelRaiders[channelId].hasRunningGame) {
         // no more players
         // set endResult
-        setResult(
-            channelId,
-            gameEnd.result[0].name,
-            parse(
-                // make result string
-                strings.win,
+        if (
+            !checkForExistingGameResult(
+                gamesArray[0].gameResult,
+                "string",
+                parse(
+                    strings.win,
+                    gameEnd.result[0].name,
+                    gamesArray[0].streamerData.displayName
+                )
+            )
+        ) {
+            setResult(
+                channelId,
                 gameEnd.result[0].name,
-                gamesArray[0].streamerData.displayName
-            ),
-            "gameResultDuration"
-        );
+                parse(
+                    strings.win,
+                    gameEnd.result[0].name,
+                    gamesArray[0].streamerData.displayName
+                ),
+                "gameResultDuration"
+            );
+        }
         // do final broadcast
         sendFinalBroadcastTimeout(channelId);
     }
@@ -1173,7 +1192,7 @@ function sendFinalBroadcastTimeout(channelId) {
         }, timeout * 1000);
     }
 }
-// TODO fix backend endgame result posted multiple times
+
 //! ---- CLEAN ---- //
 function cleanUpChannelRaiderAndDoBroadcast(channelId) {
     // cleans up channelraider list, ends game and attempts a broadcast
