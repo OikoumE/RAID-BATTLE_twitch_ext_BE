@@ -1048,9 +1048,11 @@ function setResult(channelId, raider, string, durationName) {
             raiderGame.raiderData.display_name.toLowerCase() ==
             raider.toLowerCase()
         ) {
-            const addedTime =
-                0 || getUserConfigOrDefaultValue(channelId, durationName);
-            console.log(addedTime);
+            const addedTime = getUserConfigOrDefaultValue(
+                channelId,
+                durationName
+            );
+            console.log("[backend:1054]: addedTime", addedTime);
             const resultExpires = Date.now() + addedTime * 1000;
             channelRaiders[channelId].games[i].gameResult.push({
                 resultExpires,
