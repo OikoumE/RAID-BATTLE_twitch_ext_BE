@@ -803,7 +803,6 @@ function startTmi(channels) {
     tmiClient.on("message", (channel, userstate, message, self) =>
         chatMessageHandler(channel, userstate, message, self)
     );
-
     tmiClient.on("raided", async (channel, username, viewers) => {
         // channel: String - Channel name being raided
         // username: String - Username raiding the channel
@@ -831,14 +830,16 @@ async function chatMessageHandler(channel, userstate, message, self) {
         ) {
             console.log("[backend:820]: message", message);
             const streamerData = await dataBase.findOne({
-                channelName: channel.toLowerCase(),
+                channelName: channel.toLowerCase().replace("#", ""),
             });
             const RAIDBATTLE_CHAT_INFO_TEXT = "test";
             // send message to chat
-            attemptSendChatMessageToChannel(
-                streamerData,
-                RAIDBATTLE_CHAT_INFO_TEXT
-            );
+            if (streamerData) {
+                attemptSendChatMessageToChannel(
+                    streamerData,
+                    RAIDBATTLE_CHAT_INFO_TEXT
+                );
+            }
         }
     }
     console.log("[backend:818]: channel", channel);
