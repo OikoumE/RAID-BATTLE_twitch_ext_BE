@@ -1317,9 +1317,13 @@ function checkCooldownAndSendChatMessage(message, channelId) {
         };
     } else if (!cooldown.trigger) {
         // we queue a message to be sent
-        cooldown.trigger = setTimeout(() => {
-            sendChatMessageToChannel(message, channelId);
-        }, now - cooldown.time);
+        cooldown.trigger = setTimeout(
+            () => {
+                sendChatMessageToChannel;
+            },
+            now - cooldown.time,
+            [message, channelId]
+        );
     }
 }
 
