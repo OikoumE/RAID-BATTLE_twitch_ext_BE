@@ -1205,7 +1205,7 @@ function cleanUpChannelRaiderAndDoBroadcast(channelId) {
         channelRaiders[channelId].games.length = 0;
         channelRaiders[channelId].games.push("GAME OVER");
         attemptRaidBroadcast(channelId);
-        channelRaiders[channelId] = {};
+        channelRaiders[channelId] = null;
     }
 }
 //! ---- QUEUE ---- //
