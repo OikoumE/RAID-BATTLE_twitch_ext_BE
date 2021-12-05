@@ -1205,7 +1205,7 @@ function sendFinalBroadcastTimeout(channelId) {
         }, timeout * 1000);
     }
 }
-///////////////
+
 //! ---- CLEAN ---- //
 function cleanUpChannelRaiderAndDoBroadcast(channelId) {
     // cleans up channelraider list, ends game and attempts a broadcast
