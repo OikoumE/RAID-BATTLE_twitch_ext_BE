@@ -1009,7 +1009,7 @@ function setGameExpiredResult(gamesArray, channelId, gameEnd) {
 }
 function setAllRaiderDeadCondition(gamesArray, channelId, gameEnd) {
     // handles setting condition when all raiders are dead
-    //! ALL raiders DEAD
+    //! STREAMER WIN
     const maxHealth = Math.max(
         ...gamesArray.map((game) => parseInt(game.raiderData.health))
     );
@@ -1022,8 +1022,8 @@ function setAllRaiderDeadCondition(gamesArray, channelId, gameEnd) {
                 "string",
                 parse(
                     strings.win,
-                    gameEnd.result[0].name,
-                    gamesArray[0].streamerData.displayName
+                    gamesArray[0].streamerData.displayName,
+                    gameEnd.result[0].name
                 )
             )
         ) {
@@ -1032,8 +1032,8 @@ function setAllRaiderDeadCondition(gamesArray, channelId, gameEnd) {
                 gameEnd.result[0].name,
                 parse(
                     strings.win,
-                    gameEnd.result[0].name,
-                    gamesArray[0].streamerData.displayName
+                    gamesArray[0].streamerData.displayName,
+                    gameEnd.result[0].name
                 ),
                 "gameResultDuration"
             );
