@@ -1004,7 +1004,6 @@ function setGameExpiredResult(gamesArray, channelId, gameEnd) {
             );
         }
         sendFinalBroadcastTimeout(channelId);
-        console.log("[backend:1054]: gameEnd.result", gameEnd.result);
     }
 }
 function setAllRaiderDeadCondition(gamesArray, channelId, gameEnd) {
@@ -1196,18 +1195,24 @@ function sendFinalBroadcastTimeout(channelId) {
 //! ---- CLEAN ---- //
 function cleanUpChannelRaiderAndDoBroadcast(channelId) {
     // cleans up channelraider list, ends game and attempts a broadcast
-    if (channelRaiders[channelId]) {
-        console.log("[backend:685]: cleaning up and sending final broadcast");
-        clearInterval(channelRaiders[channelId].interval);
-        channelRaiders[channelId].interval = null;
-        channelRaiders[channelId].hasRunningGame = false;
-        channelRaiders[channelId].finalBroadcastTimeout = null;
-        channelRaiders[channelId].games.length = 0;
-        channelRaiders[channelId].games.push("GAME OVER");
-        attemptRaidBroadcast(channelId);
-        setTimeout(() => {
-            channelRaiders[channelId] = "null";
-        }, 2000);
+    try {
+        if (channelRaiders[channelId]) {
+            console.log(
+                "[backend:685]: cleaning up and sending final broadcast"
+            );
+            clearInterval(channelRaiders[channelId].interval);
+            channelRaiders[channelId].interval = null;
+            channelRaiders[channelId].hasRunningGame = false;
+            channelRaiders[channelId].finalBroadcastTimeout = null;
+            channelRaiders[channelId].games = [];
+            channelRaiders[channelId].games.push("GAME OVER");
+            attemptRaidBroadcast(channelId);
+            setTimeout(() => {
+                channelRaiders[channelId] = "null";
+            }, 2000);
+        }
+    } catch (err) {
+        console.log();
     }
 }
 //! ---- QUEUE ---- //
