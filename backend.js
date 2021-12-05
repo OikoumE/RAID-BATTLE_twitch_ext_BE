@@ -1173,19 +1173,20 @@ function sendFinalBroadcastTimeout(channelId) {
         }, timeout * 1000);
     }
 }
-
+// TODO fix backend endgame result posted multiple times
 //! ---- CLEAN ---- //
 function cleanUpChannelRaiderAndDoBroadcast(channelId) {
     // cleans up channelraider list, ends game and attempts a broadcast
-    console.log("[backend:685]: cleaning up and sending final broadcast");
-    if (channelRaiders[channelId].interval) {
+    if (channelRaiders[channelId]) {
+        console.log("[backend:685]: cleaning up and sending final broadcast");
         clearInterval(channelRaiders[channelId].interval);
+        channelRaiders[channelId].interval = null;
+        channelRaiders[channelId].hasRunningGame = false;
+        channelRaiders[channelId].finalBroadcastTimeout = null;
+        channelRaiders[channelId].games.push("GAME OVER");
+        attemptRaidBroadcast(channelId);
+        channelRaiders[channelId].games.length = 0;
     }
-    channelRaiders[channelId].interval = null;
-    channelRaiders[channelId].games.length = 0;
-    channelRaiders[channelId].hasRunningGame = false;
-    channelRaiders[channelId].finalBroadcastTimeout = null;
-    attemptRaidBroadcast(channelId);
 }
 //! ---- QUEUE ---- //
 function attemptRaidBroadcast(channelId) {
