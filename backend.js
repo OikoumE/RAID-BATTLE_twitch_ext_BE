@@ -800,6 +800,11 @@ function startTmi(channels) {
     tmiClient.connect().then(() => {
         console.log(`[backend:529]: Listening for messages on ${channels}`);
     });
+    tmiClient.on(
+        "message",
+        chatMessageHandler(channel, userstate, message, self)
+    );
+
     tmiClient.on("raided", async (channel, username, viewers) => {
         // channel: String - Channel name being raided
         // username: String - Username raiding the channel
@@ -812,6 +817,32 @@ function startTmi(channels) {
         await startRaid(channel, username, viewers);
     });
 }
+
+function chatMessageHandler(channel, userstate, message, self) {
+    // Don't listen to my own messages..
+    if (self) return;
+    if (userstate["message-type"] === "chat") {
+        if (
+            message.startsWith("!") &&
+            message.toLowerCase().includes("raidbattle")
+        ) {
+            // todo .............
+            console.log("[backend:820]: message", message);
+            const streamerData = await dataBase.findOne({
+                channelName: channel,
+            });
+            const RAIDBATTLE_CHAT_INFO_TEXT = "test";
+            attemptSendChatMessageToChannel(
+                streamerData,
+                RAIDBATTLE_CHAT_INFO_TEXT
+            );
+        }
+    }
+    console.log("[backend:818]: channel", channel);
+    console.log("[backend:819]: userstate", userstate);
+    console.log("[backend:821]: self", self);
+}
+
 function restartTmi(channelList) {
     // restarts TMI.js
     if (tmiClient) {
@@ -860,8 +891,7 @@ async function startRaid(channel, username, viewers) {
         //! TEST CHAT!
         attemptSendChatMessageToChannel(
             streamerData,
-            `Starting RAID-BATTLE on channel: ${channel}, started by: ${username}`,
-            channelId
+            `Incomming raid from ${username} - get ready for RAID-BATTLE (type !RAIDBATTLE for info)`
         );
         //! TEST CHAT!
         handleBroadcastInterval(channelId);
@@ -1261,7 +1291,7 @@ async function sendRaidBroadcast(channelId) {
 //! --------------------------------------------------------- //
 //*                       -- CHAT API --                     //
 //! ------------------------------------------------------- //
-function attemptSendChatMessageToChannel(streamerData, message, channelId) {
+function attemptSendChatMessageToChannel(streamerData, message) {
     // checks if USER_CONFIG.enableChatOutput is true and sends message
     if (streamerData.userConfig) {
         if (!streamerData.userConfig.enableChatOutput) {
@@ -1269,7 +1299,7 @@ function attemptSendChatMessageToChannel(streamerData, message, channelId) {
             return;
         }
     }
-    checkCooldownAndSendChatMessage(message, channelId);
+    checkCooldownAndSendChatMessage(message, streamerData.channelId);
 }
 
 function checkCooldownAndSendChatMessage(message, channelId) {
