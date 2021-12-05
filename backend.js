@@ -818,7 +818,10 @@ function startTmi(channels) {
     });
 }
 
-function chatMessageHandler(channel, userstate, message, self) {
+async function chatMessageHandler(channel, userstate, message, self) {
+    // todo check if chat is enabled in userconfig
+    // TODO ? add "enable chat command" checkbox in config
+    // TODO ? add "chat command prefix" in config
     // Don't listen to my own messages..
     if (self) return;
     if (userstate["message-type"] === "chat") {
@@ -829,7 +832,7 @@ function chatMessageHandler(channel, userstate, message, self) {
             // todo .............
             console.log("[backend:820]: message", message);
             const streamerData = await dataBase.findOne({
-                channelName: channel,
+                channelName: channel.toLowerCase(),
             });
             const RAIDBATTLE_CHAT_INFO_TEXT = "test";
             attemptSendChatMessageToChannel(
