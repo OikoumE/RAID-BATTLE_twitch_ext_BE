@@ -1315,16 +1315,17 @@ function checkCooldownAndSendChatMessage(message, channelId) {
         channelMessageCooldown[channelId] = {
             time: now + CHAT_MSG_COOLDOWN_MS,
         };
-    } else if (!cooldown.trigger) {
-        // we queue a message to be sent
-        cooldown.trigger = setTimeout(
-            () => {
-                sendChatMessageToChannel;
-            },
-            now - cooldown.time,
-            [message, channelId]
-        );
     }
+    //  else if (!cooldown.trigger) {
+    //     // we queue a message to be sent
+    //     cooldown.trigger = setTimeout(
+    //         () => {
+    //             sendChatMessageToChannel;
+    //         },
+    //         now - cooldown.time,
+    //         [message, channelId]
+    //     );
+    // }
 }
 
 async function sendChatMessageToChannel(message, channelId) {
