@@ -112,6 +112,8 @@ const strings = {
 //! -------------------- /my_vars -------------------- //
 
 function herokuPingerTimerouter() {
+    // handles setting an interval of Math.random() to ping heroku to keep app alive
+    //* no need after setting up proper VPS
     let nextTimeout =
         Math.floor(
             Math.random() * 5 +
@@ -124,6 +126,7 @@ function herokuPingerTimerouter() {
 }
 
 async function herokuPinger() {
+    // handles pinging heroku to keep app alive
     var date = new Date();
     let nextTimeout = herokuPingerTimerouter();
     setTimeout(async () => {
@@ -228,9 +231,9 @@ function verifyAndDecode(header) {
 //*                     -- ON LAUNCH --                      //
 //! ------------------------------------------------------- //
 async function onLaunch() {
+    //this run when server starts up
     dataBase = new DataBase(mongoUri);
     await dataBase.connect();
-    //this is ran when server starts up
     console.log("[backend:130]: Server starting");
     const dataBaseUserData = await dataBase.find();
     const result = parseTmiChannelListFromDb(dataBaseUserData);
@@ -239,6 +242,7 @@ async function onLaunch() {
 }
 
 async function setDefaultUserConfigInDatabase() {
+    // handles setting database.defaultConfig to values in DEFAULTS
     const dbResult = await dataBase.updateOne(
         {
             _id: new ObjectId("61967a961ffcc7b266231e85"),
@@ -475,6 +479,7 @@ async function updateUserConfigHandler(req) {
 }
 //! ---- PARSECONFIG ---- //
 function parseUserConfigUpdateDocument(document) {
+    // parses userConfig update document
     const parsedDoc = {};
     for (const [key, value] of Object.entries(document)) {
         const max = DEFAULTS[key].max,
@@ -589,6 +594,7 @@ async function stopTestRaidHandler(req) {
 //*                       -- DATABASE --                     //
 //! ------------------------------------------------------- //
 class DataBase {
+    // class for handling all database functions
     constructor(mongoUri) {
         this.client = new MongoClient(mongoUri, {
             useNewUrlParser: true,
@@ -666,6 +672,7 @@ class DataBase {
 }
 //! -------------------- DATABASE HANDLERS -------------------- //
 async function addNewStreamer(channelId) {
+    // checks if user already in database and adds new streamer to database if user does not already exsist
     const userExsist = await dataBase.checkIfUserInDb(channelId);
     let returnData;
     if (!userExsist) {
@@ -689,6 +696,7 @@ async function addNewStreamer(channelId) {
     return returnData;
 }
 async function addStreamerToDb(userData) {
+    // adds streamer to database
     const result = await dataBase.insertOne({
         channelName: userData.display_name.toLowerCase(),
         displayName: userData.display_name,
@@ -698,6 +706,7 @@ async function addStreamerToDb(userData) {
     return result;
 }
 function parseTmiChannelListFromDb(result) {
+    // parses result from database and returns a list of channels for TMI.js to join
     const channels = [];
     for (const document of result) {
         channels.push(document.channelName);
@@ -710,6 +719,7 @@ function parseTmiChannelListFromDb(result) {
 //*                      -- TWITCH API --                    //
 //! ------------------------------------------------------- //
 async function getAppAccessToken() {
+    // gets APP_ACCESS_TOKEN token from twitch
     if (!APP_ACCESS_TOKEN || Date.now() >= TOKEN_EXPIRE_DATE) {
         const endpoint = `https://id.twitch.tv/oauth2/token?client_id=${APP_CLIENT_ID}&client_secret=${APP_CLIENT_SECRET}&grant_type=client_credentials`;
         const result = await fetch(endpoint, { method: "POST" });
@@ -765,6 +775,7 @@ async function getStreamById(id) {
     }
 }
 function getRatio(raiders, viewers) {
+    // calculates ratio of raiders:viewers
     const highestNum = Math.max(raiders, viewers);
     const ratio = {
         raider: viewers / highestNum,
@@ -778,6 +789,7 @@ function getRatio(raiders, viewers) {
 //*                       -- TMI.JS --                       //
 //! ------------------------------------------------------- //
 function startTmi(channels) {
+    // starts tmi and joins channels, register to listen for "onRaided" events
     tmiClient = new tmi.Client({
         connection: {
             secure: true,
@@ -801,6 +813,7 @@ function startTmi(channels) {
     });
 }
 function restartTmi(channelList) {
+    // restarts TMI.js
     if (tmiClient) {
         tmiClient.disconnect();
     } else {
@@ -816,6 +829,7 @@ function restartTmi(channelList) {
 //*                  -- GAME CONDITION --                    //
 //! ------------------------------------------------------- //
 async function startRaid(channel, username, viewers) {
+    // starts a raid game
     console.log(
         `[backend:549]: Starting raid on channel: ${channel}, started by: ${username}`
     );
@@ -861,6 +875,7 @@ async function startRaid(channel, username, viewers) {
 }
 
 function getUserConfigOrDefaultValue(channelId, configName) {
+    // gets userConfig value or DEFAULT value
     const userConfig =
         channelRaiders[channelId].games[0].streamerData.userConfig;
     if (userConfig) {
@@ -878,6 +893,7 @@ async function constructRaidPackage(
     streamerData,
     channelId
 ) {
+    // constructs an object for a raid game
     const streamData = await getStreamById(streamerData.channelId),
         raiderUserData = await getUser(`login=${raiderUserName}`),
         raiderData = {
@@ -921,6 +937,7 @@ function checkRaiderHealthAndSetResult(
     healthThreshold,
     stringName
 ) {
+    // checks if a specified raider has reached a specified health threshhold
     for (const game of gamesArray) {
         // check if raider is at 50% health
         if (
@@ -944,6 +961,7 @@ function checkRaiderHealthAndSetResult(
     }
 }
 function calculateGameEndResult(gamesArray) {
+    // handles calculating the end game result
     let alive = 0;
     const result = gamesArray.map((game) => {
         if (game.raiderData.health >= 50) {
@@ -957,6 +975,7 @@ function calculateGameEndResult(gamesArray) {
     return { result, alive };
 }
 function setGameExpiredResult(gamesArray, channelId, gameEnd) {
+    // handles calculating the end game result when gameDuration is expired
     if (gameExpired(gamesArray) && channelRaiders[channelId].hasRunningGame) {
         let winner, defeated;
         if (gameEnd.result.length + gameEnd.alive == 0) {
@@ -980,11 +999,11 @@ function setGameExpiredResult(gamesArray, channelId, gameEnd) {
     }
 }
 function setAllRaiderDeadCondition(gamesArray, channelId, gameEnd) {
+    // handles setting condition when all raiders are dead
     //! ALL raiders DEAD
     const maxHealth = Math.max(
         ...gamesArray.map((game) => parseInt(game.raiderData.health))
     );
-    console.log("[backend:986]: maxHealth", maxHealth);
     console.log(
         "[backend:987]: channelRaiders[channelId].hasRunningGame",
         channelRaiders[channelId].hasRunningGame
@@ -1018,12 +1037,14 @@ function setAllRaiderDeadCondition(gamesArray, channelId, gameEnd) {
 }
 //! --------------------  -------------------- //
 function parse(str) {
+    // parses string and replaces "%s" with supplied argument
     var args = [].slice.call(arguments, 1),
         i = 0;
     return str.replace(/%s/g, () => args[i++]);
 }
 
 function checkForExistingGameResult(testArray, testKey, testValue) {
+    // checks if a specified game result already exsists
     return testArray.some(function (o) {
         return o[testKey] === testValue;
     });
@@ -1076,7 +1097,7 @@ function setResult(channelId, raider, string, durationName) {
 //*                      -- TIMEKEEPER --                    //
 //! ------------------------------------------------------- //
 function gameExpired(gamesArray) {
-    //
+    // calculates if gameDuration of a game has expired
     const gameDuration = Math.max(
         ...gamesArray.map((game) => game.gameTimeObj.gameDuration)
     );
@@ -1137,7 +1158,9 @@ function calculateGameDuration(introDuration, streamerData) {
     }
     return gameDuration;
 }
+
 function calculateGameResultDuration(streamerData) {
+    // returns DEFAULT game
     gameResultDuration = streamerData.userConfig
         ? streamerData.userConfig.gameResultDuration
         : DEFAULTS.gameResultDuration.default;
@@ -1149,6 +1172,7 @@ function calculateGameResultDuration(streamerData) {
 //! ------------------------------------------------------- //
 //! ---- INTERVAL ---- //
 function handleBroadcastInterval(channelId) {
+    // handles setting/resetting interval for broadcasting during active game
     if (channelRaiders[channelId].interval) {
         clearInterval(channelRaiders[channelId].interval);
     }
@@ -1157,22 +1181,14 @@ function handleBroadcastInterval(channelId) {
     }, 1000);
 }
 function broadcastInterval(channelId) {
+    // handles setting coditions and attempting broadcast at an interval
     conditionHandler(channelId);
     attemptRaidBroadcast(channelId);
-    //TODO we need stop condition for interval
-    // if (condition) {
-    //     clearInterval(channelRaiders[channelId].interval);
-    // }
 }
 //! ---- FINAL ---- //
 function sendFinalBroadcastTimeout(channelId) {
-    channelRaiders[channelId].hasRunningGame = false;
-    let timeout = DEFAULTS.gameResultDuration.default;
-    if (channelRaiders[channelId].games[0].streamerData.userConfig) {
-        timeout =
-            channelRaiders[channelId].games[0].streamerData.userConfig
-                .gameResultDuration;
-    }
+    // sends a final broadcast after a timeOut(USER_CONFIG.gameResultDuration)
+    let timeout = getUserConfigOrDefaultValue(channelId, "gameResultDuration");
     console.log("[backend:713]:sending final broadcast in: ", timeout, " sec!");
     setTimeout(() => {
         cleanUpChannelRaiderAndDoBroadcast(channelId);
@@ -1180,10 +1196,12 @@ function sendFinalBroadcastTimeout(channelId) {
 }
 //! ---- CLEAN ---- //
 function cleanUpChannelRaiderAndDoBroadcast(channelId) {
+    // cleans up channelraider list, ends game and attempts a broadcast
     console.log("[backend:685]: cleaning up and sending final broadcast");
     clearInterval(channelRaiders[channelId].interval);
     channelRaiders[channelId].interval = null;
     channelRaiders[channelId].games.length = 0;
+    channelRaiders[channelId].hasRunningGame = false;
     attemptRaidBroadcast(channelId);
 }
 //! ---- QUEUE ---- //
@@ -1233,6 +1251,7 @@ async function sendRaidBroadcast(channelId) {
 //*                       -- CHAT API --                     //
 //! ------------------------------------------------------- //
 function attemptSendChatMessageToChannel(streamerData, message, channelId) {
+    // checks if USER_CONFIG.enableChatOutput is true and sends message
     if (streamerData.userConfig) {
         if (!streamerData.userConfig.enableChatOutput) {
             // dont send message if user has disabled chat output in config
@@ -1243,6 +1262,7 @@ function attemptSendChatMessageToChannel(streamerData, message, channelId) {
 }
 
 function checkCooldownAndSendChatMessage(message, channelId) {
+    // checks if there is timeout for sending message, adds message to queue if is in cooldown
     const cooldown = channelRaiders[channelId].msgCooldown,
         now = Date.now() / 1000,
         remainingCooldown = cooldown - now;
@@ -1261,6 +1281,7 @@ function checkCooldownAndSendChatMessage(message, channelId) {
 }
 
 async function sendChatMessageToChannel(message, channelId) {
+    // sends a message to a specified channelID
     // not more often than every 5sec pr channel
     // Maximum: 280 characters.
     console.log(
@@ -1289,6 +1310,7 @@ async function sendChatMessageToChannel(message, channelId) {
 //! ------------------------------------------------------- //
 // Create and return a JWT for use by this service.
 function makeServerToken(channelId) {
+    // makes a JWT token
     const payload = {
         exp: Math.floor(Date.now() / 1000) + serverTokenDurationSec,
         user_id: ownerId, // extension owner ID for the call to Twitch PubSub
