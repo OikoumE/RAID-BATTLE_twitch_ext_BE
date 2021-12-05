@@ -1005,11 +1005,11 @@ function setAllRaiderDeadCondition(gamesArray, channelId, gameEnd) {
         ...gamesArray.map((game) => parseInt(game.raiderData.health))
     );
     console.log(
-        "[backend:987]: channelRaiders[channelId].hasRunningGame",
+        "[backend:1008]: channelRaiders[channelId].hasRunningGame",
         channelRaiders[channelId].hasRunningGame
     );
     console.log(
-        "[backend:988]: maxHealth < 1 && channelRaiders[channelId].hasRunningGame",
+        "[backend:1012]: maxHealth < 1 && channelRaiders[channelId].hasRunningGame",
         maxHealth < 1 && channelRaiders[channelId].hasRunningGame
     );
     if (maxHealth < 1 && channelRaiders[channelId].hasRunningGame) {
@@ -1185,7 +1185,6 @@ function broadcastInterval(channelId) {
     conditionHandler(channelId);
     attemptRaidBroadcast(channelId);
 }
-
 //! ---- FINAL ---- //
 function sendFinalBroadcastTimeout(channelId) {
     // sends a final broadcast after a timeOut(USER_CONFIG.gameResultDuration)
