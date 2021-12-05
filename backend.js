@@ -1186,7 +1186,6 @@ function sendFinalBroadcastTimeout(channelId) {
             timeout,
             " sec!"
         );
-        conditionHandler(channelId);
         channelRaiders[channelId].finalBroadcastTimeout = setTimeout(() => {
             cleanUpChannelRaiderAndDoBroadcast(channelId);
         }, timeout * 1000);
