@@ -1185,6 +1185,7 @@ function broadcastInterval(channelId) {
     conditionHandler(channelId);
     attemptRaidBroadcast(channelId);
 }
+
 //! ---- FINAL ---- //
 function sendFinalBroadcastTimeout(channelId) {
     // sends a final broadcast after a timeOut(USER_CONFIG.gameResultDuration)
