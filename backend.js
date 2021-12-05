@@ -1005,14 +1005,6 @@ function setAllRaiderDeadCondition(gamesArray, channelId, gameEnd) {
     const maxHealth = Math.max(
         ...gamesArray.map((game) => parseInt(game.raiderData.health))
     );
-    console.log(
-        "[backend:1008]: channelRaiders[channelId].hasRunningGame",
-        channelRaiders[channelId].hasRunningGame
-    );
-    console.log(
-        "[backend:1012]: maxHealth < 1 && channelRaiders[channelId].hasRunningGame",
-        maxHealth < 1 && channelRaiders[channelId].hasRunningGame
-    );
     if (maxHealth < 1 && channelRaiders[channelId].hasRunningGame) {
         // no more players
         // set endResult
@@ -1028,11 +1020,6 @@ function setAllRaiderDeadCondition(gamesArray, channelId, gameEnd) {
             gameResultDuration
         );
         // do final broadcast
-        // TODO continue broadcasting, with all players at 0 health, and final gameResult
-        // TODO then sendFinalBroadcastTimeout will end game on frontend
-        console.log(
-            "[backend:1014]: all players dead, sending final broadcast"
-        );
         sendFinalBroadcastTimeout(channelId);
     }
 }
@@ -1187,7 +1174,6 @@ function broadcastInterval(channelId) {
     attemptRaidBroadcast(channelId);
 }
 //! ---- FINAL ---- //
-
 function sendFinalBroadcastTimeout(channelId) {
     if (!channelRaiders[channelId].finalBroadcastTimeout) {
         // sends a final broadcast after a timeOut(USER_CONFIG.gameResultDuration)
