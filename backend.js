@@ -82,7 +82,7 @@ let APP_ACCESS_TOKEN = null,
 const initialHealth = 100,
     channelRaiders = {},
     KEEP_HEROKU_ALIVE_INTERVAL = 15,
-    CHAT_MSG_COOLDOWN_MS = 15000,
+    CHAT_MSG_COOLDOWN_MS = 30000,
     channelMessageCooldown = {};
 
 var dataBase, tmiClient;
@@ -1305,6 +1305,7 @@ function attemptSendChatMessageToChannel(streamerData, message) {
 }
 
 function checkCooldownAndSendChatMessage(message, channelId) {
+    // TODO change this to use TMI CHAT BOT instead. reasons
     // checks if there is timeout for sending message, adds message to queue if is in cooldown
     const cooldown = channelMessageCooldown[channelId],
         now = Date.now();
