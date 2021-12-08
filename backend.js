@@ -806,7 +806,7 @@ function startTmi(channels) {
         console.log(`[backend:529]: Listening for messages on ${channels}`);
     });
     tmiClient.on("message", (channel, userstate, message, self) =>
-        chatMessageHandler(channel, userstate, message, self)
+        chatCommandHandler(channel, userstate, message, self)
     );
     tmiClient.on("raided", async (channel, username, viewers) => {
         // channel: String - Channel name being raided
@@ -821,11 +821,15 @@ function startTmi(channels) {
     });
 }
 
-async function chatMessageHandler(channel, userstate, message, self) {
+async function chatCommandHandler(channel, userstate, message, self) {
     // todo check if chat is enabled in userconfig
-    // TODO ? add "enable chat command" checkbox in config
+    const userData = dataBase.findOne({
+            channelName: channel.replace("#", "").toLowerCase(),
+        }),
+        userConfig = userData.userConfig;
     // Don't listen to my own messages..
-    if (self) return;
+    // Don't listen if chatCommands are disabled
+    if (self || !userConfig.enableChatCommands) return;
     // if message is of type chat and is a command
     if (userstate["message-type"] === "chat") {
         if (
