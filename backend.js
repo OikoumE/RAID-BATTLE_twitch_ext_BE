@@ -893,7 +893,10 @@ async function startRaid(channel, username, viewers) {
         attemptSendChatMessageToChannel(
             streamerData,
             `Incoming raid from ${username} - get ready for RAID-BATTLE ${
-                getUserConfigOrDefaultValue(channelId, "enableChatCommands")
+                (await getUserConfigOrDefaultValue(
+                    channelId,
+                    "enableChatCommands"
+                ))
                     ? "(type !RAIDBATTLE for info)"
                     : ""
             }`
@@ -1098,7 +1101,7 @@ function setResult(channelId, raider, string, durationName) {
             raiderGame.raiderData.display_name.toLowerCase() ==
             raider.toLowerCase()
         ) {
-            const addedTime = getUserConfigOrDefaultValue(
+            const addedTime = await getUserConfigOrDefaultValue(
                 channelId,
                 durationName
             );
@@ -1131,7 +1134,7 @@ function constructGameTimeObject(streamerData) {
     // handles creating the gameTimeObj: {gameDuration, introDuration, gameResultDuration}
     const introDuration = calculateIntroDuration(streamerData),
         gameDuration = calculateGameDuration(introDuration, streamerData),
-        gameResultDuration = getUserConfigOrDefaultValue(
+        gameResultDuration = await getUserConfigOrDefaultValue(
             streamerData.channelId,
             "gameDuration"
         );
@@ -1141,7 +1144,10 @@ function calculateIntroDuration(streamerData) {
     // set introDuration on gameTimeObj
     introDuration = Math.floor(
         Date.now() / 1000 +
-            getUserConfigOrDefaultValue(streamerData.channelId, "introDuration")
+            (await getUserConfigOrDefaultValue(
+                streamerData.channelId,
+                "introDuration"
+            ))
     );
     return introDuration;
 }
@@ -1161,7 +1167,7 @@ function calculateGameDuration(introDuration, streamerData) {
         );
         let extraTime = 0;
         if (userConfig && userConfig.extendGameDurationEnabled) {
-            extraTime = getUserConfigOrDefaultValue(
+            extraTime = await getUserConfigOrDefaultValue(
                 streamerData.channelId,
                 "extendGameDuration"
             );
@@ -1172,10 +1178,10 @@ function calculateGameDuration(introDuration, streamerData) {
         // or DEFAULTS if no streamerData.userConfig
         gameDuration = Math.floor(
             introDuration +
-                getUserConfigOrDefaultValue(
+                (await getUserConfigOrDefaultValue(
                     streamerData.channelId,
                     "gameDuration"
-                )
+                ))
         );
     }
     return gameDuration;
@@ -1203,7 +1209,7 @@ function broadcastInterval(channelId) {
 function sendFinalBroadcastTimeout(channelId) {
     if (!channelRaiders[channelId].finalBroadcastTimeout) {
         // sends a final broadcast after a timeOut(USER_CONFIG.gameResultDuration)
-        const timeout = getUserConfigOrDefaultValue(
+        const timeout = await getUserConfigOrDefaultValue(
             channelId,
             "gameResultDuration"
         );
