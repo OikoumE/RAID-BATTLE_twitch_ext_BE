@@ -39,8 +39,8 @@ const channelCooldownMs = 1000; // maximum broadcast rate per channel
 const bearerPrefix = "Bearer "; // HTTP authorization headers have this prefix
 const channelCooldowns = {}; // rate limit compliance
 let userCooldowns = {}; // spam prevention
-const { resolveObjectURL } = require("buffer");
-const { get } = require("https");
+// const { resolveObjectURL } = require("buffer");
+// const { get } = require("https");
 
 //! --------------------------------------------------------- //
 //*                      -- TODO's --                        //
@@ -889,34 +889,41 @@ async function startRaid(channel, username, viewers) {
             (game) => game.raiderData.raider === username
         )
     ) {
-        await constructGamePackage(username, viewers, streamerData, channelId);
-        setResult(
-            channelId,
+        let result = null;
+        const gamePackage = await constructGamePackage(
             username,
-            parse(strings.intro1, username),
-            "introDuration"
-        );
-        // TODO make !COMMAND not show if commands are disabled
-        attemptSendChatMessageToChannel(
+            viewers,
             streamerData,
-            `Incoming raid from ${username} - get ready for RAID-BATTLE ${
-                (await getUserConfigOrDefaultValue(
-                    channelId,
-                    "enableChatCommands"
-                ))
-                    ? "(type !RAIDBATTLE for info)"
-                    : ""
-            }`
+            channelId
         );
-        handleBroadcastInterval(channelId);
+        if (gamePackage) {
+            setResult(
+                channelId,
+                username,
+                parse(strings.intro1, username),
+                "introDuration"
+            );
+            attemptSendChatMessageToChannel(
+                streamerData,
+                `Incoming raid from ${username} - get ready for RAID-BATTLE ${
+                    (await getUserConfigOrDefaultValue(
+                        channelId,
+                        "enableChatCommands"
+                    ))
+                        ? "(type !RAIDBATTLE for info)"
+                        : ""
+                }`
+            );
+            handleBroadcastInterval(channelId);
+            result = channelRaiders[channelId].games;
+        }
+        console.log(
+            `[backend:906]: StartRaid returned: ${
+                result == null ? "Null" : "channelRaiders[channelId].games"
+            }:`
+        );
+        return result;
     }
-    const result = channelRaiders[channelId].games || null;
-    console.log(
-        `[backend:906]: StartRaid returned: ${
-            result == null ? "Null" : "channelRaiders[channelId].games"
-        }:`
-    );
-    return result;
 }
 
 async function getUserConfigOrDefaultValue(channelId, configName) {
@@ -925,7 +932,7 @@ async function getUserConfigOrDefaultValue(channelId, configName) {
     let result = DEFAULTS[`${configName}`].default;
     if (streamerData && streamerData.userConfig) {
         // we have userconfig
-        result = userConfig[`${configName}`];
+        result = streamerData.userConfig[`${configName}`];
     }
     return result;
 }
@@ -937,26 +944,30 @@ async function constructGamePackage(
     channelId
 ) {
     // constructs an object for a raid game
-    const streamData = await getStreamById(streamerData.channelId),
-        raiderUserData = await getUser(`login=${raiderUserName}`),
-        raiderData = {
-            display_name: raiderUserData.display_name,
-            profile_image_url: raiderUserData.profile_image_url,
-            viewers: raiderAmount,
-            health: initialHealth,
-        },
-        supportRatio = getRatio(raiderAmount, streamData.viewer_count),
-        gameTimeObj = await constructGameTimeObject(streamerData),
-        gameResult = [],
-        raidPackage = {
-            streamerData,
-            raiderData,
-            supportRatio,
-            gameTimeObj,
-            gameResult,
-        };
-    channelRaiders[channelId].games.push(raidPackage);
-    return raidPackage;
+    const streamData = await getStreamById(streamerData.channelId);
+    if (streamData.type == "live") {
+        const raiderUserData = await getUser(`login=${raiderUserName}`),
+            raiderData = {
+                display_name: raiderUserData.display_name,
+                profile_image_url: raiderUserData.profile_image_url,
+                viewers: raiderAmount,
+                health: initialHealth,
+            },
+            supportRatio = getRatio(raiderAmount, streamData.viewer_count),
+            gameTimeObj = await constructGameTimeObject(streamerData),
+            gameResult = [],
+            raidPackage = {
+                streamerData,
+                raiderData,
+                supportRatio,
+                gameTimeObj,
+                gameResult,
+            };
+        channelRaiders[channelId].games.push(raidPackage);
+        return raidPackage;
+    } else {
+        return null;
+    }
 }
 
 function conditionHandler(channelId) {
