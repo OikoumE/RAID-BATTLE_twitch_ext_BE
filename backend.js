@@ -153,7 +153,7 @@ const STRINGS = {
     secretEnv: usingValue("secret"),
     clientIdEnv: usingValue("client-id"),
     ownerIdEnv: usingValue("owner-id"),
-    serverStarted: "Server running at %s",
+    serverStarted: "Server running at",
     secretMissing: missingValue("secret", "EXT_SECRET"),
     clientIdMissing: missingValue("client ID", "EXT_CLIENT_ID"),
     ownerIdMissing: missingValue("owner ID", "EXT_OWNER_ID"),
@@ -835,7 +835,7 @@ async function chatCommandHandler(channel, userstate, message, self) {
         ) {
             // send message to chat
             console.log(
-                `[backend:838]:Command: "${message}"  recognized on channel: ${channel}`
+                `[backend:838]: Command: "${message}"  recognized on channel: ${channel}`
             );
             attemptSendChatMessageToChannel(
                 streamerData,
@@ -914,7 +914,6 @@ async function startRaid(channel, username, viewers) {
 
 async function getUserConfigOrDefaultValue(channelId, configName) {
     // gets userConfig value or DEFAULT value
-    console.trace("-------------------------");
     const streamerData = await dataBase.findOne({ channelId });
     let result = DEFAULTS[`${configName}`].default;
     if (streamerData && streamerData.userConfig) {
@@ -1318,7 +1317,7 @@ async function sendChatMessageToChannel(message, channelId) {
     // not more often than every 5sec pr channel
     // Maximum: 280 characters.
     console.log(
-        `[backend:1270]: sending message: "${message}" to channel: "${channelId}"`
+        `[backend:1321]: sending message: "${message}" to channel: "${channelId}"`
     );
     const jwtToken = makeServerToken(channelId);
     const url = `https://api.twitch.tv/helix/extensions/chat?broadcaster_id=${channelId}`,
@@ -1335,7 +1334,7 @@ async function sendChatMessageToChannel(message, channelId) {
         });
     const res = await fetch(url, { method: "POST", headers, body });
     console.log(
-        `[backend:532]: Broadcast chat message result: ${res.status}: ${res.statusText}`
+        `[backend:1338]: Broadcast chat message result: ${res.status}: ${res.statusText}`
     );
 }
 //! --------------------------------------------------------- //
