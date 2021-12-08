@@ -909,11 +909,10 @@ async function startRaid(channel, username, viewers) {
     return result;
 }
 
-function getUserConfigOrDefaultValue(channelId, configName) {
+async function getUserConfigOrDefaultValue(channelId, configName) {
     // gets userConfig value or DEFAULT value
-    const userConfig =
-        channelRaiders[channelId].games[0].streamerData.userConfig;
-    if (userConfig) {
+    const streamerData = await dataBase.findOne({ channelId });
+    if (streamerData && streamerData.userConfig) {
         // we have userconfig
         return userConfig[`${configName}`];
     } else {
