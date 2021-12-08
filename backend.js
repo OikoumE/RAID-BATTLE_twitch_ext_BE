@@ -96,6 +96,7 @@ const DEFAULTS = {
     introDuration: { default: 30, max: 60, min: 0 },
     gameResultDuration: { default: 15, max: 30, min: 0 },
     enableChatOutput: { default: true },
+    enableChatCommands: { default: true },
     gameInfoDuration: { default: 10, max: 20, min: 0 },
 };
 const strings = {
@@ -545,11 +546,11 @@ function streamerSupportHandler(req) {
         );
         for (const gameObj of channelRaiders[channelId].games) {
             if (gameObj.raiderData.health > 0) {
-                //! TEST
+                //! DURING TEST
                 if (opaqueUserId == "U93645775") {
                     gameObj.raiderData.health = gameObj.raiderData.health - 20;
                 }
-                //! TEST
+                //! DURING TEST
                 gameObj.raiderData.health =
                     gameObj.raiderData.health - gameObj.supportRatio.streamer;
             }
@@ -823,7 +824,6 @@ function startTmi(channels) {
 async function chatMessageHandler(channel, userstate, message, self) {
     // todo check if chat is enabled in userconfig
     // TODO ? add "enable chat command" checkbox in config
-    // TODO ? add "chat command prefix" in config
     // Don't listen to my own messages..
     if (self) return;
     // if message is of type chat and is a command
@@ -890,12 +890,10 @@ async function startRaid(channel, username, viewers) {
             parse(strings.intro1, username),
             "introDuration"
         );
-        //! TEST CHAT!
         attemptSendChatMessageToChannel(
             streamerData,
             `Incomming raid from ${username} - get ready for RAID-BATTLE (type !RAIDBATTLE for info)`
         );
-        //! TEST CHAT!
         handleBroadcastInterval(channelId);
     }
     const result = channelRaiders[channelId].games || null;
@@ -1088,7 +1086,6 @@ function checkForExistingGameResult(testArray, testKey, testValue) {
     });
     // will be true if pair is found, otherwise false.
 }
-// function setResult(channelId, raider, string, finalResult = false) {
 function setResult(channelId, raider, string, durationName) {
     // sets a result on a game if a special condition is met
     // channelRaiders[channelId] == Array
@@ -1301,32 +1298,16 @@ function attemptSendChatMessageToChannel(streamerData, message) {
             return;
         }
     }
-    checkCooldownAndSendChatMessage(message, streamerData.channelId);
-}
-
-function checkCooldownAndSendChatMessage(message, channelId) {
-    // TODO change this to use TMI CHAT BOT instead. reasons
-    // checks if there is timeout for sending message, adds message to queue if is in cooldown
-    const cooldown = channelMessageCooldown[channelId],
+    // checks if there is timeout for sending message
+    const cooldown = channelMessageCooldown[streamerData.channelId],
         now = Date.now();
     if (!cooldown || cooldown.time < now) {
         // we are not in cooldown
-        // we can send message
-        sendChatMessageToChannel(message, channelId);
-        channelMessageCooldown[channelId] = {
+        sendChatMessageToChannel(message, streamerData.channelId);
+        channelMessageCooldown[streamerData.channelId] = {
             time: now + CHAT_MSG_COOLDOWN_MS,
         };
     }
-    //  else if (!cooldown.trigger) {
-    //     // we queue a message to be sent
-    //     cooldown.trigger = setTimeout(
-    //         () => {
-    //             sendChatMessageToChannel;
-    //         },
-    //         now - cooldown.time,
-    //         [message, channelId]
-    //     );
-    // }
 }
 
 async function sendChatMessageToChannel(message, channelId) {
