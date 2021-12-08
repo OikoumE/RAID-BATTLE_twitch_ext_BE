@@ -825,11 +825,13 @@ async function chatCommandHandler(channel, userstate, message, self) {
     const userData = await dataBase.findOne({
             channelName: channel.replace("#", "").toLowerCase(),
         }),
-        userConfig = userData.userConfig;
-    console.log(userData);
+        userConfig = userData.userConfig,
+        chatCommandsEnabled = userConfig
+            ? userConfig.enableChatCommands
+            : DEFAULTS.enableChatCommands.default;
     // Don't listen to my own messages..
     // Don't listen if chatCommands are disabled
-    if (self || !userConfig.enableChatCommands) return;
+    if (self || !chatCommandsEnabled) return;
     // if message is of type chat and is a command
     if (userstate["message-type"] === "chat") {
         if (
