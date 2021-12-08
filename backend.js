@@ -1092,7 +1092,7 @@ function checkForExistingGameResult(testArray, testKey, testValue) {
     });
     // will be true if pair is found, otherwise false.
 }
-function setResult(channelId, raider, string, durationName) {
+async function setResult(channelId, raider, string, durationName) {
     // sets a result on a game if a special condition is met
     // channelRaiders[channelId] == Array
     for (let i = 0; i < channelRaiders[channelId].games.length; i++) {
@@ -1130,7 +1130,7 @@ function gameExpired(gamesArray) {
     //! GAME EXPIRED
     return true;
 }
-function constructGameTimeObject(streamerData) {
+async function constructGameTimeObject(streamerData) {
     // handles creating the gameTimeObj: {gameDuration, introDuration, gameResultDuration}
     const introDuration = calculateIntroDuration(streamerData),
         gameDuration = calculateGameDuration(introDuration, streamerData),
@@ -1140,7 +1140,7 @@ function constructGameTimeObject(streamerData) {
         );
     return { introDuration, gameDuration, gameResultDuration };
 }
-function calculateIntroDuration(streamerData) {
+async function calculateIntroDuration(streamerData) {
     // set introDuration on gameTimeObj
     introDuration = Math.floor(
         Date.now() / 1000 +
@@ -1151,7 +1151,7 @@ function calculateIntroDuration(streamerData) {
     );
     return introDuration;
 }
-function calculateGameDuration(introDuration, streamerData) {
+async function calculateGameDuration(introDuration, streamerData) {
     // set gameDuration on gameTimeObj
     // if there are more than 0 games in the list use extendGameDuration
     const userConfig = streamerData.userConfig;
@@ -1206,7 +1206,7 @@ function broadcastInterval(channelId) {
     attemptRaidBroadcast(channelId);
 }
 //! ---- FINAL ---- //
-function sendFinalBroadcastTimeout(channelId) {
+async function sendFinalBroadcastTimeout(channelId) {
     if (!channelRaiders[channelId].finalBroadcastTimeout) {
         // sends a final broadcast after a timeOut(USER_CONFIG.gameResultDuration)
         const timeout = await getUserConfigOrDefaultValue(
