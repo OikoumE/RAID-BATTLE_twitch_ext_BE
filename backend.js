@@ -686,7 +686,6 @@ async function addNewStreamer(channelId) {
         console.log("[backend:337]: result", result);
         const allChannelList = await dataBase.find();
         const newChannelList = parseTmiChannelListFromDb(allChannelList);
-        console.log("[backend:446]: newChannelList", newChannelList);
         restartTmi(newChannelList);
         returnData = {
             result: "Success, added to channels to monitor for raids",
@@ -716,7 +715,6 @@ function parseTmiChannelListFromDb(result) {
     for (const document of result) {
         channels.push(document.channelName);
     }
-    console.log("[backend:317]: channels", channels);
     return channels;
 }
 
@@ -822,32 +820,30 @@ function startTmi(channels) {
 }
 
 async function chatCommandHandler(channel, userstate, message, self) {
-    const userData = await dataBase.findOne({
-            channelName: channel.replace("#", "").toLowerCase(),
-        }),
-        userConfig = userData.userConfig,
-        chatCommandsEnabled = userConfig
-            ? userConfig.enableChatCommands
-            : DEFAULTS.enableChatCommands.default;
-    // Don't listen to my own messages..
-    // Don't listen if chatCommands are disabled
+    // checks if chatCommands are enabled and sends a message if it is
+    const streamerData = await dataBase.findOne({
+        channelName: channel.replace("#", "").toLowerCase(),
+    });
+    let chatCommandsEnabled = DEFAULTS.enableChatCommands.default;
+    if (streamerData.userConfig) {
+        chatCommandsEnabled = streamerData.userConfig.enableChatCommands;
+    }
+    // Don't listen to my own messages or if chatCommands are disabled
     if (self || !chatCommandsEnabled) return;
     // if message is of type chat and is a command
-    if (userstate["message-type"] === "chat") {
+    if (userstate["message-type"] === "chat" && streamerData) {
         if (
             message.startsWith("!") &&
             message.toLowerCase().includes("raidbattle")
         ) {
-            const streamerData = await dataBase.findOne({
-                channelName: channel.toLowerCase().replace("#", ""),
-            });
             // send message to chat
-            if (streamerData) {
-                attemptSendChatMessageToChannel(
-                    streamerData,
-                    strings.RAIDBATTLE_CHAT_INFO_TEXT
-                );
-            }
+            console.log(
+                `[backend:838]:Command: "${message}"  recognized on channel: ${channel}`
+            );
+            attemptSendChatMessageToChannel(
+                streamerData,
+                strings.RAIDBATTLE_CHAT_INFO_TEXT
+            );
         }
     }
 }
