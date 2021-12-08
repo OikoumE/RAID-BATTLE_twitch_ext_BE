@@ -905,7 +905,7 @@ async function startRaid(channel, username, viewers) {
     }
     const result = channelRaiders[channelId].games || null;
     console.log(
-        `:StartRaid returned:, ${
+        `[backend:906]: StartRaid returned: ${
             result == null ? "Null" : "channelRaiders[channelId].games"
         }:`
     );
@@ -914,6 +914,7 @@ async function startRaid(channel, username, viewers) {
 
 async function getUserConfigOrDefaultValue(channelId, configName) {
     // gets userConfig value or DEFAULT value
+    console.trace("-------------------------");
     const streamerData = await dataBase.findOne({ channelId });
     if (streamerData && streamerData.userConfig) {
         // we have userconfig
@@ -940,7 +941,7 @@ async function constructGamePackage(
             health: initialHealth,
         },
         supportRatio = getRatio(raiderAmount, streamData.viewer_count),
-        gameTimeObj = constructGameTimeObject(streamerData),
+        gameTimeObj = await constructGameTimeObject(streamerData),
         gameResult = [],
         raidPackage = {
             streamerData,
@@ -1132,8 +1133,8 @@ function gameExpired(gamesArray) {
 }
 async function constructGameTimeObject(streamerData) {
     // handles creating the gameTimeObj: {gameDuration, introDuration, gameResultDuration}
-    const introDuration = calculateIntroDuration(streamerData),
-        gameDuration = calculateGameDuration(introDuration, streamerData),
+    const introDuration = await calculateIntroDuration(streamerData),
+        gameDuration = await calculateGameDuration(introDuration, streamerData),
         gameResultDuration = await getUserConfigOrDefaultValue(
             streamerData.channelId,
             "gameDuration"
