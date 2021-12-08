@@ -82,7 +82,7 @@ let APP_ACCESS_TOKEN = null,
 const initialHealth = 100,
     channelRaiders = {},
     KEEP_HEROKU_ALIVE_INTERVAL = 15,
-    CHAT_MSG_COOLDOWN_MS = 30000,
+    CHAT_MSG_COOLDOWN_MS = 10000,
     channelMessageCooldown = {};
 
 var dataBase, tmiClient;
@@ -1026,7 +1026,6 @@ function setGameExpiredResult(gamesArray, channelId, gameEnd) {
             defeated = gameEnd.result[0].name;
         } else if (gameEnd.alive) {
             // if any raider > 50%, "RAIDER[0]" win
-            console.log("[backend:1078]: gameEnd.result", gameEnd.result);
             winner = gameEnd.result[0].name;
             defeated = gamesArray[0].streamerData.displayName;
         }
@@ -1037,6 +1036,7 @@ function setGameExpiredResult(gamesArray, channelId, gameEnd) {
                 parse(strings.win, winner, defeated)
             )
         ) {
+            console.log("[backend:1078]: gameEnd.result", gameEnd.result);
             setResult(
                 channelId,
                 gameEnd.result[0].name,
@@ -1110,7 +1110,6 @@ function setResult(channelId, raider, string, durationName) {
                 channelId,
                 durationName
             );
-            console.log("[backend:1054]: addedTime", addedTime);
             const resultExpires = Date.now() + addedTime * 1000;
             channelRaiders[channelId].games[i].gameResult.push({
                 resultExpires,
