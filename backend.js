@@ -916,13 +916,12 @@ async function getUserConfigOrDefaultValue(channelId, configName) {
     // gets userConfig value or DEFAULT value
     console.trace("-------------------------");
     const streamerData = await dataBase.findOne({ channelId });
+    let result = DEFAULTS[`${configName}`].default;
     if (streamerData && streamerData.userConfig) {
         // we have userconfig
-        return userConfig[`${configName}`];
-    } else {
-        // we dont have userconfig
-        return DEFAULTS[`${configName}`].default;
+        result = userConfig[`${configName}`];
     }
+    return result;
 }
 
 async function constructGamePackage(
