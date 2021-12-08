@@ -335,8 +335,6 @@ async function setDefaultUserConfigInDatabase() {
     console.log(`[backend:174]: ${STRINGS.serverStarted}${server.info.uri}`);
     // Periodically clear cool-down tracking to prevent unbounded growth due to
     // per-session logged-out user tokens.
-    // TODO
-    // ??????????????????????????????
     setInterval(() => {
         userCooldowns = {};
     }, userCooldownClearIntervalMs);
@@ -673,7 +671,6 @@ class DataBase {
         }
         return false;
     }
-    //TODO deleteOne //? idk if we need
 }
 //! -------------------- DATABASE HANDLERS -------------------- //
 async function addNewStreamer(channelId) {
@@ -896,7 +893,7 @@ async function startRaid(channel, username, viewers) {
         attemptSendChatMessageToChannel(
             streamerData,
             `Incoming raid from ${username} - get ready for RAID-BATTLE ${
-                streamerData.userConfig.enableChatCommands
+                getUserConfigOrDefaultValue(channelId, "enableChatCommands")
                     ? "(type !RAIDBATTLE for info)"
                     : ""
             }`
@@ -1135,16 +1132,17 @@ function constructGameTimeObject(streamerData) {
     // handles creating the gameTimeObj: {gameDuration, introDuration, gameResultDuration}
     const introDuration = calculateIntroDuration(streamerData),
         gameDuration = calculateGameDuration(introDuration, streamerData),
-        gameResultDuration = calculateGameResultDuration(streamerData);
+        gameResultDuration = getUserConfigOrDefaultValue(
+            streamerData.channelId,
+            "gameDuration"
+        );
     return { introDuration, gameDuration, gameResultDuration };
 }
 function calculateIntroDuration(streamerData) {
     // set introDuration on gameTimeObj
     introDuration = Math.floor(
         Date.now() / 1000 +
-            (streamerData.userConfig
-                ? streamerData.userConfig.introDuration
-                : DEFAULTS.introDuration.default)
+            getUserConfigOrDefaultValue(streamerData.channelId, "introDuration")
     );
     return introDuration;
 }
@@ -1164,9 +1162,10 @@ function calculateGameDuration(introDuration, streamerData) {
         );
         let extraTime = 0;
         if (userConfig && userConfig.extendGameDurationEnabled) {
-            extraTime = streamerData.userConfig
-                ? streamerData.userConfig.extendGameDuration
-                : DEFAULTS.extendGameDuration.default;
+            extraTime = getUserConfigOrDefaultValue(
+                streamerData.channelId,
+                "extendGameDuration"
+            );
         }
         gameDuration = Math.floor(ongoingGame + extraTime);
     } else {
@@ -1174,20 +1173,13 @@ function calculateGameDuration(introDuration, streamerData) {
         // or DEFAULTS if no streamerData.userConfig
         gameDuration = Math.floor(
             introDuration +
-                (streamerData.userConfig
-                    ? streamerData.userConfig.gameDuration
-                    : DEFAULTS.gameDuration.default)
+                getUserConfigOrDefaultValue(
+                    streamerData.channelId,
+                    "gameDuration"
+                )
         );
     }
     return gameDuration;
-}
-
-function calculateGameResultDuration(streamerData) {
-    // returns DEFAULT game
-    gameResultDuration = streamerData.userConfig
-        ? streamerData.userConfig.gameResultDuration
-        : DEFAULTS.gameResultDuration.default;
-    return gameResultDuration;
 }
 
 //! --------------------------------------------------------- //
