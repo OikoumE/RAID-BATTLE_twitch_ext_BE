@@ -833,6 +833,13 @@ async function chatCommandHandler(channel, userstate, message, self) {
             message.startsWith("!") &&
             message.toLowerCase().includes("raidbattle")
         ) {
+            if (message.toLowerCase().includes("madeby")) {
+                attemptSendChatMessageToChannel(
+                    streamerData,
+                    "Was made by @itsOiK"
+                );
+                return;
+            }
             // send message to chat
             console.log(
                 `[backend:838]: Command: "${message}"  recognized on channel: ${channel}`
