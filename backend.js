@@ -20,7 +20,7 @@ const path = require("path");
 const Boom = require("boom");
 const ext = require("commander");
 const jsonwebtoken = require("jsonwebtoken");
-const request = require("request");
+// const request = require("request");
 
 // The developer rig uses self-signed certificates.  Node doesn't accept them
 // by default.  Do not use this in production.
