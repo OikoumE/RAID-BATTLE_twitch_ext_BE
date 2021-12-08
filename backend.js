@@ -822,11 +822,11 @@ function startTmi(channels) {
 }
 
 async function chatCommandHandler(channel, userstate, message, self) {
-    // todo check if chat is enabled in userconfig
     const userData = dataBase.findOne({
             channelName: channel.replace("#", "").toLowerCase(),
         }),
         userConfig = userData.userConfig;
+    console.log(userData);
     // Don't listen to my own messages..
     // Don't listen if chatCommands are disabled
     if (self || !userConfig.enableChatCommands) return;
