@@ -822,7 +822,7 @@ function startTmi(channels) {
 }
 
 async function chatCommandHandler(channel, userstate, message, self) {
-    const userData = dataBase.findOne({
+    const userData = await dataBase.findOne({
             channelName: channel.replace("#", "").toLowerCase(),
         }),
         userConfig = userData.userConfig;
@@ -894,9 +894,14 @@ async function startRaid(channel, username, viewers) {
             parse(strings.intro1, username),
             "introDuration"
         );
+        // TODO make !COMMAND not show if commands are disabled
         attemptSendChatMessageToChannel(
             streamerData,
-            `Incomming raid from ${username} - get ready for RAID-BATTLE (type !RAIDBATTLE for info)`
+            `Incoming raid from ${username} - get ready for RAID-BATTLE ${
+                streamerData.userConfig.enableChatCommands
+                    ? "(type !RAIDBATTLE for info)"
+                    : ""
+            }`
         );
         handleBroadcastInterval(channelId);
     }
