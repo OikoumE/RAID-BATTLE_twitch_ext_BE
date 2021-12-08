@@ -73,8 +73,8 @@ const mongoUri = process.env.MONGODB_URL;
 const APP_CLIENT_ID =
         process.env.APP_CLIENT_ID || "epcjd8cqin8efwuwgs9m8ubpjnbw90",
     APP_CLIENT_SECRET = process.env.APP_CLIENT_SECRET || "",
-    // CURRENT_VERSION = process.env.CURRENT_VERSION || "0.0.4";
-    CURRENT_VERSION = "0.0.4";
+    CURRENT_VERSION = process.env.CURRENT_VERSION;
+// CURRENT_VERSION = "0.0.4";
 
 let APP_ACCESS_TOKEN = null,
     TOKEN_EXPIRE_DATE = null;
