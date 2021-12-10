@@ -153,7 +153,7 @@ const STRINGS = {
     secretEnv: usingValue("secret"),
     clientIdEnv: usingValue("client-id"),
     ownerIdEnv: usingValue("owner-id"),
-    serverStarted: "Server running at",
+    serverStarted: "Server running at: ",
     secretMissing: missingValue("secret", "EXT_SECRET"),
     clientIdMissing: missingValue("client ID", "EXT_CLIENT_ID"),
     ownerIdMissing: missingValue("owner ID", "EXT_OWNER_ID"),
@@ -208,10 +208,10 @@ function getOption(optionName, environmentName) {
         if (ext[optionName]) {
             return ext[optionName];
         } else if (process.env[environmentName]) {
-            console.log("[backend:210]: ", STRINGS[optionName + "Env"]);
+            console.log("[backend:210]:", STRINGS[optionName + "Env"]);
             return process.env[environmentName];
         }
-        console.log("[backend:214]: ", STRINGS[optionName + "Missing"]);
+        console.log("[backend:214]:", STRINGS[optionName + "Missing"]);
         process.exit(1);
     })();
     console.log(
@@ -336,7 +336,7 @@ async function setDefaultUserConfigInDatabase() {
     //! /TESTING
     // Start the server.
     await server.start();
-    console.log(`[backend:174]: ${STRINGS.serverStarted}${server.info.uri}`);
+    console.log(`[backend:174]: ${STRINGS.serverStarted}${server.info.uri}\n`);
     // Periodically clear cool-down tracking to prevent unbounded growth due to
     // per-session logged-out user tokens.
     setInterval(() => {
