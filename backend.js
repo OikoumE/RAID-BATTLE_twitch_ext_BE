@@ -348,7 +348,6 @@ async function setDefaultUserConfigInDatabase() {
 //! --------------------------------------------------------- //
 //*                   -- ROUTE HANDLERS --                   //
 //! ------------------------------------------------------- //
-
 function userIsInCooldown(opaqueUserId, skipCooldown = false) {
     // Check if the user is in cool-down.
     const cooldown = userCooldowns[opaqueUserId];
