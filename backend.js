@@ -459,6 +459,7 @@ async function requestUserConfigHandler(req) {
         data: { result: null, defaults: DEFAULTS },
     });
 }
+//
 //! ---- UPDATECONFIG ---- //
 async function updateUserConfigHandler(req) {
     // Verify all requests.
