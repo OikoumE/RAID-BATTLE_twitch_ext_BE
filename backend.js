@@ -208,10 +208,10 @@ function getOption(optionName, environmentName) {
         if (ext[optionName]) {
             return ext[optionName];
         } else if (process.env[environmentName]) {
-            console.log(STRINGS[optionName + "Env"]);
+            console.log("[backend:210]: ", STRINGS[optionName + "Env"]);
             return process.env[environmentName];
         }
-        console.log(STRINGS[optionName + "Missing"]);
+        console.log("[backend:214]: ", STRINGS[optionName + "Missing"]);
         process.exit(1);
     })();
     console.log(`Using "${option}" for ${optionName}`);
