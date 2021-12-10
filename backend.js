@@ -214,7 +214,11 @@ function getOption(optionName, environmentName) {
         console.log("[backend:214]: ", STRINGS[optionName + "Missing"]);
         process.exit(1);
     })();
-    console.log(`Using "${option}" for ${optionName}`);
+    console.log(
+        `[backend:217]: Using "${
+            optionName == "secret" ? "REDACTED" : option
+        }" for ${optionName}`
+    );
     return option;
 }
 // Verify the header and the enclosed JWT.
