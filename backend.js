@@ -757,7 +757,7 @@ async function getUser(path) {
         console.log("[backend:674]: Error when getting user by ID", err);
     }
 }
-async function getStreamById(id) {
+async function getStreamsById(id) {
     // Query Twitch for stream details.
     const url = `https://api.twitch.tv/helix/streams?user_id=${id}`,
         appToken = await getAppAccessToken(),
@@ -948,7 +948,8 @@ async function constructGamePackage(
     channelId
 ) {
     // constructs an object for a raid game
-    const streamData = await getStreamById(streamerData.channelId);
+    const streamData = await getStreamsById(streamerData.channelId);
+    console.log(streamData);
     if (streamData.type == "live") {
         const raiderUserData = await getUser(`login=${raiderUserName}`),
             raiderData = {
