@@ -950,7 +950,7 @@ async function constructGamePackage(
     // constructs an object for a raid game
     const streamData = await getStreamsById(streamerData.channelId);
     console.log(streamData);
-    if (streamData.type == "live") {
+    if (streamData && streamData.type == "live") {
         const raiderUserData = await getUser(`login=${raiderUserName}`),
             raiderData = {
                 display_name: raiderUserData.display_name,
