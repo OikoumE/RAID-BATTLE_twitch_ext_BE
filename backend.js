@@ -768,10 +768,8 @@ async function getStreamsById(id) {
     // Handle response.
     try {
         let response = await fetch(url, { headers });
-        console.log("[backend:593]: response", response);
         if (response.ok) {
             let data = await response.json();
-            console.log("[backend:773]: data", data);
             return data.data[0];
         }
     } catch (err) {
@@ -893,7 +891,7 @@ async function startRaid(channel, username, viewers) {
             (game) => game.raiderData.raider === username
         )
     ) {
-        let result = null;
+        let result = [];
         const gamePackage = await constructGamePackage(
             username,
             viewers,
@@ -923,7 +921,7 @@ async function startRaid(channel, username, viewers) {
         }
         console.log(
             `[backend:906]: StartRaid returned: ${
-                result == null ? "Null" : "channelRaiders[channelId].games"
+                result == [] ? "Null" : "channelRaiders[channelId].games"
             }:`
         );
         return result;
