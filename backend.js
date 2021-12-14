@@ -768,11 +768,11 @@ async function getStreamsById(id) {
     // Handle response.
     try {
         let response = await fetch(url, { headers });
+        console.log("[backend:593]: response", response);
         if (response.ok) {
             let data = await response.json();
             return data.data[0];
         }
-        console.log("[backend:593]: response", response);
     } catch (err) {
         console.log("[backend:661]: Error when getting stream by ID", err);
     }
