@@ -771,9 +771,8 @@ async function getStreamsById(id) {
         if (response.ok) {
             let data = await response.json();
             return data.data[0];
-        } else {
-            console.log("[backend:593]: response", response);
         }
+        console.log("[backend:593]: response", response);
     } catch (err) {
         console.log("[backend:661]: Error when getting stream by ID", err);
     }
