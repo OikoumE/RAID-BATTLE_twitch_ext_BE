@@ -412,7 +412,7 @@ async function ongoingRaidGameQueryHandler(req) {
         addNewStreamer(channelId);
     }
     if (typeof channelRaiders[channelId] === "undefined") {
-        console.log("[backend:522]: No active games");
+        console.log(`[backend:415]: No active games on channel ${channelId}`);
         return null;
     } else if (
         channelRaiders[channelId] &&
