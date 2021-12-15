@@ -418,7 +418,7 @@ async function ongoingRaidGameQueryHandler(req) {
         channelRaiders[channelId] &&
         typeof channelRaiders[channelId].games === "undefined"
     ) {
-        console.log("[backend:528]: No active games");
+        console.log(`[backend:528]: No active games on channel ${channelId}`);
         return null;
     } else if (
         channelRaiders[channelId] &&
