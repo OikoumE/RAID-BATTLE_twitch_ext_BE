@@ -114,8 +114,8 @@ const strings = {
     // both raiders must be below 50% for streamer to win
     // if any raider above 50%, team raider wins
 };
-//! -------------------- /my_vars -------------------- //
 
+//! -------------------- /my_vars -------------------- //
 function herokuPingerTimerouter() {
     // handles setting an interval of Math.random() to ping heroku to keep app alive
     //* no need after setting up proper VPS
