@@ -221,6 +221,7 @@ function getOption(optionName, environmentName) {
     );
     return option;
 }
+
 // Verify the header and the enclosed JWT.
 function verifyAndDecode(header) {
     if (header.startsWith(bearerPrefix)) {
@@ -1014,6 +1015,10 @@ function checkRaiderHealthAndSetResult(
                 parse(strings[stringName], game.raiderData.display_name),
                 "gameInfoDuration"
             );
+            attemptSendChatMessageToChannel(
+                game.streamerData,
+                parse(strings[stringName], game.raiderData.display_name)
+            );
         }
     }
 }
@@ -1058,6 +1063,10 @@ function setGameExpiredResult(gamesArray, channelId, gameEnd) {
                 parse(strings.win, winner, defeated),
                 "gameResultDuration"
             );
+            attemptSendChatMessageToChannel(
+                gamesArray[0].streamerData,
+                parse(strings.win, winner, defeated)
+            );
         }
         sendFinalBroadcastTimeout(channelId);
     }
@@ -1091,6 +1100,14 @@ function setAllRaiderDeadCondition(gamesArray, channelId, gameEnd) {
                     gameEnd.result[0].name
                 ),
                 "gameResultDuration"
+            );
+            attemptSendChatMessageToChannel(
+                gamesArray[0].streamerData,
+                parse(
+                    strings.win,
+                    gamesArray[0].streamerData.displayName,
+                    gameEnd.result[0].name
+                )
             );
         }
         // do final broadcast
