@@ -106,7 +106,7 @@ const strings = {
     help: "Use !raidbattle for help on how to battle",
     win: "%s was victorious over %s!",
     draw: "%s met their equal in %s, its a draw!",
-    halfHealth: "%s has around 50% left!",
+    halfHealth: "%s has around %s % left!",
     dead: "%s has been defeated!",
     gameOver: "GAME OVER",
     RAIDBATTLE_CHAT_INFO_TEXT:
@@ -1006,21 +1006,30 @@ function checkRaiderHealthAndSetResult(
             !checkForExistingGameResult(
                 game.gameResult,
                 "string",
-                parse(strings[stringName], game.raiderData.display_name)
+                parse(
+                    strings[stringName],
+                    game.raiderData.display_name,
+                    healthThreshold
+                )
             )
         ) {
             console.log(
-                "[backend:957]: raider under 50% and not in resultqueue"
+                `[backend:957]: raider under ${healthThreshold}% and not in resultqueue`
             );
             setResult(
                 channelId,
                 game.raiderData.display_name,
                 parse(strings[stringName], game.raiderData.display_name),
+                healthThreshold,
                 "gameInfoDuration"
             );
             attemptSendChatMessageToChannel(
                 game.streamerData,
-                parse(strings[stringName], game.raiderData.display_name)
+                parse(
+                    strings[stringName],
+                    game.raiderData.display_name,
+                    healthThreshold
+                )
             );
         }
     }
