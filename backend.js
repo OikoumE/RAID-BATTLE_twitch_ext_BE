@@ -968,7 +968,7 @@ function checkRaiderHealthAndSetResult(channelId, healthThreshold, stringName) {
         let operand = false,
             name = game.raiderData.user_name;
         if (healthThreshold > 50) {
-            name = channelRaiders[channelId].streamerData.user_name;
+            name = game.streamerData.user_name;
             if (
                 game.raiderData.health >= healthThreshold &&
                 !checkForExistingGameResult(
