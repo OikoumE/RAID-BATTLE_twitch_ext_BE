@@ -1019,8 +1019,12 @@ function checkRaiderHealthAndSetResult(
             setResult(
                 channelId,
                 game.raiderData.display_name,
-                parse(strings[stringName], game.raiderData.display_name),
-                healthThreshold,
+                parse(
+                    strings[stringName],
+                    game.raiderData.display_name,
+                    healthThreshold
+                ),
+
                 "gameInfoDuration"
             );
             attemptSendChatMessageToChannel(
