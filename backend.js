@@ -946,11 +946,26 @@ function conditionHandler(channelId) {
     // perform required tasks accodringly
     const gamesArray = channelRaiders[channelId].games;
     // get raiders at/below 25% and set result
-    checkRaiderHealthAndSetResult(channelId, gamesArray, 25, "halfHealth");
+    checkRaiderHealthAndSetResult(
+        channelId,
+        channelRaiders[channelId],
+        25,
+        "halfHealth"
+    );
     // get raiders at/below 50% and set result
-    checkRaiderHealthAndSetResult(channelId, gamesArray, 75, "halfHealth");
+    checkRaiderHealthAndSetResult(
+        channelId,
+        channelRaiders[channelId],
+        75,
+        "halfHealth"
+    );
     // get raiders below 1% and set result
-    checkRaiderHealthAndSetResult(channelId, gamesArray, 1, "dead");
+    checkRaiderHealthAndSetResult(
+        channelId,
+        channelRaiders[channelId],
+        1,
+        "dead"
+    );
     // gametime has run out
     const gameEndResult = calculateGameEndResult(gamesArray);
     // check if all raiders are dead and set result
@@ -960,17 +975,17 @@ function conditionHandler(channelId) {
 }
 function checkRaiderHealthAndSetResult(
     channelId,
-    gamesArray,
+    channelRaiders,
     healthThreshold,
     stringName
 ) {
     // checks if a specified raider has reached a specified health threshhold
-    for (const game of gamesArray) {
+    for (const game of channelRaiders.games) {
         // check if raider is at 50% health
         let operand = false,
             name = game.raiderData.display_name;
         if (healthThreshold > 50) {
-            name = game.streamData.user_name;
+            name = channelRaiders.streamData.user_name;
             if (
                 game.raiderData.health >= healthThreshold &&
                 !checkForExistingGameResult(
