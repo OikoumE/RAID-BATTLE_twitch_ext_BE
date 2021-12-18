@@ -915,7 +915,6 @@ async function constructGamePackage(
 ) {
     // constructs an object for a raid game
     const streamData = await getStreamsById(streamerData.channelId);
-    console.log("[backend:917]: streamData", streamData);
     if (streamData && streamData.type == "live") {
         const raiderUserData = await getUser(`login=${raiderUserName}`),
             raiderData = {
@@ -944,49 +943,32 @@ async function constructGamePackage(
 function conditionHandler(channelId) {
     // Checks if certain conditions are met and
     // perform required tasks accodringly
-    const gamesArray = channelRaiders[channelId].games;
     // get raiders at/below 25% and set result
-    checkRaiderHealthAndSetResult(
-        channelId,
-        channelRaiders[channelId],
-        25,
-        "halfHealth"
-    );
+    checkRaiderHealthAndSetResult(channelId, 25, "halfHealth");
     // get raiders at/below 50% and set result
-    checkRaiderHealthAndSetResult(
-        channelId,
-        channelRaiders[channelId],
-        75,
-        "halfHealth"
-    );
+    checkRaiderHealthAndSetResult(channelId, 75, "halfHealth");
     // get raiders below 1% and set result
-    checkRaiderHealthAndSetResult(
-        channelId,
-        channelRaiders[channelId],
-        1,
-        "dead"
-    );
+    checkRaiderHealthAndSetResult(channelId, 1, "dead");
     // gametime has run out
-    const gameEndResult = calculateGameEndResult(gamesArray);
+    const gameEndResult = calculateGameEndResult(channelId);
     // check if all raiders are dead and set result
-    setAllRaiderDeadCondition(gamesArray, channelId, gameEndResult);
+    setAllRaiderDeadCondition(channelId, gameEndResult);
     // check if game is expired and set result
-    setGameExpiredResult(gamesArray, channelId, gameEndResult);
+    setGameExpiredResult(channelId, gameEndResult);
 }
-function checkRaiderHealthAndSetResult(
-    channelId,
-    channelRaid,
-    healthThreshold,
-    stringName
-) {
+function checkRaiderHealthAndSetResult(channelId, healthThreshold, stringName) {
+    const gamesArray = channelRaiders[channelId].games;
     // checks if a specified raider has reached a specified health threshhold
-    console.log("[backend:984]: channelRaid", channelRaid.streamerData);
-    for (const game of channelRaid.games) {
+    console.log(
+        "[backend:984]: channelRaid",
+        channelRaiders[channelId].streamerData
+    );
+    for (const game of gamesArray) {
         // check if raider is at 50% health
         let operand = false,
-            name = game.raiderData.display_name;
+            name = game.raiderData.user_name;
         if (healthThreshold > 50) {
-            name = channelRaid.streamerData.user_name;
+            name = channelRaiders[channelId].streamerData.user_name;
             if (
                 game.raiderData.health >= healthThreshold &&
                 !checkForExistingGameResult(
@@ -1016,25 +998,18 @@ function checkRaiderHealthAndSetResult(
             setResult(
                 channelId,
                 game.raiderData.display_name,
-                parse(
-                    strings[stringName],
-                    game.raiderData.display_name,
-                    healthThreshold
-                ),
+                parse(strings[stringName], name, healthThreshold),
                 "gameInfoDuration"
             );
             attemptSendChatMessageToChannel(
                 game.streamerData,
-                parse(
-                    strings[stringName],
-                    game.raiderData.display_name,
-                    healthThreshold
-                )
+                parse(strings[stringName], name, healthThreshold)
             );
         }
     }
 }
-function calculateGameEndResult(gamesArray) {
+function calculateGameEndResult(channelId) {
+    const gamesArray = channelRaiders[channelId].games;
     // handles calculating the end game result
     let alive = 0;
     const result = gamesArray.map((game) => {
@@ -1048,7 +1023,8 @@ function calculateGameEndResult(gamesArray) {
     });
     return { result, alive };
 }
-function setGameExpiredResult(gamesArray, channelId, gameEnd) {
+function setGameExpiredResult(channelId, gameEnd) {
+    const gamesArray = channelRaiders[channelId].games;
     // handles calculating the end game result when gameDuration is expired
     if (gameExpired(gamesArray) && channelRaiders[channelId].hasRunningGame) {
         let winner, defeated;
@@ -1083,7 +1059,8 @@ function setGameExpiredResult(gamesArray, channelId, gameEnd) {
         sendFinalBroadcastTimeout(channelId);
     }
 }
-function setAllRaiderDeadCondition(gamesArray, channelId, gameEnd) {
+function setAllRaiderDeadCondition(channelId, gameEnd) {
+    const gamesArray = channelRaiders[channelId].games;
     // handles setting condition when all raiders are dead
     //! STREAMER WIN
     const maxHealth = Math.max(
