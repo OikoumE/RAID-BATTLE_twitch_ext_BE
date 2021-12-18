@@ -404,8 +404,7 @@ async function ongoingRaidGameQueryHandler(req) {
     // Verify all requests.
     const payload = verifyAndDecode(req.headers.authorization);
     const { channel_id: channelId, opaque_user_id: opaqueUserId } = payload;
-    console.log("[backend:406]: channel_id", channel_id);
-    console.log("[backend:407]: opaque_user_id", opaque_user_id);
+    console.log("[backend:406]: payload", payload);
     // Bot abuse prevention:  don't allow a user to spam the button.
     if (userIsInCooldown(opaqueUserId)) {
         throw Boom.tooManyRequests(STRINGS.cooldown);
