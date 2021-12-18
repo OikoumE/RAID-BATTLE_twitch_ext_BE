@@ -959,10 +959,6 @@ function conditionHandler(channelId) {
 function checkRaiderHealthAndSetResult(channelId, healthThreshold, stringName) {
     const gamesArray = channelRaiders[channelId].games;
     // checks if a specified raider has reached a specified health threshhold
-    console.log(
-        "[backend:984]: channelRaiders[channelId]",
-        channelRaiders[channelId]
-    );
     for (const game of gamesArray) {
         // check if raider is at 50% health
         let operand = false,
