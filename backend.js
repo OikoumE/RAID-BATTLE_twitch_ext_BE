@@ -79,7 +79,7 @@ const APP_CLIENT_ID =
 let APP_ACCESS_TOKEN = null,
     TOKEN_EXPIRE_DATE = null;
 
-const initialHealth = 100,
+const initialSupport = 50,
     channelRaiders = {},
     KEEP_HEROKU_ALIVE_INTERVAL = 15,
     CHAT_MSG_COOLDOWN_MS = 5000,
@@ -956,7 +956,7 @@ async function constructGamePackage(
                 display_name: raiderUserData.display_name,
                 profile_image_url: raiderUserData.profile_image_url,
                 viewers: raiderAmount,
-                health: initialHealth,
+                health: initialSupport,
             },
             supportRatio = getRatio(raiderAmount, streamData.viewer_count),
             gameTimeObj = await constructGameTimeObject(streamerData),
@@ -979,9 +979,11 @@ function conditionHandler(channelId) {
     // Checks if certain conditions are met and
     // perform required tasks accodringly
     const gamesArray = channelRaiders[channelId].games;
-    // get raiders at/below 50hp and set result
-    checkRaiderHealthAndSetResult(channelId, gamesArray, 50, "halfHealth");
-    // get raiders below 1hp and set result
+    // get raiders at/below 25% and set result
+    checkRaiderHealthAndSetResult(channelId, gamesArray, 25, "halfHealth");
+    // get raiders at/below 50% and set result
+    checkRaiderHealthAndSetResult(channelId, gamesArray, 75, "halfHealth");
+    // get raiders below 1% and set result
     checkRaiderHealthAndSetResult(channelId, gamesArray, 1, "dead");
     // gametime has run out
     const gameEndResult = calculateGameEndResult(gamesArray);
