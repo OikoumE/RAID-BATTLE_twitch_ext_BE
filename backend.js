@@ -24,7 +24,7 @@ const jsonwebtoken = require("jsonwebtoken");
 
 // The developer rig uses self-signed certificates.  Node doesn't accept them
 // by default.  Do not use this in production.
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
+// process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0"; //! ONLY WHEN DEV AND TESTING
 
 // Use verbose logging during development.  Set this to false for production.
 const verboseLogging = true;
@@ -963,6 +963,7 @@ function checkRaiderHealthAndSetResult(channelId, healthThreshold, stringName) {
         // check if raider is at 50% health
         let operand = false,
             name = game.raiderData.user_name;
+        //TODO fix this to use -50 -> +50 when gauge
         if (healthThreshold > 50) {
             name = game.streamerData.user_name;
             if (
