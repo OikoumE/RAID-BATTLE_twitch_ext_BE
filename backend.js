@@ -980,6 +980,7 @@ function checkRaiderHealthAndSetResult(
     stringName
 ) {
     // checks if a specified raider has reached a specified health threshhold
+    console.log("[backend:984]: channelRaiders", channelRaiders);
     for (const game of channelRaiders.games) {
         // check if raider is at 50% health
         let operand = false,
