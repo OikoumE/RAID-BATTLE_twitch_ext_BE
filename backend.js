@@ -927,15 +927,15 @@ async function constructGamePackage(
             supportRatio = getRatio(raiderAmount, streamData.viewer_count),
             gameTimeObj = await constructGameTimeObject(streamerData),
             gameResult = [],
-            raidPackage = {
+            gamePackage = {
                 streamerData,
                 raiderData,
                 supportRatio,
                 gameTimeObj,
                 gameResult,
             };
-        channelRaiders[channelId].games.push(raidPackage);
-        return raidPackage;
+        channelRaiders[channelId].games.push(gamePackage);
+        return gamePackage;
     } else {
         return null;
     }
@@ -986,7 +986,7 @@ function checkRaiderHealthAndSetResult(
         let operand = false,
             name = game.raiderData.display_name;
         if (healthThreshold > 50) {
-            name = channelRaiders.streamData.user_name;
+            name = channelRaiders.streamerData.user_name;
             if (
                 game.raiderData.health >= healthThreshold &&
                 !checkForExistingGameResult(
