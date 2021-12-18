@@ -82,7 +82,7 @@ let APP_ACCESS_TOKEN = null,
 const initialHealth = 100,
     channelRaiders = {},
     KEEP_HEROKU_ALIVE_INTERVAL = 15,
-    CHAT_MSG_COOLDOWN_MS = 10000,
+    CHAT_MSG_COOLDOWN_MS = 5000,
     channelMessageCooldown = {};
 
 var dataBase, tmiClient;
