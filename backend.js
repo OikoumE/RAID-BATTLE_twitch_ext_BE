@@ -975,18 +975,18 @@ function conditionHandler(channelId) {
 }
 function checkRaiderHealthAndSetResult(
     channelId,
-    channelRaiders,
+    channelRaid,
     healthThreshold,
     stringName
 ) {
     // checks if a specified raider has reached a specified health threshhold
-    console.log("[backend:984]: channelRaiders", channelRaiders);
-    for (const game of channelRaiders.games) {
+    console.log("[backend:984]: channelRaid", channelRaid.streamerData);
+    for (const game of channelRaid.games) {
         // check if raider is at 50% health
         let operand = false,
             name = game.raiderData.display_name;
         if (healthThreshold > 50) {
-            name = channelRaiders.streamerData.user_name;
+            name = channelRaid.streamerData.user_name;
             if (
                 game.raiderData.health >= healthThreshold &&
                 !checkForExistingGameResult(
