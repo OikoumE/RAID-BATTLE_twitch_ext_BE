@@ -330,12 +330,6 @@ async function setDefaultUserConfigInDatabase() {
         path: "/TESTRAID/stop",
         handler: stopTestRaidHandler, //
     });
-    // Matisse stuff
-    server.route({
-        method: "POST",
-        path: "/matisse/",
-        handler: warmHandler, //
-    });
     //! /TESTING
     // Start the server.
     await server.start();
@@ -368,39 +362,7 @@ function userIsInCooldown(opaqueUserId, skipCooldown = false) {
 function return404(req) {
     return "<style> html { background-color: #000000;} </style><img src='https://http.cat/404.jpg' />";
 }
-//! ---- WARM ---- //
-async function warmHandler(req) {
-    // Verify all requests.
-    const payload = verifyAndDecode(req.headers.authorization);
-    const { channel_id: channelId, opaque_user_id: opaqueUserId } = payload;
-    // Bot abuse prevention:  don't allow a user to spam the button.
-    if (userIsInCooldown(opaqueUserId)) {
-        throw Boom.tooManyRequests(STRINGS.cooldown);
-    }
-    let response;
-    try {
-        if (channelId == 468106723 || channelId == 93645775) {
-            const data = req.payload;
-            const jsonData = JSON.parse(data);
-            url = `http://matissesprojects.github.io/send/heat/yolkRocks?x=${jsonData.x}&y=${jsonData.y}`;
-            res = await fetch(url);
-            response = await res.text();
-            console.log(response);
-            if (
-                response.includes("not found") &&
-                response.includes("ERR_NGROK")
-            ) {
-                throw "ngrok error";
-            }
-        } else {
-            response = "unauthorized";
-        }
-    } catch (err) {
-        response = "MatisseNGROK error";
-        console.log("[backend:312]: ", response);
-    }
-    return JSON.stringify({ data: response });
-}
+
 //! ---- ONGOING ---- //
 async function ongoingRaidGameQueryHandler(req) {
     // Verify all requests.
@@ -524,7 +486,7 @@ function raiderSupportHandler(req) {
             ) {
                 if (gameObj.raiderData.health < 100) {
                     console.log(
-                        `increase health on : ${raider} in stream: ${channelId}, by ${opaqueUserId}`
+                        `[backend:487]: increase health on : ${raider} in stream: ${channelId}, by ${opaqueUserId}`
                     );
                     gameObj.raiderData.health =
                         gameObj.raiderData.health + gameObj.supportRatio.raider;
@@ -804,7 +766,9 @@ function startTmi(channels) {
         channels: channels,
     });
     tmiClient.connect().then(() => {
-        console.log(`[backend:529]: Listening for messages on ${channels}`);
+        console.log(
+            `[backend:529]: Listening for messages on ${channels.length} channels`
+        );
     });
     tmiClient.on("message", (channel, userstate, message, self) =>
         chatCommandHandler(channel, userstate, message, self)
@@ -951,7 +915,7 @@ async function constructGamePackage(
 ) {
     // constructs an object for a raid game
     const streamData = await getStreamsById(streamerData.channelId);
-    console.log(streamData);
+    console.log("[backend:917]: streamData", streamData);
     if (streamData && streamData.type == "live") {
         const raiderUserData = await getUser(`login=${raiderUserName}`),
             raiderData = {
@@ -1006,7 +970,7 @@ function checkRaiderHealthAndSetResult(
         let operand = false,
             name = game.raiderData.display_name;
         if (healthThreshold > 50) {
-            name = game.streamData.displayName;
+            name = game.streamData.user_name;
             if (
                 game.raiderData.health >= healthThreshold &&
                 !checkForExistingGameResult(
@@ -1313,7 +1277,7 @@ function cleanUpChannelRaiderAndDoBroadcast(channelId) {
             }, 2000);
         }
     } catch (err) {
-        console.log();
+        console.log("[backend:1317]: ERROR");
     }
 }
 //! ---- QUEUE ---- //
