@@ -49,6 +49,8 @@ let userCooldowns = {}; // spam prevention
 // Make a logger that logs critical errors to DB
 // log pr channelID: timestamp, error, scriptLocation
 
+// TODO change health range form -50 -> +50 to easier use gauge
+
 // TODO broadcast endgame state from EBS to EXT, with game result
 // TODO calculate game result
 // TODO sending gameOverState: win/defeated raiderX/loose
@@ -1001,18 +1003,33 @@ function checkRaiderHealthAndSetResult(
     // checks if a specified raider has reached a specified health threshhold
     for (const game of gamesArray) {
         // check if raider is at 50% health
-        if (
-            game.raiderData.health <= healthThreshold &&
-            !checkForExistingGameResult(
-                game.gameResult,
-                "string",
-                parse(
-                    strings[stringName],
-                    game.raiderData.display_name,
-                    healthThreshold
+        let operand = false,
+            name = game.raiderData.display_name;
+        if (healthThreshold > 50) {
+            name = game.streamData.displayName;
+            if (
+                game.raiderData.health >= healthThreshold &&
+                !checkForExistingGameResult(
+                    game.gameResult,
+                    "string",
+                    parse(strings[stringName], name, healthThreshold)
                 )
-            )
-        ) {
+            ) {
+                operand = true;
+            }
+        } else if (healthThreshold < 50) {
+            if (
+                game.raiderData.health <= healthThreshold &&
+                !checkForExistingGameResult(
+                    game.gameResult,
+                    "string",
+                    parse(strings[stringName], name, healthThreshold)
+                )
+            ) {
+                operand = true;
+            }
+        }
+        if (operand) {
             console.log(
                 `[backend:957]: raider under ${healthThreshold}% and not in resultqueue`
             );
@@ -1024,7 +1041,6 @@ function checkRaiderHealthAndSetResult(
                     game.raiderData.display_name,
                     healthThreshold
                 ),
-
                 "gameInfoDuration"
             );
             attemptSendChatMessageToChannel(
