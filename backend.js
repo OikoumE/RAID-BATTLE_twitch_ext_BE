@@ -961,8 +961,6 @@ function checkRaiderHealthAndSetResult(channelId, healthThreshold, stringName) {
     // checks if a specified raider has reached a specified health threshhold
     for (const game of gamesArray) {
         // check if raider is at 50% health
-        // console.log("[backend:963]: game.raiderData", game.raiderData);
-        // console.log("[backend:964]: game.streamerData", game.streamerData);
         let operand = false,
             name = game.raiderData.display_name;
         //TODO fix this to use -50 -> +50 when gauge
