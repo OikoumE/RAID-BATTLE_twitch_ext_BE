@@ -870,7 +870,7 @@ async function startRaid(channel, username, viewers) {
             setResult(
                 channelId,
                 username,
-                parse(strings.intro1, username),
+                parseString(strings.intro1, username),
                 "introDuration"
             );
             attemptSendChatMessageToChannel(
@@ -944,9 +944,9 @@ function conditionHandler(channelId) {
     // Checks if certain conditions are met and
     // perform required tasks accodringly
     // get raiders at/below 25% and set result
-    checkRaiderHealthAndSetResult(channelId, 25, "halfHealth");
+    // checkRaiderHealthAndSetResult(channelId, 50, "halfHealth"); //TODO fix when gauge
     // get raiders at/below 50% and set result
-    checkRaiderHealthAndSetResult(channelId, 75, "halfHealth");
+    // checkRaiderHealthAndSetResult(channelId, 75, "halfHealth"); //TODO fix when gauge
     // get raiders below 1% and set result
     checkRaiderHealthAndSetResult(channelId, 1, "dead");
     // gametime has run out
@@ -971,7 +971,7 @@ function checkRaiderHealthAndSetResult(channelId, healthThreshold, stringName) {
                 !checkForExistingGameResult(
                     game.gameResult,
                     "string",
-                    parse(strings[stringName], name, healthThreshold)
+                    parseString(strings[stringName], name, healthThreshold)
                 )
             ) {
                 operand = true;
@@ -982,7 +982,7 @@ function checkRaiderHealthAndSetResult(channelId, healthThreshold, stringName) {
                 !checkForExistingGameResult(
                     game.gameResult,
                     "string",
-                    parse(strings[stringName], name, healthThreshold)
+                    parseString(strings[stringName], name, healthThreshold)
                 )
             ) {
                 operand = true;
@@ -995,12 +995,12 @@ function checkRaiderHealthAndSetResult(channelId, healthThreshold, stringName) {
             setResult(
                 channelId,
                 game.raiderData.display_name,
-                parse(strings[stringName], name, healthThreshold),
+                parseString(strings[stringName], name, healthThreshold),
                 "gameInfoDuration"
             );
             attemptSendChatMessageToChannel(
                 game.streamerData,
-                parse(strings[stringName], name, healthThreshold)
+                parseString(strings[stringName], name, healthThreshold)
             );
         }
     }
@@ -1038,19 +1038,19 @@ function setGameExpiredResult(channelId, gameEnd) {
             !checkForExistingGameResult(
                 gamesArray[0].gameResult,
                 "string",
-                parse(strings.win, winner, defeated)
+                parseString(strings.win, winner, defeated)
             )
         ) {
             console.log("[backend:1078]: gameEnd.result", gameEnd.result);
             setResult(
                 channelId,
                 gameEnd.result[0].name,
-                parse(strings.win, winner, defeated),
+                parseString(strings.win, winner, defeated),
                 "gameResultDuration"
             );
             attemptSendChatMessageToChannel(
                 gamesArray[0].streamerData,
-                parse(strings.win, winner, defeated)
+                parseString(strings.win, winner, defeated)
             );
         }
         sendFinalBroadcastTimeout(channelId);
@@ -1070,7 +1070,7 @@ function setAllRaiderDeadCondition(channelId, gameEnd) {
             !checkForExistingGameResult(
                 gamesArray[0].gameResult,
                 "string",
-                parse(
+                parseString(
                     strings.win,
                     gamesArray[0].streamerData.displayName,
                     gameEnd.result[0].name
@@ -1080,7 +1080,7 @@ function setAllRaiderDeadCondition(channelId, gameEnd) {
             setResult(
                 channelId,
                 gameEnd.result[0].name,
-                parse(
+                parseString(
                     strings.win,
                     gamesArray[0].streamerData.displayName,
                     gameEnd.result[0].name
@@ -1089,7 +1089,7 @@ function setAllRaiderDeadCondition(channelId, gameEnd) {
             );
             attemptSendChatMessageToChannel(
                 gamesArray[0].streamerData,
-                parse(
+                parseString(
                     strings.win,
                     gamesArray[0].streamerData.displayName,
                     gameEnd.result[0].name
@@ -1101,7 +1101,7 @@ function setAllRaiderDeadCondition(channelId, gameEnd) {
     }
 }
 //! --------------------  -------------------- //
-function parse(str) {
+function parseString(str) {
     // parses string and replaces "%s" with supplied argument
     var args = [].slice.call(arguments, 1),
         i = 0;
