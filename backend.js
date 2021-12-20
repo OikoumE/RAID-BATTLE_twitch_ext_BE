@@ -149,7 +149,7 @@ async function herokuPinger() {
         herokuPinger();
     }, nextTimeout);
 }
-herokuPinger();
+// herokuPinger(); //! ENABLES HEROKUPINGER!
 
 const STRINGS = {
     secretEnv: usingValue("secret"),
