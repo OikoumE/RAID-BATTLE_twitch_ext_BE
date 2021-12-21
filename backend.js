@@ -537,21 +537,24 @@ async function startTestRaidHandler(req) {
     if (userIsInCooldown(opaqueUserId)) {
         throw Boom.tooManyRequests(STRINGS.cooldown);
     }
-    let testRaidPayload;
+    let testRaidPayload,
+        startedRaid = "Null";
     try {
-        console.log("[backend:541]: req.payload", req.payload);
         testRaidPayload = JSON.parse(req.payload);
+        regex = /^[a-zA-Z0-9][a-zA-Z0-9_]{3,24}$/gs;
+        if (regex.test(testRaidPayload.testRaider)) {
+            // console.log("[backend:566]: testRaidPayload", testRaidPayload);
+            await addNewStreamer(channelId);
+            const channel = await dataBase.findOne({ channelId });
+            startedRaid = await startRaid(
+                channel.channelName,
+                testRaidPayload.testRaider,
+                testRaidPayload.testAmount
+            );
+        }
     } catch (err) {
         console.log("[backend:541]: ERROR: JSON.parse \n", err);
     }
-    // console.log("[backend:566]: testRaidPayload", testRaidPayload);
-    await addNewStreamer(channelId);
-    const channel = await dataBase.findOne({ channelId });
-    const startedRaid = await startRaid(
-        channel.channelName,
-        testRaidPayload.testRaider,
-        testRaidPayload.testAmount
-    );
     return JSON.stringify(startedRaid);
 }
 //! ---- STOPTESTRAID ---- //
