@@ -359,8 +359,11 @@ function userIsInCooldown(opaqueUserId, skipCooldown = false) {
 }
 
 //! ---- 404 ---- //
-function return404(req) {
+function return404() {
     return "<style> html { background-color: #000000;} </style><img src='https://http.cat/404.jpg' />";
+}
+function return400() {
+    return "<style> html { background-color: #000000;} </style><img src='https://http.cat/400.jpg' />";
 }
 
 //! ---- ONGOING ---- //
@@ -554,6 +557,7 @@ async function startTestRaidHandler(req) {
         }
     } catch (err) {
         console.log("[backend:541]: ERROR: JSON.parse \n", err);
+        startedRaid = return400();
     }
     return JSON.stringify(startedRaid);
 }
