@@ -537,7 +537,13 @@ async function startTestRaidHandler(req) {
     if (userIsInCooldown(opaqueUserId)) {
         throw Boom.tooManyRequests(STRINGS.cooldown);
     }
-    const testRaidPayload = JSON.parse(req.payload);
+    let testRaidPayload;
+    try {
+        console.log("[backend:541]: req.payload", req.payload);
+        testRaidPayload = JSON.parse(req.payload);
+    } catch (err) {
+        console.log("[backend:541]: ERROR: JSON.parse \n", err);
+    }
     // console.log("[backend:566]: testRaidPayload", testRaidPayload);
     await addNewStreamer(channelId);
     const channel = await dataBase.findOne({ channelId });
