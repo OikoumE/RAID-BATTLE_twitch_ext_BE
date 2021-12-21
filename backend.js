@@ -532,7 +532,7 @@ function streamerSupportHandler(req) {
     return "NO ACTIVE GAMES RUNNING; STOP ALL RUNNING GAMES";
 }
 //! ---- STARTTESTRAID ---- //
-async function startTestRaidHandler(req, h) {
+async function startTestRaidHandler(req, reply) {
     // Verify all requests.
     const payload = verifyAndDecode(req.headers.authorization);
     const { channel_id: channelId, opaque_user_id: opaqueUserId } = payload;
@@ -549,19 +549,21 @@ async function startTestRaidHandler(req, h) {
             // console.log("[backend:566]: testRaidPayload", testRaidPayload);
             await addNewStreamer(channelId);
             const channel = await dataBase.findOne({ channelId });
-            startedRaid = await startRaid(
+            const startedRaid = await startRaid(
                 channel.channelName,
                 testRaidPayload.testRaider,
                 testRaidPayload.testAmount
             );
-            h.status(200);
+            const response = reply(startedRaid).status(200);
+            return response;
         }
     } catch (err) {
-        console.log("[backend:541]: ERROR: JSON.parse \n", err);
-        startedRaid = return400();
-        h.status(400);
+        console.log("[backend:541]: ERROR: JSON.parse \n");
+        const response = reply(return400).status(400);
+        return response;
     }
-    return h(JSON.stringify(startedRaid));
+    const response = reply(startedRaid).status(400);
+    return response;
 }
 //! ---- STOPTESTRAID ---- //
 async function stopTestRaidHandler(req) {
