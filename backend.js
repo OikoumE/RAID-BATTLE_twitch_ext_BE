@@ -532,7 +532,7 @@ function streamerSupportHandler(req) {
     return "NO ACTIVE GAMES RUNNING; STOP ALL RUNNING GAMES";
 }
 //! ---- STARTTESTRAID ---- //
-async function startTestRaidHandler(req) {
+async function startTestRaidHandler(req, h) {
     // Verify all requests.
     const payload = verifyAndDecode(req.headers.authorization);
     const { channel_id: channelId, opaque_user_id: opaqueUserId } = payload;
@@ -554,12 +554,14 @@ async function startTestRaidHandler(req) {
                 testRaidPayload.testRaider,
                 testRaidPayload.testAmount
             );
+            h.status(200);
         }
     } catch (err) {
         console.log("[backend:541]: ERROR: JSON.parse \n", err);
         startedRaid = return400();
+        h.status(400);
     }
-    return JSON.stringify(startedRaid);
+    return h(JSON.stringify(startedRaid));
 }
 //! ---- STOPTESTRAID ---- //
 async function stopTestRaidHandler(req) {
