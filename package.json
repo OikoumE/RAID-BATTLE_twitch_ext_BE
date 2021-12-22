@@ -10,7 +10,7 @@
         "twitch",
         "extension"
     ],
-    "author": "itsOik!",
+    "author": "itsOik",
     "license": "Apache-2.0",
     "dependencies": {
         "boom": "^7.2.0",
