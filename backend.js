@@ -403,12 +403,15 @@ async function addStreamerToChannelsHandler(req) {
     // Verify all requests.
     const payload = verifyAndDecode(req.headers.authorization);
     const { channel_id: channelId, opaque_user_id: opaqueUserId } = payload;
-    // Bot abuse prevention:  don't allow a user to spam the button.
-    if (userIsInCooldown(opaqueUserId, true)) {
-        throw Boom.tooManyRequests(STRINGS.cooldown);
+    if (confirmOpaqueUser(channelId, opaqueUserId)) {
+        if (userIsInCooldown(opaqueUserId, true)) {
+            // Bot abuse prevention:  don't allow a user to spam the button.
+            throw Boom.tooManyRequests(STRINGS.cooldown);
+        }
+        const result = await addNewStreamer(channelId);
+        return JSON.stringify(result);
     }
-    const result = await addNewStreamer(channelId);
-    return JSON.stringify(result);
+    return return400;
 }
 //! ---- REQUESTCONFIG ---- //
 async function requestUserConfigHandler(req) {
@@ -416,20 +419,23 @@ async function requestUserConfigHandler(req) {
     const payload = verifyAndDecode(req.headers.authorization);
     const { channel_id: channelId, opaque_user_id: opaqueUserId } = payload;
     // Bot abuse prevention:  don't allow a user to spam the button.
-    if (userIsInCooldown(opaqueUserId, true)) {
-        throw Boom.tooManyRequests(STRINGS.cooldown);
-    }
-    const result = await dataBase.findOne({ channelId });
-    if (result.userConfig) {
+    if (confirmOpaqueUser(channelId, opaqueUserId)) {
+        if (userIsInCooldown(opaqueUserId, true)) {
+            throw Boom.tooManyRequests(STRINGS.cooldown);
+        }
+        const result = await dataBase.findOne({ channelId });
+        if (result.userConfig) {
+            return JSON.stringify({
+                result: "Loaded user config",
+                data: { result: result.userConfig, defaults: DEFAULTS },
+            });
+        }
         return JSON.stringify({
-            result: "Loaded user config",
-            data: { result: result.userConfig, defaults: DEFAULTS },
+            result: "Did not find config, hit save to store config",
+            data: { result: null, defaults: DEFAULTS },
         });
     }
-    return JSON.stringify({
-        result: "Did not find config, hit save to store config",
-        data: { result: null, defaults: DEFAULTS },
-    });
+    return return400;
 }
 //
 //! ---- UPDATECONFIG ---- //
@@ -437,21 +443,24 @@ async function updateUserConfigHandler(req) {
     // Verify all requests.
     const payload = verifyAndDecode(req.headers.authorization);
     const { channel_id: channelId, opaque_user_id: opaqueUserId } = payload;
-    // Bot abuse prevention:  don't allow a user to spam the button.
-    if (userIsInCooldown(opaqueUserId)) {
-        throw Boom.tooManyRequests(STRINGS.cooldown);
+    if (confirmOpaqueUser(channelId, opaqueUserId)) {
+        // Bot abuse prevention:  don't allow a user to spam the button.
+        if (userIsInCooldown(opaqueUserId)) {
+            throw Boom.tooManyRequests(STRINGS.cooldown);
+        }
+        const jsonUpdateDocument = JSON.parse(req.payload),
+            updateDocument = parseUserConfigUpdateDocument(jsonUpdateDocument);
+        await addNewStreamer(channelId);
+        const updateResult = await dataBase.updateOne(
+            { channelId },
+            { $set: { userConfig: updateDocument } }
+        );
+        return JSON.stringify({
+            result: "User Config updated!",
+            data: updateResult,
+        });
     }
-    const jsonUpdateDocument = JSON.parse(req.payload),
-        updateDocument = parseUserConfigUpdateDocument(jsonUpdateDocument);
-    await addNewStreamer(channelId);
-    const updateResult = await dataBase.updateOne(
-        { channelId },
-        { $set: { userConfig: updateDocument } }
-    );
-    return JSON.stringify({
-        result: "User Config updated!",
-        data: updateResult,
-    });
+    return return400;
 }
 //! ---- PARSECONFIG ---- //
 function parseUserConfigUpdateDocument(document) {
@@ -539,30 +548,33 @@ async function startTestRaidHandler(req, reply) {
     const payload = verifyAndDecode(req.headers.authorization);
     const { channel_id: channelId, opaque_user_id: opaqueUserId } = payload;
     // Bot abuse prevention:  don't allow a user to spam the button.
-    console.log("[backend:541]: opaqueUserId", opaqueUserId);
-    if (userIsInCooldown(opaqueUserId)) {
-        throw Boom.tooManyRequests(STRINGS.cooldown);
-    }
-    let testRaidPayload,
-        startedRaid = "Null";
-    try {
-        testRaidPayload = JSON.parse(req.payload);
-        regex = /^[a-zA-Z0-9][a-zA-Z0-9_]{3,24}$/gs;
-        if (regex.test(testRaidPayload.testRaider)) {
-            // console.log("[backend:566]: testRaidPayload", testRaidPayload);
-            await addNewStreamer(channelId);
-            const channel = await dataBase.findOne({ channelId });
-            const startedRaid = await startRaid(
-                channel.channelName,
-                testRaidPayload.testRaider,
-                testRaidPayload.testAmount
-            );
-            return JSON.stringify(startedRaid);
+    if (confirmOpaqueUser(channelId, opaqueUserId)) {
+        console.log("[backend:541]: opaqueUserId", opaqueUserId);
+        if (userIsInCooldown(opaqueUserId)) {
+            throw Boom.tooManyRequests(STRINGS.cooldown);
         }
-    } catch (err) {
-        console.log("[backend:541]: ERROR: JSON.parse \n");
+        let testRaidPayload,
+            startedRaid = "Null";
+        try {
+            testRaidPayload = JSON.parse(req.payload);
+            regex = /^[a-zA-Z0-9][a-zA-Z0-9_]{3,24}$/gs;
+            if (regex.test(testRaidPayload.testRaider)) {
+                // console.log("[backend:566]: testRaidPayload", testRaidPayload);
+                await addNewStreamer(channelId);
+                const channel = await dataBase.findOne({ channelId });
+                const startedRaid = await startRaid(
+                    channel.channelName,
+                    testRaidPayload.testRaider,
+                    testRaidPayload.testAmount
+                );
+                return JSON.stringify(startedRaid);
+            }
+        } catch (err) {
+            console.log("[backend:541]: ERROR: JSON.parse \n");
+        }
+        return JSON.stringify(startedRaid);
     }
-    return JSON.stringify(startedRaid);
+    return return400;
 }
 //! ---- STOPTESTRAID ---- //
 async function stopTestRaidHandler(req) {
@@ -570,13 +582,16 @@ async function stopTestRaidHandler(req) {
     const payload = verifyAndDecode(req.headers.authorization);
     const { channel_id: channelId, opaque_user_id: opaqueUserId } = payload;
     // Bot abuse prevention:  don't allow a user to spam the button.
-    if (userIsInCooldown(opaqueUserId)) {
-        throw Boom.tooManyRequests(STRINGS.cooldown);
+    if (confirmOpaqueUser(channelId, opaqueUserId)) {
+        if (userIsInCooldown(opaqueUserId)) {
+            throw Boom.tooManyRequests(STRINGS.cooldown);
+        }
+        cleanUpChannelRaiderAndDoBroadcast(channelId);
+        return JSON.stringify({
+            result: `Stopped all raid-games on channel: ${channelId}`,
+        });
     }
-    cleanUpChannelRaiderAndDoBroadcast(channelId);
-    return JSON.stringify({
-        result: `Stopped all raid-games on channel: ${channelId}`,
-    });
+    return return400;
 }
 
 //! --------------------------------------------------------- //
@@ -1393,4 +1408,8 @@ function makeServerToken(channelId) {
         },
     };
     return jsonwebtoken.sign(payload, secret, { algorithm: "HS256" });
+}
+
+function confirmOpaqueUser(channelId, opaqueId) {
+    return channelId === parseInt(opaqueId.replace("U", ""));
 }
