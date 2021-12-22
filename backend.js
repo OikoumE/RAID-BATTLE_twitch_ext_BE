@@ -458,14 +458,16 @@ function parseUserConfigUpdateDocument(document) {
     // parses userConfig update document
     const parsedDoc = {};
     for (const [key, value] of Object.entries(document)) {
-        const max = DEFAULTS[key].max,
-            min = DEFAULTS[key].min;
-        if (!key.toLowerCase().includes("enable")) {
-            parsedDoc[key] = parseInt(
-                value > max ? max : value < min ? min : value
-            );
-        } else {
-            parsedDoc[key] = value;
+        if (DEFAULTS.hasOwnProperty(key)) {
+            const max = DEFAULTS[key].max,
+                min = DEFAULTS[key].min;
+            if (!key.toLowerCase().includes("enable")) {
+                parsedDoc[key] = parseInt(
+                    value > max ? max : value < min ? min : value
+                );
+            } else {
+                parsedDoc[key] = value ? true : false;
+            }
         }
     }
     return parsedDoc;
@@ -554,7 +556,7 @@ async function startTestRaidHandler(req, reply) {
                 testRaidPayload.testRaider,
                 testRaidPayload.testAmount
             );
-            const response = reply(startedRaid).status(200);
+            const response = reply(JSON.stringify(startedRaid)).status(200);
             return response;
         }
     } catch (err) {
