@@ -572,7 +572,7 @@ async function startTestRaidHandler(req, reply) {
             console.log("[backend:541]: ERROR: JSON.parse \n");
         }
         return JSON.stringify(startedRaid);
-    }
+    } //
     return return400;
 }
 //! ---- STOPTESTRAID ---- //
