@@ -556,16 +556,12 @@ async function startTestRaidHandler(req, reply) {
                 testRaidPayload.testRaider,
                 testRaidPayload.testAmount
             );
-            const response = reply(JSON.stringify(startedRaid)).status(200);
-            return response;
+            return JSON.stringify(startedRaid);
         }
     } catch (err) {
         console.log("[backend:541]: ERROR: JSON.parse \n");
-        const response = reply(return400).status(400);
-        return response;
     }
-    const response = reply(startedRaid).status(400);
-    return response;
+    return JSON.stringify(startedRaid);
 }
 //! ---- STOPTESTRAID ---- //
 async function stopTestRaidHandler(req) {
