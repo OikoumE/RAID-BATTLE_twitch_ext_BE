@@ -549,7 +549,6 @@ async function startTestRaidHandler(req, reply) {
     const { channel_id: channelId, opaque_user_id: opaqueUserId } = payload;
     // Bot abuse prevention:  don't allow a user to spam the button.
     if (confirmOpaqueUser(channelId, opaqueUserId)) {
-        console.log("[backend:541]: opaqueUserId", opaqueUserId);
         if (userIsInCooldown(opaqueUserId)) {
             throw Boom.tooManyRequests(STRINGS.cooldown);
         }
@@ -1411,5 +1410,5 @@ function makeServerToken(channelId) {
 }
 
 function confirmOpaqueUser(channelId, opaqueId) {
-    return channelId === parseInt(opaqueId.replace("U", ""));
+    return parseInt(channelId) === parseInt(opaqueId.replace("U", ""));
 }
