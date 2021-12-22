@@ -411,7 +411,7 @@ async function addStreamerToChannelsHandler(req) {
         const result = await addNewStreamer(channelId);
         return JSON.stringify(result);
     }
-    return return400;
+    return JSON.stringify(return400);
 }
 //! ---- REQUESTCONFIG ---- //
 async function requestUserConfigHandler(req) {
@@ -435,7 +435,7 @@ async function requestUserConfigHandler(req) {
             data: { result: null, defaults: DEFAULTS },
         });
     }
-    return return400;
+    return JSON.stringify(return400);
 }
 //
 //! ---- UPDATECONFIG ---- //
@@ -460,7 +460,7 @@ async function updateUserConfigHandler(req) {
             data: updateResult,
         });
     }
-    return return400;
+    return JSON.stringify(return400);
 }
 //! ---- PARSECONFIG ---- //
 function parseUserConfigUpdateDocument(document) {
@@ -573,7 +573,7 @@ async function startTestRaidHandler(req, reply) {
         }
         return JSON.stringify(startedRaid);
     }
-    return return400;
+    return JSON.stringify(return400);
 }
 //! ---- STOPTESTRAID ---- //
 async function stopTestRaidHandler(req) {
@@ -590,7 +590,7 @@ async function stopTestRaidHandler(req) {
             result: `Stopped all raid-games on channel: ${channelId}`,
         });
     }
-    return return400;
+    return JSON.stringify(return400);
 }
 
 //! --------------------------------------------------------- //
