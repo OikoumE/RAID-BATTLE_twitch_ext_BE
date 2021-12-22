@@ -539,6 +539,7 @@ async function startTestRaidHandler(req, reply) {
     const payload = verifyAndDecode(req.headers.authorization);
     const { channel_id: channelId, opaque_user_id: opaqueUserId } = payload;
     // Bot abuse prevention:  don't allow a user to spam the button.
+    console.log("[backend:541]: opaqueUserId", opaqueUserId);
     if (userIsInCooldown(opaqueUserId)) {
         throw Boom.tooManyRequests(STRINGS.cooldown);
     }
