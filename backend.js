@@ -377,25 +377,24 @@ async function ongoingRaidGameQueryHandler(req) {
         throw Boom.tooManyRequests(STRINGS.cooldown);
     }
     const result = await dataBase.findOne({ channelId });
-    console.log(result);
-
+    const noActiveGameString = `No active games on channel ${result.displayName} - ${channelId}`;
     if (!result) {
         addNewStreamer(channelId);
     }
     if (typeof channelRaiders[channelId] === "undefined") {
-        console.log(`[backend:415]: No active games on channel ${channelId}`);
+        console.log(`[backend:415]: ${noActiveGameString}`);
         return null;
     } else if (
         channelRaiders[channelId] &&
         typeof channelRaiders[channelId].games === "undefined"
     ) {
-        console.log(`[backend:421]: No active games on channel ${channelId}`);
+        console.log(`[backend:421]: ${noActiveGameString}`);
         return null;
     } else if (
         channelRaiders[channelId] &&
         channelRaiders[channelId].games.length < 1
     ) {
-        console.log(`[backend:427]: No active games on channel ${channelId}`);
+        console.log(`[backend:427]: ${noActiveGameString}`);
         return null;
     }
     return JSON.stringify(channelRaiders[channelId].games);
