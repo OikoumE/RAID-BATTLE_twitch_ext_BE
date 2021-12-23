@@ -67,8 +67,8 @@ const tmi = require("tmi.js");
 const fetch = require("node-fetch");
 const { MongoClient } = require("mongodb");
 const ObjectId = require("mongodb").ObjectId;
-const { channel } = require("diagnostics_channel");
-const { stringify } = require("querystring");
+// const { channel } = require("diagnostics_channel");
+// const { stringify } = require("querystring");
 const mongoUri = process.env.MONGODB_URL;
 
 //* twitch api auth
@@ -377,6 +377,8 @@ async function ongoingRaidGameQueryHandler(req) {
         throw Boom.tooManyRequests(STRINGS.cooldown);
     }
     const result = await dataBase.findOne({ channelId });
+    console.log(result);
+
     if (!result) {
         addNewStreamer(channelId);
     }
