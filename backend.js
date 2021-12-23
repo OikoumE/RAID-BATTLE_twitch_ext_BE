@@ -832,10 +832,7 @@ async function chatCommandHandler(channel, userstate, message, self) {
     if (self || !chatCommandsEnabled) return;
     // if message is of type chat and is a command
     if (userstate["message-type"] === "chat" && streamerData) {
-        if (
-            message.startsWith("!") &&
-            message.toLowerCase().includes("raidbattle")
-        ) {
+        if (message.startsWith("!raidbattle")) {
             if (message.toLowerCase().includes("madeby")) {
                 attemptSendChatMessageToChannel(
                     streamerData,
@@ -932,10 +929,10 @@ async function startRaid(channel, username, viewers) {
 async function getUserConfigOrDefaultValue(channelId, configName) {
     // gets userConfig value or DEFAULT value
     const streamerData = await dataBase.findOne({ channelId });
-    let result = DEFAULTS[`${configName}`].default;
+    let result = DEFAULTS[configName].default;
     if (streamerData && streamerData.userConfig) {
         // we have userconfig
-        result = streamerData.userConfig[`${configName}`];
+        result = streamerData.userConfig[configName];
     }
     return result;
 }
