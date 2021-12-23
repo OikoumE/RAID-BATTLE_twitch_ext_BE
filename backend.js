@@ -444,6 +444,8 @@ async function updateUserConfigHandler(req) {
     // Verify all requests.
     const payload = verifyAndDecode(req.headers.authorization);
     const { channel_id: channelId, opaque_user_id: opaqueUserId } = payload;
+    console.log("[backend:446]: channelId", channelId);
+    console.log("[backend:447]: opaqueUserId", opaqueUserId);
     if (confirmOpaqueUser(channelId, opaqueUserId)) {
         // Bot abuse prevention:  don't allow a user to spam the button.
         if (userIsInCooldown(opaqueUserId)) {
