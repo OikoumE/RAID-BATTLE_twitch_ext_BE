@@ -2845,8 +2845,8 @@
 
                         client.prototype._getPromiseDelay =
                             function _getPromiseDelay() {
-                                if (this.currentLatency <= 600) {
-                                    return 600;
+                                if (this.currentLatency <= 1000) {
+                                    return 1000;
                                 } else {
                                     return this.currentLatency + 100;
                                 }
