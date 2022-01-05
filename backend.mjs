@@ -14,21 +14,32 @@
  *    limitations under the License.
  */
 
-const fs = require("fs");
-const Hapi = require("hapi");
-const path = require("path");
-const Boom = require("boom");
-const ext = require("commander");
-const jsonwebtoken = require("jsonwebtoken");
-// const request = require("request");
+import fs from "fs";
+import Hapi from "@hapi/hapi";
+import path from "path";
+import { dirname } from "path";
+import { fileURLToPath } from "url";
+import Boom from "boom";
+import ext from "commander";
+import jsonwebtoken from "jsonwebtoken";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
+import dotenv from "dotenv";
+dotenv.config();
+
+//! ------------------------------------------------
+
+import tmi from "tmi.js";
+import fetch from "node-fetch";
+import { MongoClient } from "mongodb";
+import { ObjectId } from "mongodb";
+
+//! ------------------------------------------------
 
 // The developer rig uses self-signed certificates.  Node doesn't accept them
 // by default.  Do not use this in production.
-// process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0"; //! ONLY WHEN DEV AND TESTING
-
-// Use verbose logging during development.  Set this to false for production.
-const verboseLogging = true;
-const verboseLog = verboseLogging ? console.log.bind(console) : () => {};
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0"; //! ONLY WHEN DEV AND TESTING
 
 // Service state variables
 const serverTokenDurationSec = 30; // our tokens for pubsub expire after 30 seconds
@@ -39,8 +50,6 @@ const channelCooldownMs = 1000; // maximum broadcast rate per channel
 const bearerPrefix = "Bearer "; // HTTP authorization headers have this prefix
 const channelCooldowns = {}; // rate limit compliance
 let userCooldowns = {}; // spam prevention
-// const { resolveObjectURL } = require("buffer");
-// const { get } = require("https");
 
 //! --------------------------------------------------------- //
 //*                      -- TODO's --                        //
@@ -49,41 +58,30 @@ let userCooldowns = {}; // spam prevention
 // Make a logger that logs critical errors to DB
 // log pr channelID: timestamp, error, scriptLocation
 
-// TODO change health range form -50 -> +50 to easier use gauge
-
-// TODO broadcast endgame state from EBS to EXT, with game result
-// TODO calculate game result
-// TODO sending gameOverState: win/defeated raiderX/loose
-
-//! TODO fix full cleanup happening before gameResultDuration instead of later like intended
-//! TODO if raider == dead && timeLeft > 1 {gameResultDuration (timestamp) is NOW+gameResultDuration}
-
+// TODO change health range from -50 -> +50 to easier use gauge
 // TODO figure out a way to remove channels from channels to monitor list.
 
 //! --------------------------------------------------------- //
 //*                      -- MY VARS --                       //
 //! ------------------------------------------------------- //
-const tmi = require("tmi.js");
-const fetch = require("node-fetch");
-const { MongoClient } = require("mongodb");
-const ObjectId = require("mongodb").ObjectId;
-// const { channel } = require("diagnostics_channel");
-// const { stringify } = require("querystring");
-const mongoUri = process.env.MONGODB_URL;
 
 //* twitch api auth
-const APP_CLIENT_ID =
-        process.env.APP_CLIENT_ID || "epcjd8cqin8efwuwgs9m8ubpjnbw90",
-    APP_CLIENT_SECRET = process.env.APP_CLIENT_SECRET || "",
-    CURRENT_VERSION = process.env.CURRENT_VERSION;
-// CURRENT_VERSION = "0.0.4";
+const APP_CLIENT_ID = process.env.APP_CLIENT_ID,
+    APP_CLIENT_SECRET = process.env.APP_CLIENT_SECRET,
+    CURRENT_VERSION = process.env.CURRENT_VERSION,
+    EXT_OWNER_ID = process.env.EXT_OWNER_ID,
+    mongoUri = process.env.MONGODB_URL,
+    EXT_CLIENT_SECRET = process.env.EXT_CLIENT_SECRET,
+    EXT_CLIENT_ID = process.env.EXT_CLIENT_ID;
+const ownerId = EXT_OWNER_ID,
+    secret = Buffer.from(EXT_CLIENT_SECRET, "base64"),
+    clientId = EXT_CLIENT_ID;
 
 let APP_ACCESS_TOKEN = null,
     TOKEN_EXPIRE_DATE = null;
 
-const initialSupport = 50,
+const initialSupport = 0,
     channelRaiders = {},
-    KEEP_HEROKU_ALIVE_INTERVAL = 15,
     CHAT_MSG_COOLDOWN_MS = 5000,
     channelMessageCooldown = {};
 
@@ -113,43 +111,7 @@ const strings = {
     gameOver: "GAME OVER",
     RAIDBATTLE_CHAT_INFO_TEXT:
         "RAID BATTLE is a game that is triggered when a channel that has the extension installed is being raided. The raiders & viewers can choose to support either the {RAIDER} or the {STREAMER} by clicking the respective buttons on screen",
-    // both raiders must be below 50% for streamer to win
-    // if any raider above 50%, team raider wins
 };
-
-//! -------------------- /my_vars -------------------- //
-function herokuPingerTimerouter() {
-    // handles setting an interval of Math.random() to ping heroku to keep app alive
-    //* no need after setting up proper VPS
-    let nextTimeout =
-        Math.floor(
-            Math.random() * 5 +
-                Math.floor(Math.random() * KEEP_HEROKU_ALIVE_INTERVAL)
-        ) *
-        60 *
-        1000;
-    // nextTimeout < 5 ? herokuPingerTimerouter() : nextTimeout;
-    return nextTimeout;
-}
-
-async function herokuPinger() {
-    // handles pinging heroku to keep app alive
-    var date = new Date();
-    let nextTimeout = herokuPingerTimerouter();
-    setTimeout(async () => {
-        fetch("https://raid-battle-twitch-ext.herokuapp.com/").then((res) =>
-            console.log(
-                "[backend:107]: HerokuPinger returned: ",
-                res.status,
-                `, PINGED@: ${date.toLocaleTimeString()}, next ping in  - ${Math.floor(
-                    nextTimeout / 1000 / 60
-                )} min`
-            )
-        );
-        herokuPinger();
-    }, nextTimeout);
-}
-// herokuPinger(); //! ENABLES HEROKUPINGER!
 
 const STRINGS = {
     secretEnv: usingValue("secret"),
@@ -172,15 +134,6 @@ function missingValue(name, variable) {
     const option = name.charAt(0);
     return `Extension ${name} required.\nUse argument "-${option} <${name}>" or environment variable "${variable}".`;
 }
-ext.version(require("./package.json").version)
-    .option("-s, --secret <secret>", "Extension secret")
-    .option("-c, --client-id <client_id>", "Extension client ID")
-    .option("-o, --owner-id <owner_id>", "Extension owner ID")
-    .parse(process.argv);
-
-const ownerId = getOption("ownerId", "EXT_OWNER_ID");
-const secret = Buffer.from(getOption("secret", "EXT_SECRET"), "base64");
-const clientId = getOption("clientId", "EXT_CLIENT_ID");
 
 const serverOptions = {
     host: "0.0.0.0",
@@ -203,26 +156,6 @@ if (
     };
 }
 const server = new Hapi.Server(serverOptions);
-
-// Get options from the command line or the environment.
-function getOption(optionName, environmentName) {
-    const option = (() => {
-        if (ext[optionName]) {
-            return ext[optionName];
-        } else if (process.env[environmentName]) {
-            console.log("[backend:210]:", STRINGS[optionName + "Env"]);
-            return process.env[environmentName];
-        }
-        console.log("[backend:214]:", STRINGS[optionName + "Missing"]);
-        process.exit(1);
-    })();
-    console.log(
-        `[backend:217]: Using "${
-            optionName == "secret" ? "REDACTED" : option
-        }" for ${optionName}`
-    );
-    return option;
-}
 
 // Verify the header and the enclosed JWT.
 function verifyAndDecode(header) {
@@ -275,6 +208,14 @@ async function setDefaultUserConfigInDatabase() {
 //*                      -- ROUTE's --                       //
 //! ------------------------------------------------------- //
 (async () => {
+    //! ----------------------- LOCAL TESTING ----------------------- !\\
+    // // Handle adding new streamers to channels to watch for raids
+    // server.route({
+    //     method: "POST",
+    //     path: "/addStreamerToChannels/",
+    //     handler: addStreamerToChannelsHandler, //
+    // });
+    //! ----------------------- LOCAL TESTING ----------------------- !\\
     // Handle adding new streamers to channels to watch for raids
     server.route({
         method: "POST",
@@ -377,24 +318,23 @@ async function ongoingRaidGameQueryHandler(req) {
         throw Boom.tooManyRequests(STRINGS.cooldown);
     }
     const result = await dataBase.findOne({ channelId });
-    const noActiveGameString = `No active games on channel ${result.displayName} - ${channelId} (${opaqueUserId})`;
     if (!result) {
         addNewStreamer(channelId);
     }
     if (typeof channelRaiders[channelId] === "undefined") {
-        console.log(`[backend:415]: ${noActiveGameString}`);
+        console.log(`[backend:415]: No active games on channel ${channelId}`);
         return null;
     } else if (
         channelRaiders[channelId] &&
         typeof channelRaiders[channelId].games === "undefined"
     ) {
-        console.log(`[backend:421]: ${noActiveGameString}`);
+        console.log(`[backend:421]: No active games on channel ${channelId}`);
         return null;
     } else if (
         channelRaiders[channelId] &&
         channelRaiders[channelId].games.length < 1
     ) {
-        console.log(`[backend:427]: ${noActiveGameString}`);
+        console.log(`[backend:427]: No active games on channel ${channelId}`);
         return null;
     }
     return JSON.stringify(channelRaiders[channelId].games);
@@ -444,8 +384,6 @@ async function updateUserConfigHandler(req) {
     // Verify all requests.
     const payload = verifyAndDecode(req.headers.authorization);
     const { channel_id: channelId, opaque_user_id: opaqueUserId } = payload;
-    console.log("[backend:446]: channelId", channelId);
-    console.log("[backend:447]: opaqueUserId", opaqueUserId);
     if (confirmOpaqueUser(channelId, opaqueUserId)) {
         // Bot abuse prevention:  don't allow a user to spam the button.
         if (userIsInCooldown(opaqueUserId)) {
@@ -525,7 +463,7 @@ function streamerSupportHandler(req) {
     if (userIsInCooldown(opaqueUserId)) {
         throw Boom.tooManyRequests(STRINGS.cooldown);
     }
-    if (channelRaiders[channelId] && channelRaiders[channelId].games) {
+    if (channelRaiders[channelId]?.games) {
         console.log(
             `[backend:627]: reduce health on all raiders in stream: ${channelId}, by ${opaqueUserId}`
         );
@@ -558,8 +496,10 @@ async function startTestRaidHandler(req, reply) {
         let testRaidPayload,
             startedRaid = "Null";
         try {
+            console.log("[backend:498]: req.payload", req.payload);
+            console.log("[backend:498]: req.payload", typeof req.payload);
             testRaidPayload = JSON.parse(req.payload);
-            regex = /^[a-zA-Z0-9][a-zA-Z0-9_]{3,24}$/gs;
+            const regex = /^[a-zA-Z0-9][a-zA-Z0-9_]{3,24}$/gs;
             if (regex.test(testRaidPayload.testRaider)) {
                 // console.log("[backend:566]: testRaidPayload", testRaidPayload);
                 await addNewStreamer(channelId);
@@ -572,12 +512,13 @@ async function startTestRaidHandler(req, reply) {
                 return JSON.stringify(startedRaid);
             }
         } catch (err) {
-            console.log("[backend:541]: ERROR: JSON.parse \n");
+            console.log("[backend:541]: ERROR: JSON.parse \n", err);
         }
         return JSON.stringify(startedRaid);
     }
     return JSON.stringify(return400);
 }
+
 //! ---- STOPTESTRAID ---- //
 async function stopTestRaidHandler(req) {
     // Verify all requests.
@@ -597,6 +538,33 @@ async function stopTestRaidHandler(req) {
 }
 
 //! --------------------------------------------------------- //
+//*                     -- LEADERBOARD --                    //
+//! ------------------------------------------------------- //
+// TODO update all docs with score + history
+// TODO rework healthbar thingy
+// TODO PLACEHOLDER
+// TODO PLACEHOLDER
+// TODO PLACEHOLDER
+
+// const user = {
+//     score: 1,
+//     history: {
+//         raided: {
+//             by: "raider",
+//             win: true,
+//         },
+//         raids: ["streamer1", "streamer2", "streamer3"],
+//     },
+// };
+const thisState = new StateMachine()
+
+class StateMachine{
+    constructor(){
+        //
+        this.state = null
+    }
+}
+//! --------------------------------------------------------- //
 //*                       -- DATABASE --                     //
 //! ------------------------------------------------------- //
 class DataBase {
@@ -607,7 +575,7 @@ class DataBase {
             useUnifiedTopology: true,
         });
         this.dataBaseName = "RaidBattle";
-        this.collection = "users";
+        this.collection = "TEST_COLLECTION";
     }
     async connect() {
         try {
@@ -681,6 +649,7 @@ async function addNewStreamer(channelId) {
     const userExsist = await dataBase.checkIfUserInDb(channelId);
     let returnData;
     if (!userExsist) {
+        console.log("[backend:621]: channelId", channelId);
         const userData = await getUser(`id=${channelId}`);
         const result = await addStreamerToDb(userData);
         console.log("[backend:337]: result", result);
@@ -701,6 +670,7 @@ async function addNewStreamer(channelId) {
 }
 async function addStreamerToDb(userData) {
     // adds streamer to database
+    console.log("[backend:641]: userData", userData);
     const result = await dataBase.insertOne({
         channelName: userData.display_name.toLowerCase(),
         displayName: userData.display_name,
@@ -731,6 +701,8 @@ async function getAppAccessToken() {
             APP_ACCESS_TOKEN = data.access_token;
             process.env.APP_ACCESS_TOKEN = APP_ACCESS_TOKEN;
             TOKEN_EXPIRE_DATE = Date.now() + data.expires_in * 1000;
+        } else {
+            //
         }
     }
     return APP_ACCESS_TOKEN;
@@ -758,6 +730,7 @@ async function getUser(path) {
 }
 async function getStreamsById(id) {
     // Query Twitch for stream details.
+    // only works on live channels
     const url = `https://api.twitch.tv/helix/streams?user_id=${id}`,
         appToken = await getAppAccessToken(),
         headers = {
@@ -767,12 +740,19 @@ async function getStreamsById(id) {
     // Handle response.
     try {
         let response = await fetch(url, { headers });
+        console.log("[backend:734]: response", response);
         if (response.ok) {
-            let data = await response.json();
-            return data.data[0];
+            const data = await response.json();
+            if (data.data.length != 0) {
+                return data.data[0];
+            } else {
+                console.log("[backend:750]: ERROR: No data in 'data': ", data);
+                throw err("[backend:750]: ERROR: No data in 'data': ", data);
+            }
         }
     } catch (err) {
-        console.log("[backend:661]: Error when getting stream by ID", err);
+        console.log("[backend:755]: Error when getting stream by ID", err);
+        return null;
     }
 }
 function getRatio(raiders, viewers) {
@@ -796,7 +776,7 @@ function startTmi(channels) {
             secure: true,
             reconnect: true,
         },
-        channels,
+        channels: channels,
     });
     tmiClient.connect().then(() => {
         console.log(
@@ -840,10 +820,10 @@ async function chatCommandHandler(channel, userstate, message, self) {
                 );
                 return;
             }
+            // console.log(
+            //     `[backend:838]: Command: "${message}"  recognized on channel: ${channel}`
+            // );
             // send message to chat
-            console.log(
-                `[backend:838]: Command: "${message}"  recognized on channel: ${channel}`
-            );
             attemptSendChatMessageToChannel(
                 streamerData,
                 strings.RAIDBATTLE_CHAT_INFO_TEXT
@@ -857,10 +837,10 @@ function restartTmi(channelList) {
     if (tmiClient) {
         tmiClient.disconnect();
     } else {
-        console.log("[backend:859]: Error: no tmi connected??");
+        console.error("no tmi connected??");
     }
     tmiClient.on("disconnected", (reason) => {
-        console.log("[backend:346]: reason", reason);
+        console.error("[backend:346]: reason", reason);
         startTmi(channelList);
     });
 }
@@ -874,8 +854,12 @@ async function startRaid(channel, username, viewers) {
         `[backend:549]: Starting raid on channel: ${channel}, started by: ${username}`
     );
     //# HERE
-    const streamerData = await dataBase.findOne({ channelName: channel }),
-        channelId = streamerData.channelId;
+    const streamerData = await dataBase.findOne({
+            channelName: channel.toLowerCase(),
+        }),
+        channelId = streamerData?.channelId;
+    console.log("[backend:846]: channelId", channelId);
+    console.log("[backend:846]: streamerData", streamerData);
     if (typeof channelRaiders[channelId] !== "object") {
         channelRaiders[channelId] = {
             games: [],
@@ -896,6 +880,7 @@ async function startRaid(channel, username, viewers) {
             streamerData,
             channelId
         );
+        console.log("[backend:861]: gamePackage", gamePackage);
         if (gamePackage) {
             setResult(
                 channelId,
@@ -916,12 +901,16 @@ async function startRaid(channel, username, viewers) {
             );
             handleBroadcastInterval(channelId);
             result = channelRaiders[channelId].games;
-        }
+        } else
+            console.log("[backend:897]: ERROR: no 'gamePackage' constructed");
+
         console.log(
             `[backend:906]: StartRaid returned: ${
                 result == [] ? "Null" : "channelRaiders[channelId].games"
             }:`
         );
+        console.log("[backend:887]: result", result);
+
         return result;
     }
 }
@@ -932,7 +921,13 @@ async function getUserConfigOrDefaultValue(channelId, configName) {
     let result = DEFAULTS[configName].default;
     if (streamerData && streamerData.userConfig) {
         // we have userconfig
-        result = streamerData.userConfig[configName];
+        const userConfValue = streamerData.userConfig[configName];
+        if (
+            Number.isInteger(userConfValue) ||
+            typeof userConfValue === "boolean"
+        ) {
+            return userConfValue;
+        }
     }
     return result;
 }
@@ -945,7 +940,9 @@ async function constructGamePackage(
 ) {
     // constructs an object for a raid game
     const streamData = await getStreamsById(streamerData.channelId);
-    if (streamData && streamData.type == "live") {
+    console.log("[backend:918]: ERROR: streamData", streamData);
+    if (streamData) {
+        //! DEV && streamData.type == "live") {
         const raiderUserData = await getUser(`login=${raiderUserName}`),
             raiderData = {
                 display_name: raiderUserData.display_name,
@@ -966,6 +963,7 @@ async function constructGamePackage(
         channelRaiders[channelId].games.push(gamePackage);
         return gamePackage;
     } else {
+        console.log("[backend:919]: ERROR: streamData", streamData);
         return null;
     }
 }
@@ -994,29 +992,31 @@ function checkRaiderHealthAndSetResult(channelId, healthThreshold, stringName) {
         let operand = false,
             name = game.raiderData.display_name;
         //TODO fix this to use -50 -> +50 when gauge
-        if (healthThreshold > 50) {
-            name = game.streamerData.displayName;
-            if (
-                game.raiderData.health >= healthThreshold &&
-                !checkForExistingGameResult(
-                    game.gameResult,
-                    "string",
-                    parseString(strings[stringName], name, healthThreshold)
-                )
-            ) {
-                operand = true;
-            }
-        } else if (healthThreshold < 50) {
-            if (
-                game.raiderData.health <= healthThreshold &&
-                !checkForExistingGameResult(
-                    game.gameResult,
-                    "string",
-                    parseString(strings[stringName], name, healthThreshold)
-                )
-            ) {
-                operand = true;
-            }
+        if (healthThreshold === 50) {
+            //TODO
+            // name = game.streamerData.displayName;
+            // if (
+            //     game.raiderData.health >= healthThreshold &&
+            //     !checkForExistingGameResult(
+            //         game.gameResult,
+            //         "string",
+            //         parseString(strings[stringName], name, healthThreshold)
+            //     )
+            // ) {
+            //     operand = true;
+            // }
+        } else if (healthThreshold == -50) {
+            //TODO
+            // if (
+            //     game.raiderData.health <= healthThreshold &&
+            //     !checkForExistingGameResult(
+            //         game.gameResult,
+            //         "string",
+            //         parseString(strings[stringName], name, healthThreshold)
+            //     )
+            // ) {
+            //     operand = true;
+            // }
         }
         if (operand) {
             console.log(
@@ -1040,12 +1040,14 @@ function calculateGameEndResult(channelId) {
     // handles calculating the end game result
     let alive = 0;
     const result = gamesArray.map((game) => {
-        if (game.raiderData.health >= 50) {
+        if (game.raiderData.health < 0) {
             alive++;
             return { name: game.raiderData.display_name, alive: true };
-        } else if (game.raiderData.health < 50) {
+        } else if (game.raiderData.health > 0) {
             alive--;
             return { name: game.raiderData.display_name, alive: false };
+        } else if ((game.raiderData.health = 0)) {
+            // TODO DRAW
         }
     });
     return { result, alive };
