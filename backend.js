@@ -495,7 +495,7 @@ function raiderSupportHandler(req) {
     }
     const raider = req.params.raider;
     // increase health on specific raider
-    if (channelRaiders[channelId].games) {
+    if (channelRaiders[channelId]?.games) {
         for (const gameObj of channelRaiders[channelId].games) {
             if (
                 gameObj.raiderData.display_name.toLowerCase() ==
@@ -796,7 +796,7 @@ function startTmi(channels) {
             secure: true,
             reconnect: true,
         },
-        channels: channels,
+        channels,
     });
     tmiClient.connect().then(() => {
         console.log(
@@ -857,10 +857,10 @@ function restartTmi(channelList) {
     if (tmiClient) {
         tmiClient.disconnect();
     } else {
-        console.error("no tmi connected??");
+        console.log("[backend:859]: Error: no tmi connected??");
     }
     tmiClient.on("disconnected", (reason) => {
-        console.error("[backend:346]: reason", reason);
+        console.log("[backend:346]: reason", reason);
         startTmi(channelList);
     });
 }
