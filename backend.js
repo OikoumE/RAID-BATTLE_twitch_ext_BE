@@ -377,7 +377,7 @@ async function ongoingRaidGameQueryHandler(req) {
         throw Boom.tooManyRequests(STRINGS.cooldown);
     }
     const result = await dataBase.findOne({ channelId });
-    const noActiveGameString = `No active games on channel ${result.displayName} - ${channelId}`;
+    const noActiveGameString = `No active games on channel ${result.displayName} - ${channelId} (${opaqueUserId})`;
     if (!result) {
         addNewStreamer(channelId);
     }
