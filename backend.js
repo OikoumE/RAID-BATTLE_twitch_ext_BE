@@ -1389,9 +1389,16 @@ async function sendChatMessageToChannel(message, channelId) {
             extension_version: CURRENT_VERSION,
         });
     const res = await fetch(url, { method: "POST", headers, body });
-    console.log(
-        `[backend:1338]: Broadcast chat message result: ${res.status}: ${res.statusText}`
-    );
+    let string;
+    if (res.status == 200) {
+        string = "Broadcast chat message result: SUCCESS!";
+    } else if (res.status > 200) {
+        string = "ERROR:";
+        console.log("[backend:1395]: res.status;", res.status);
+        console.log("[backend:1396]: res.statusText;", res.statusText);
+        console.log("[backend:1397]: res.body;", res.body);
+    }
+    console.log(`[backend:1338]: ${string}`);
 }
 //! --------------------------------------------------------- //
 //*                     -- JWT TOKEN --                      //
