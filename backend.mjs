@@ -39,16 +39,16 @@ import { ObjectId } from "mongodb";
 
 // The developer rig uses self-signed certificates.  Node doesn't accept them
 // by default.  Do not use this in production.
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0"; //! ONLY WHEN DEV AND TESTING
+// process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0"; //! ONLY WHEN DEV AND TESTING
 
 // Service state variables
 const serverTokenDurationSec = 30; // our tokens for pubsub expire after 30 seconds
 const userCooldownMs = 100; // maximum input rate per user to prevent bot abuse
 const userSkipCooldownMs = 10; // maximum input rate per user to prevent bot abuse
 const userCooldownClearIntervalMs = 60000; // interval to reset our tracking object
+const channelCooldowns = {}; // rate limit compliance
 const channelCooldownMs = 1000; // maximum broadcast rate per channel
 const bearerPrefix = "Bearer "; // HTTP authorization headers have this prefix
-const channelCooldowns = {}; // rate limit compliance
 let userCooldowns = {}; // spam prevention
 
 //! --------------------------------------------------------- //
@@ -342,6 +342,7 @@ async function ongoingRaidGameQueryHandler(req) {
 //! ---- ADDSTREAMER ---- //
 async function addStreamerToChannelsHandler(req) {
     // Verify all requests.
+    console.log("[backend:344]: lalalalalalla");
     const payload = verifyAndDecode(req.headers.authorization);
     const { channel_id: channelId, opaque_user_id: opaqueUserId } = payload;
     if (confirmOpaqueUser(channelId, opaqueUserId)) {
@@ -556,14 +557,15 @@ async function stopTestRaidHandler(req) {
 //         raids: ["streamer1", "streamer2", "streamer3"],
 //     },
 // };
-const thisState = new StateMachine()
 
-class StateMachine{
-    constructor(){
-        //
-        this.state = null
-    }
-}
+// class StateMachine {
+//     constructor() {
+//         //
+//         this.state = null;
+//     }
+// }
+// const thisState = new StateMachine();
+
 //! --------------------------------------------------------- //
 //*                       -- DATABASE --                     //
 //! ------------------------------------------------------- //
@@ -651,6 +653,7 @@ async function addNewStreamer(channelId) {
     if (!userExsist) {
         console.log("[backend:621]: channelId", channelId);
         const userData = await getUser(`id=${channelId}`);
+
         const result = await addStreamerToDb(userData);
         console.log("[backend:337]: result", result);
         const allChannelList = await dataBase.find();
@@ -670,12 +673,16 @@ async function addNewStreamer(channelId) {
 }
 async function addStreamerToDb(userData) {
     // adds streamer to database
-    console.log("[backend:641]: userData", userData);
     const result = await dataBase.insertOne({
         channelName: userData.display_name.toLowerCase(),
         displayName: userData.display_name,
         channelId: userData.id,
         profilePicUrl: userData.profile_image_url,
+        created: Date.now(),
+        stats: {
+            score: 0,
+            raids: [],
+        },
     });
     return result;
 }
@@ -731,6 +738,7 @@ async function getUser(path) {
 async function getStreamsById(id) {
     // Query Twitch for stream details.
     // only works on live channels
+    console.log("[backend:735]: id", id);
     const url = `https://api.twitch.tv/helix/streams?user_id=${id}`,
         appToken = await getAppAccessToken(),
         headers = {
@@ -740,14 +748,13 @@ async function getStreamsById(id) {
     // Handle response.
     try {
         let response = await fetch(url, { headers });
-        console.log("[backend:734]: response", response);
-        if (response.ok) {
+        if (response.status < 400) {
             const data = await response.json();
             if (data.data.length != 0) {
                 return data.data[0];
             } else {
-                console.log("[backend:750]: ERROR: No data in 'data': ", data);
-                throw err("[backend:750]: ERROR: No data in 'data': ", data);
+                // console.log("[backend:750]: ERROR: No data in 'data': ", data);
+                throw `[backend:750]: ERROR: No data in 'data': ${data}`;
             }
         }
     } catch (err) {
@@ -805,7 +812,7 @@ async function chatCommandHandler(channel, userstate, message, self) {
         channelName: channel.replace("#", "").toLowerCase(),
     });
     let chatCommandsEnabled = DEFAULTS.enableChatCommands.default;
-    if (streamerData.userConfig) {
+    if (streamerData?.userConfig) {
         chatCommandsEnabled = streamerData.userConfig.enableChatCommands;
     }
     // Don't listen to my own messages or if chatCommands are disabled
@@ -858,8 +865,6 @@ async function startRaid(channel, username, viewers) {
             channelName: channel.toLowerCase(),
         }),
         channelId = streamerData?.channelId;
-    console.log("[backend:846]: channelId", channelId);
-    console.log("[backend:846]: streamerData", streamerData);
     if (typeof channelRaiders[channelId] !== "object") {
         channelRaiders[channelId] = {
             games: [],
@@ -880,7 +885,7 @@ async function startRaid(channel, username, viewers) {
             streamerData,
             channelId
         );
-        console.log("[backend:861]: gamePackage", gamePackage);
+        // console.log("[backend:861]: gamePackage", gamePackage);
         if (gamePackage) {
             setResult(
                 channelId,
@@ -909,7 +914,8 @@ async function startRaid(channel, username, viewers) {
                 result == [] ? "Null" : "channelRaiders[channelId].games"
             }:`
         );
-        console.log("[backend:887]: result", result);
+
+        // console.log("[backend:887]: result", result);
 
         return result;
     }
@@ -940,7 +946,6 @@ async function constructGamePackage(
 ) {
     // constructs an object for a raid game
     const streamData = await getStreamsById(streamerData.channelId);
-    console.log("[backend:918]: ERROR: streamData", streamData);
     if (streamData) {
         //! DEV && streamData.type == "live") {
         const raiderUserData = await getUser(`login=${raiderUserName}`),
@@ -980,6 +985,7 @@ function conditionHandler(channelId) {
     // gametime has run out
     const gameEndResult = calculateGameEndResult(channelId);
     // check if all raiders are dead and set result
+    console.log("[backend:982]: gameEndResult", gameEndResult);
     setAllRaiderDeadCondition(channelId, gameEndResult);
     // check if game is expired and set result
     setGameExpiredResult(channelId, gameEndResult);
@@ -1036,6 +1042,7 @@ function checkRaiderHealthAndSetResult(channelId, healthThreshold, stringName) {
     }
 }
 function calculateGameEndResult(channelId) {
+    //TODO change to handle -50/+50 health gauge
     const gamesArray = channelRaiders[channelId].games;
     // handles calculating the end game result
     let alive = 0;
@@ -1046,8 +1053,8 @@ function calculateGameEndResult(channelId) {
         } else if (game.raiderData.health > 0) {
             alive--;
             return { name: game.raiderData.display_name, alive: false };
-        } else if ((game.raiderData.health = 0)) {
-            // TODO DRAW
+        } else {
+            return { name: game.raiderData.display_name, alive: null };
         }
     });
     return { result, alive };
@@ -1105,17 +1112,17 @@ function setAllRaiderDeadCondition(channelId, gameEnd) {
                 parseString(
                     strings.win,
                     gamesArray[0].streamerData.displayName,
-                    gameEnd.result[0].name
+                    gameEnd.result[0]?.name
                 )
             )
         ) {
             setResult(
                 channelId,
-                gameEnd.result[0].name,
+                gameEnd.result[0]?.name,
                 parseString(
                     strings.win,
                     gamesArray[0].streamerData.displayName,
-                    gameEnd.result[0].name
+                    gameEnd.result[0]?.name
                 ),
                 "gameResultDuration"
             );
@@ -1124,7 +1131,7 @@ function setAllRaiderDeadCondition(channelId, gameEnd) {
                 parseString(
                     strings.win,
                     gamesArray[0].streamerData.displayName,
-                    gameEnd.result[0].name
+                    gameEnd.result[0]?.name
                 )
             );
         }
@@ -1154,7 +1161,7 @@ async function setResult(channelId, raider, string, durationName) {
         const raiderGame = channelRaiders[channelId].games[i];
         if (
             raiderGame.raiderData.display_name.toLowerCase() ==
-            raider.toLowerCase()
+            raider?.toLowerCase()
         ) {
             const addedTime = await getUserConfigOrDefaultValue(
                 channelId,
@@ -1197,7 +1204,7 @@ async function constructGameTimeObject(streamerData) {
 }
 async function calculateIntroDuration(streamerData) {
     // set introDuration on gameTimeObj
-    introDuration = Math.floor(
+    const introDuration = Math.floor(
         Date.now() / 1000 +
             (await getUserConfigOrDefaultValue(
                 streamerData.channelId,
@@ -1210,6 +1217,7 @@ async function calculateGameDuration(introDuration, streamerData) {
     // set gameDuration on gameTimeObj
     // if there are more than 0 games in the list use extendGameDuration
     const userConfig = streamerData.userConfig;
+    let gameDuration;
     if (
         channelRaiders[streamerData.channelId].games &&
         channelRaiders[streamerData.channelId].games.length >= 1
@@ -1299,7 +1307,7 @@ function cleanUpChannelRaiderAndDoBroadcast(channelId) {
             }, 2000);
         }
     } catch (err) {
-        console.log("[backend:1317]: ERROR");
+        console.log("[backend:1317]: ERROR: ", err);
     }
 }
 //! ---- QUEUE ---- //
@@ -1390,7 +1398,7 @@ async function sendChatMessageToChannel(message, channelId) {
         });
     const res = await fetch(url, { method: "POST", headers, body });
     console.log(
-        `[backend:1338]: Broadcast chat message result: ${res.status}: ${res.statusText}`
+        `[backend:1337]: Broadcast chat message result: ${res.status}: ${res.statusText}`
     );
 }
 //! --------------------------------------------------------- //
