@@ -1390,9 +1390,9 @@ async function sendChatMessageToChannel(message, channelId) {
         });
     const res = await fetch(url, { method: "POST", headers, body });
     let string;
-    if (res.status == 200) {
+    if (res.status < 300) {
         string = "Broadcast chat message result: SUCCESS!";
-    } else if (res.status > 200) {
+    } else if (res.status >= 300) {
         string = "ERROR:";
         console.log("[backend:1395]: res.status;", res.status);
         console.log("[backend:1396]: res.statusText;", res.statusText);
