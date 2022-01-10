@@ -335,14 +335,14 @@ async function ongoingRaidGameQueryHandler(req, res) {
         //     result: `[backend:415]: No active games on channel ${channelId}`,
         // });
         return;
-    } else if (channelRaiders[channelId] && typeof channelRaiders[channelId].data.games === "undefined") {
+    } else if (channelRaiders[channelId] && typeof channelRaiders[channelId]?.data?.games === "undefined") {
         console.log(`[backend:421]: No active games on channel ${channelId}`);
         res.sendStatus(204);
         // .json({
         //     result: `[backend:421]: No active games on channel ${channelId}`,
         // });
         return;
-    } else if (channelRaiders[channelId] && channelRaiders[channelId].data.games.length < 1) {
+    } else if (channelRaiders[channelId] && channelRaiders[channelId]?.data?.games.length < 1) {
         console.log(`[backend:427]: No active games on channel ${channelId}`);
         res.sendStatus(204);
         // .json({
