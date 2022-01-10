@@ -485,7 +485,10 @@ function clickSupportIncrement(channelId, clickTracker, clicker) {
     if (!clickTracker.clickers.includes(clicker)) clickTracker.clickers.push(clicker);
     calculateClickSUpport(channelId);
 }
-
+//main
+//sentence sentence sentence 123 sentence sentence sentence 
+// branch
+//sentence sentence sentence sentence sentence sentence sentence 
 function calculateClickSUpport(channelId) {
     const clickTracker = channelRaiders[channelId].data.clickTracker,
         sTracker = clickTracker.streamer,
@@ -896,11 +899,11 @@ function setGameExpiredResult(channelId) {
             defeated,
             stringToSend,
             draw = false;
-        if (channelRaidersData.supportState > 0) {
+        if (channelRaidersData.supportState > 5) {
             //? streamer win
             defeated = raiders.length > 1 ? raiders.join(", ") : raiders[0];
             winner = gamesArray[0].streamerData.channelName;
-        } else if (channelRaidersData.supportState < 0) {
+        } else if (channelRaidersData.supportState < -5) {
             //? raiders win
             winner = raiders.length > 1 ? raiders.join(", ") : raiders[0];
             defeated = gamesArray[0].streamerData.channelName;
