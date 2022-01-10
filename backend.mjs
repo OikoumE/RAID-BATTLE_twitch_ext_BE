@@ -485,10 +485,6 @@ function clickSupportIncrement(channelId, clickTracker, clicker) {
     if (!clickTracker.clickers.includes(clicker)) clickTracker.clickers.push(clicker);
     calculateClickSUpport(channelId);
 }
-//main
-//sentence sentence sentence 123 sentence sentence sentence 
-// branch
-//sentence sentence sentence sentence sentence sentence sentence 
 function calculateClickSUpport(channelId) {
     const clickTracker = channelRaiders[channelId].data.clickTracker,
         sTracker = clickTracker.streamer,
