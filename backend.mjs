@@ -912,7 +912,6 @@ function setGameExpiredResult(channelId) {
         }
         stringToSend = `${winner} Gained more support than ${defeated}`;
         if (draw) stringToSend = `It was a draw between ${winner} and ${defeated}`;
-
         if (!checkForExistingGameResult(gamesArray[0].gameResult, "string", stringToSend)) {
             setResult(channelId, raiders[0], stringToSend, "gameResultDuration");
             attemptSendChatMessageToChannel(gamesArray[0].streamerData, stringToSend);
