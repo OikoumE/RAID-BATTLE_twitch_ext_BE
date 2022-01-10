@@ -884,8 +884,43 @@ function conditionHandler(channelId) {
     // console.log("[backend:982]: gameEndResult", gameEndResult);
     // setAllRaiderDeadCondition(channelId, gameEndResult);
     // check if game is expired and set result
-    // setGameExpiredResult(channelId, gameEndResult);
+    setGameExpiredResult(channelId);
 }
+function setGameExpiredResult(channelId) {
+    const channelRaidersData = channelRaiders[channelId].data,
+        gamesArray = channelRaidersData.games;
+    // handles calculating the end game result when gameDuration is expired
+    if (gameExpired(gamesArray) && channelRaiders[channelId].hasRunningGame) {
+        const raiders = gamesArray.map((game) => game.raiderData.display_name);
+        let winner,
+            defeated,
+            stringToSend,
+            draw = false;
+        if (channelRaidersData.supportState > 0) {
+            //? streamer win
+            defeated = raiders.length > 1 ? raiders.join(", ") : raiders[0];
+            winner = gamesArray[0].streamerData.channelName;
+        } else if (channelRaidersData.supportState < 0) {
+            //? raiders win
+            winner = raiders.length > 1 ? raiders.join(", ") : raiders[0];
+            defeated = gamesArray[0].streamerData.channelName;
+        } else {
+            //? Draw
+            winner = raiders.length > 1 ? raiders.join(", ") : raiders[0];
+            defeated = gamesArray[0].streamerData.channelName;
+            draw = true;
+        }
+        stringToSend = `${winner} Gained more support than ${defeated}`;
+        if (draw) stringToSend = `It was a draw between ${winner} and ${defeated}`;
+
+        if (!checkForExistingGameResult(gamesArray[0].gameResult, "string", stringToSend)) {
+            setResult(channelId, raiders[0], stringToSend, "gameResultDuration");
+            attemptSendChatMessageToChannel(gamesArray[0].streamerData, stringToSend);
+        }
+        sendFinalBroadcastTimeout(channelId);
+    }
+}
+
 // function checkRaiderHealthAndSetResult(channelId, healthThreshold, stringName) {
 //     const gamesArray = channelRaiders[channelId].games;
 //     // checks if a specified raider has reached a specified health threshhold
@@ -950,35 +985,7 @@ function conditionHandler(channelId) {
 //     });
 //     return { result, alive };
 // }
-// function setGameExpiredResult(channelId, gameEnd) {
-//     const gamesArray = channelRaiders[channelId].games;
-//     // handles calculating the end game result when gameDuration is expired
-//     if (gameExpired(gamesArray) && channelRaiders[channelId].hasRunningGame) {
-//         let winner, defeated;
-//         if (gameEnd.result.length + gameEnd.alive == 0) {
-//             // if all had less than 50%, "STREAMER" wins
-//             winner = gamesArray[0].streamerData.displayName;
-//             defeated = gameEnd.result[0].name;
-//         } else if (gameEnd.alive) {
-//             // if any raider > 50%, "RAIDER[0]" win
-//             winner = gameEnd.result[0].name;
-//             defeated = gamesArray[0].streamerData.displayName;
-//         }
-//         if (
-//             !checkForExistingGameResult(gamesArray[0].gameResult, "string", parseString(strings.win, winner, defeated))
-//         ) {
-//             console.log("[backend:1078]: gameEnd.result", gameEnd.result);
-//             setResult(
-//                 channelId,
-//                 gameEnd.result[0].name,
-//                 parseString(strings.win, winner, defeated),
-//                 "gameResultDuration"
-//             );
-//             attemptSendChatMessageToChannel(gamesArray[0].streamerData, parseString(strings.win, winner, defeated));
-//         }
-//         sendFinalBroadcastTimeout(channelId);
-//     }
-// }
+
 // function setAllRaiderDeadCondition(channelId, gameEnd) {
 //     const gamesArray = channelRaiders[channelId].games;
 //     // handles setting condition when all raiders are dead
