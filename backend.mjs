@@ -141,23 +141,6 @@ function missingValue(name, variable) {
     return `Extension ${name} required.\nUse argument "-${option} <${name}>" or environment variable "${variable}".`;
 }
 
-// Verify the header and the enclosed JWT.
-function verifyAndDecode(header) {
-    if (header.startsWith(bearerPrefix)) {
-        try {
-            const token = header.substring(bearerPrefix.length);
-            return jsonwebtoken.verify(token, secret, {
-                algorithms: ["HS256"],
-            });
-        } catch (ex) {
-            //TODO change this //?
-            throw Boom.unauthorized(STRINGS.invalidJwt);
-        }
-    }
-    //TODO change this //?
-    throw Boom.unauthorized(STRINGS.invalidAuthHeader);
-}
-
 //! --------------------------------------------------------- //
 //*                      -- EXPRESS --                       //
 //! ------------------------------------------------------- //
@@ -194,6 +177,7 @@ async function onLaunch() {
 onLaunch();
 
 //! ---- WebSocket ---- //
+// TODO when dashboard is made
 
 async function setDefaultUserConfigInDatabase() {
     // handles setting database.defaultConfig to values in DEFAULTS
@@ -213,6 +197,21 @@ async function setDefaultUserConfigInDatabase() {
     );
     // console.log("[backend:192]: result", dbResult);
 }
+
+async function getUserConfigOrDefaultValue(channelId, configName) {
+    // gets userConfig value or DEFAULT value
+    const streamerData = await dataBase.findOne({ channelId });
+    let result = DEFAULTS[configName].default;
+    if (streamerData && streamerData.userConfig) {
+        // we have userconfig
+        const userConfValue = streamerData.userConfig[configName];
+        if (Number.isInteger(userConfValue) || typeof userConfValue === "boolean") {
+            return userConfValue;
+        }
+    }
+    return result;
+}
+
 //! --------------------------------------------------------- //
 //*                      -- ROUTE's --                       //
 //! ------------------------------------------------------- //
@@ -247,9 +246,12 @@ app.post("/TESTRAID/stop", (req, res) => stopTestRaidHandler(req, res));
 //! ----- EVENTSUB ----- //
 // Handle stop broadcasting a testraid
 app.post(EVENTSUB_ENDPOINT_PATH, (req, res) => {
-    webhookCallback(req, res, verifiedNotificationHandler);
+    webhookCallback({ req, res, callbackObj: { startRaid, addNewStreamer, deleteEventSubEndpoint } });
 });
 
+//! --------------------------------------------------------- //
+//*                       -- SERVER --                       //
+//! ------------------------------------------------------- //
 const server = app.listen(port, ip, () => {
     const time = Date.now();
     console.log(`${time} - HTTP - server running at ${ip}:${port}/`);
@@ -257,17 +259,6 @@ const server = app.listen(port, ip, () => {
 //! --------------------------------------------------------- //
 //*                   -- ROUTE HANDLERS --                   //
 //! ------------------------------------------------------- //
-function userIsInCooldown(opaqueUserId, skipCooldown = false) {
-    // Check if the user is in cool-down.
-    const cooldown = userCooldowns[opaqueUserId];
-    const now = Date.now();
-    if (cooldown && cooldown > now) {
-        return true;
-    }
-    // Voting extensions must also track per-user votes to prevent skew.
-    userCooldowns[opaqueUserId] = now + skipCooldown ? userSkipCooldownMs : userCooldownMs;
-    return false;
-}
 //! ---- STATUSCAT ---- //
 function return404() {
     return "<style> html { background-color: #000000;} </style><img src='https://http.cat/404.jpg' />";
@@ -279,91 +270,38 @@ function return200() {
     return "<style> html { background-color: #000000;} </style><img src='https://http.cat/200.jpg' />";
 }
 
-//! ---- NOTIFICATION ---- //
-async function verifiedNotificationHandler(notification) {
-    //this is where we handle verified notification from twitch
-    const channel = notification.event.to_broadcaster_user_name,
-        username = notification.event.from_broadcaster_user_name,
-        viewers = notification.event.viewers;
-    await startRaid(channel, username, viewers);
-    // const EXAMPLE = {
-    //     subscription: {
-    //         id: "f1c2a387-161a-49f9-a165-0f21d7a4e1c4",
-    //         type: "channel.raid",
-    //         version: "1",
-    //         status: "enabled",
-    //         cost: 0,
-    //         condition: {
-    //             to_broadcaster_user_id: "1337",
-    //         },
-    //         transport: {
-    //             method: "webhook",
-    //             callback: "https://example.com/webhooks/callback",
-    //         },
-    //         created_at: "2019-11-16T10:11:12.123Z",
-    //     },
-    //     event: {
-    //         from_broadcaster_user_id: "1234",
-    //         from_broadcaster_user_login: "cool_user",
-    //         from_broadcaster_user_name: "Cool_User",
-    //         to_broadcaster_user_id: "1337",
-    //         to_broadcaster_user_login: "cooler_user",
-    //         to_broadcaster_user_name: "Cooler_User",
-    //         viewers: 9001,
-    //     },
-    // };
-}
-
 //! ---- ONGOING ---- //
 async function ongoingRaidGameQueryHandler(req, res) {
     // Verify all requests.
-    const payload = verifyAndDecode(req.headers.authorization);
-    const { channel_id: channelId, opaque_user_id: opaqueUserId } = payload;
-    // console.log("[backend:406]: payload", payload);
-    // Bot abuse prevention:  don't allow a user to spam the button.
-    if (userIsInCooldown(opaqueUserId)) {
-        throw Boom.tooManyRequests(STRINGS.cooldown);
+    const confirmed = isUserConfirmed(req.headers.authorization);
+    const { channel_id: channelId, opaque_user_id: opaqueUserId } = confirmed;
+    if (confirmed.result) {
+        const result = await dataBase.findOne({ channelId });
+        if (!result) {
+            addNewStreamer(channelId);
+        }
+        if (typeof channelRaiders[channelId] === "undefined") {
+            console.log(`[backend:415]: No active games on channel ${channelId}`);
+            res.sendStatus(204);
+            return;
+        } else if (channelRaiders[channelId] && typeof channelRaiders[channelId]?.data?.games === "undefined") {
+            console.log(`[backend:421]: No active games on channel ${channelId}`);
+            res.sendStatus(204);
+            return;
+        } else if (channelRaiders[channelId] && channelRaiders[channelId]?.data?.games.length < 1) {
+            console.log(`[backend:427]: No active games on channel ${channelId}`);
+            res.sendStatus(204);
+            return;
+        }
+        res.status(200).json(channelRaiders[channelId].data);
     }
-    const result = await dataBase.findOne({ channelId });
-    if (!result) {
-        addNewStreamer(channelId);
-    }
-    if (typeof channelRaiders[channelId] === "undefined") {
-        console.log(`[backend:415]: No active games on channel ${channelId}`);
-        res.sendStatus(204);
-        // .json({
-        //     result: `[backend:415]: No active games on channel ${channelId}`,
-        // });
-        return;
-    } else if (channelRaiders[channelId] && typeof channelRaiders[channelId]?.data?.games === "undefined") {
-        console.log(`[backend:421]: No active games on channel ${channelId}`);
-        res.sendStatus(204);
-        // .json({
-        //     result: `[backend:421]: No active games on channel ${channelId}`,
-        // });
-        return;
-    } else if (channelRaiders[channelId] && channelRaiders[channelId]?.data?.games.length < 1) {
-        console.log(`[backend:427]: No active games on channel ${channelId}`);
-        res.sendStatus(204);
-        // .json({
-        //     result: `[backend:427]: No active games on channel ${channelId}`,
-        // });
-        return;
-    }
-    // return JSON.stringify(channelRaiders[channelId].data.games);
-    res.status(200).json(channelRaiders[channelId].data);
 }
 //! ---- ADDSTREAMER ---- //
 async function addStreamerToChannelsHandler(req, res) {
     // Verify all requests.
-    console.log("[backend:344]: lalalalalalla");
-    const payload = verifyAndDecode(req.headers.authorization);
-    const { channel_id: channelId, opaque_user_id: opaqueUserId } = payload;
-    if (userIsInCooldown(opaqueUserId, true)) {
-        // Bot abuse prevention:  don't allow a user to spam the button.
-        throw Boom.tooManyRequests(STRINGS.cooldown);
-    }
-    if (confirmOpaqueUser(channelId, opaqueUserId)) {
+    const confirmed = isUserConfirmed(req.headers.authorization);
+    const { channel_id: channelId, opaque_user_id: opaqueUserId } = confirmed;
+    if (confirmed.result) {
         const result = await addNewStreamer(channelId);
         res.status(200).json(result);
     }
@@ -372,13 +310,9 @@ async function addStreamerToChannelsHandler(req, res) {
 //! ---- REQUESTCONFIG ---- //
 async function requestUserConfigHandler(req, res) {
     // Verify all requests.
-    const payload = verifyAndDecode(req.headers.authorization);
-    const { channel_id: channelId, opaque_user_id: opaqueUserId } = payload;
-    // Bot abuse prevention:  don't allow a user to spam the button.
-    if (confirmOpaqueUser(channelId, opaqueUserId)) {
-        if (userIsInCooldown(opaqueUserId, true)) {
-            throw Boom.tooManyRequests(STRINGS.cooldown);
-        }
+    const confirmed = isUserConfirmed(req.headers.authorization);
+    const { channel_id: channelId, opaque_user_id: opaqueUserId } = confirmed;
+    if (confirmed.result) {
         const result = await dataBase.findOne({ channelId });
         if (result.userConfig) {
             res.status(200).json({
@@ -398,13 +332,9 @@ async function requestUserConfigHandler(req, res) {
 //! ---- UPDATECONFIG ---- //
 async function updateUserConfigHandler(req, res) {
     // Verify all requests.
-    const payload = verifyAndDecode(req.headers.authorization);
-    const { channel_id: channelId, opaque_user_id: opaqueUserId } = payload;
-    if (confirmOpaqueUser(channelId, opaqueUserId)) {
-        // Bot abuse prevention:  don't allow a user to spam the button.
-        if (userIsInCooldown(opaqueUserId)) {
-            throw Boom.tooManyRequests(STRINGS.cooldown);
-        }
+    const confirmed = isUserConfirmed(req.headers.authorization);
+    const { channel_id: channelId, opaque_user_id: opaqueUserId } = confirmed;
+    if (confirmed.result) {
         const jsonUpdateDocument = JSON.parse(req.body),
             updateDocument = parseUserConfigUpdateDocument(jsonUpdateDocument);
         await addNewStreamer(channelId);
@@ -437,37 +367,33 @@ function parseUserConfigUpdateDocument(document) {
 //! ---- RAIDERSUPPORT ---- //
 function raiderSupportHandler(req, res) {
     // Verify all requests.
-    const payload = verifyAndDecode(req.headers.authorization);
-    const { channel_id: channelId, opaque_user_id: opaqueUserId } = payload;
-    // Bot abuse prevention:  don't allow a user to spam the button.
-    if (userIsInCooldown(opaqueUserId)) {
-        throw Boom.tooManyRequests(STRINGS.cooldown);
-    }
-    // const raider = req.params.raider;
-    // increase health on specific raider
-    if (channelRaiders[channelId]?.data?.games) {
-        clickSupportIncrement(channelId, channelRaiders[channelId].data.clickTracker.raider, opaqueUserId);
-        res.status(200).json(channelRaiders[channelId].data);
-        return; //channelRaiders[channelId].games;
+    const confirmed = isUserConfirmed(req.headers.authorization);
+    const { channel_id: channelId, opaque_user_id: opaqueUserId } = confirmed;
+    if (confirmed.result) {
+        // const raider = req.params.raider;
+        // increase health on specific raider
+        if (channelRaiders[channelId]?.data?.games) {
+            clickSupportIncrement(channelId, channelRaiders[channelId].data.clickTracker.raider, opaqueUserId);
+            res.status(200).json(channelRaiders[channelId].data);
+            return; //channelRaiders[channelId].games;
+        }
     }
     console.log("[backend:493]: returning null");
     return "NO ACTIVE GAMES RUNNING; STOP ALL RUNNING GAMES";
     //TODO figure out response
     res.status(400).json(return400);
 }
-//! ---- STREAMERSUPPoRT ---- //
+//! ---- STREAMERSUPPORT ---- //
 function streamerSupportHandler(req, res) {
     // Verify all requests.
-    const payload = verifyAndDecode(req.headers.authorization);
-    const { channel_id: channelId, opaque_user_id: opaqueUserId } = payload;
-    // Bot abuse prevention:  don't allow a user to spam the button.
-    if (userIsInCooldown(opaqueUserId)) {
-        throw Boom.tooManyRequests(STRINGS.cooldown);
-    }
-    if (channelRaiders[channelId]?.data?.games) {
-        clickSupportIncrement(channelId, channelRaiders[channelId].data.clickTracker.streamer, opaqueUserId);
-        res.status(200).json(channelRaiders[channelId].data);
-        return; //channelRaiders[channelId].games;
+    const confirmed = isUserConfirmed(req.headers.authorization);
+    const { channel_id: channelId, opaque_user_id: opaqueUserId } = confirmed;
+    if (confirmed.result) {
+        if (channelRaiders[channelId]?.data?.games) {
+            clickSupportIncrement(channelId, channelRaiders[channelId].data.clickTracker.streamer, opaqueUserId);
+            res.status(200).json(channelRaiders[channelId].data);
+            return; //channelRaiders[channelId].games;
+        }
     }
     console.log("[backend:520]: returning null");
     return "NO ACTIVE GAMES RUNNING; STOP ALL RUNNING GAMES";
@@ -483,9 +409,6 @@ function clickSupportIncrement(channelId, clickTracker, clicker) {
     // increments click counter and adds clicker to list if not already in list
     clickTracker.clicks += 1;
     if (!clickTracker.clickers.includes(clicker)) clickTracker.clickers.push(clicker);
-    calculateClickSUpport(channelId);
-}
-function calculateClickSUpport(channelId) {
     const clickTracker = channelRaiders[channelId].data.clickTracker,
         sTracker = clickTracker.streamer,
         rTracker = clickTracker.raider;
@@ -498,13 +421,9 @@ function calculateClickSUpport(channelId) {
 //! ---- STARTTESTRAID ---- //
 async function startTestRaidHandler(req, res) {
     // Verify all requests.
-    const payload = verifyAndDecode(req.headers.authorization);
-    const { channel_id: channelId, opaque_user_id: opaqueUserId } = payload;
-    // Bot abuse prevention:  don't allow a user to spam the button.
-    if (payload && confirmOpaqueUser(channelId, opaqueUserId)) {
-        if (userIsInCooldown(opaqueUserId)) {
-            throw Boom.tooManyRequests(STRINGS.cooldown);
-        }
+    const confirmed = isUserConfirmed(req.headers.authorization);
+    const { channel_id: channelId, opaque_user_id: opaqueUserId } = confirmed;
+    if (confirmed.result) {
         let testRaidPayload,
             startedRaid = "Null";
         try {
@@ -534,21 +453,14 @@ async function startTestRaidHandler(req, res) {
 //! ---- STOPTESTRAID ---- //
 async function stopTestRaidHandler(req, res) {
     // Verify all requests.
-    const payload = verifyAndDecode(req.headers.authorization);
-    const { channel_id: channelId, opaque_user_id: opaqueUserId } = payload;
-    // Bot abuse prevention:  don't allow a user to spam the button.
-    if (confirmOpaqueUser(channelId, opaqueUserId)) {
-        if (userIsInCooldown(opaqueUserId)) {
-            throw Boom.tooManyRequests(STRINGS.cooldown);
-        }
+    const confirmed = isUserConfirmed(req.headers.authorization);
+    const { channel_id: channelId, opaque_user_id: opaqueUserId } = confirmed;
+    if (confirmed.result) {
         cleanUpChannelRaiderAndDoBroadcast(channelId);
         res.status(200).json({
             result: `Stopped all raid-games on channel: ${channelId}`,
         });
         return;
-        JSON.stringify({
-            result: `Stopped all raid-games on channel: ${channelId}`,
-        });
     }
     res.status(400).json(return400);
 }
@@ -584,11 +496,21 @@ async function stopTestRaidHandler(req, res) {
 //! -------------------- DATABASE HANDLERS -------------------- //
 async function addNewStreamer(channelId) {
     // checks if user already in database and adds new streamer to database if user does not already exsist
+    const result = await checkEventSubUser(channelId);
+    if (result) {
+        // we are happy
+        await continueAddingNewStreamer(channelId, result);
+    } else {
+        await EventSubRegister(channelId);
+        return;
+    }
+}
+async function continueAddingNewStreamer(channelId, registeredEventSub) {
     const userExsist = await dataBase.checkIfUserInDb(channelId);
     let returnData;
     if (!userExsist) {
-        console.log("[backend:621]: channelId", channelId);
         const userData = await getUser(`id=${channelId}`);
+        userData["eventSub"] = registeredEventSub;
         const result = await addStreamerToDb(userData);
         console.log("[backend:337]: result", result);
         const allChannelList = await dataBase.find();
@@ -608,12 +530,14 @@ async function addNewStreamer(channelId) {
 }
 async function addStreamerToDb(userData) {
     // adds streamer to database
+    //TODO add eventsub
     const result = await dataBase.insertOne({
         channelName: userData.display_name.toLowerCase(),
         displayName: userData.display_name,
         channelId: userData.id,
         profilePicUrl: userData.profile_image_url,
         created: Date.now(),
+        eventSubId: userData.eventSub,
         stats: {
             score: 0,
             raids: [],
@@ -628,6 +552,66 @@ function parseTmiChannelListFromDb(result) {
         channels.push(document.channelName);
     }
     return channels;
+}
+//! -------------------- EVENTSUB HANDLERS -------------------- //
+async function checkEventSubUser(userId) {
+    const eventSubs = await getEventSubEndpoint();
+    console.log("[backend:616]: eventSubs.data??????????", eventSubs.data);
+    for (const i = 0; i < eventSubs.data.length; i++) {
+        //? eventSubs.data ???
+        if (parseInt(eventSubs[i].condition.to_broadcaster_user_id) === parseInt(userId)) {
+            if (eventSubs[i].status === "enabled") return eventSubs[i];
+        }
+    }
+    return false;
+    const example = {
+        data: [
+            {
+                id: "xxxxx",
+                status: "enabled",
+                type: "channel.raid",
+                version: "1",
+                condition: {
+                    from_broadcaster_user_id: "",
+                    to_broadcaster_user_id: "93645775",
+                },
+                created_at: "2022-01-12T18:42:21.779827161Z",
+                transport: {
+                    method: "webhook",
+                    callback: "xxxx",
+                },
+                cost: 0,
+            },
+        ],
+    };
+}
+async function deleteEventSubEndpoint(channelId) {
+    const streamerData = await dataBase.findOne({ channelId });
+    const url = EVENTSUB_ENDPOINT + "?id=" + streamerData.eventSubId;
+    const myAppToken = APP_ACCESS_TOKEN;
+    const headers = {
+        Authorization: `Bearer ` + myAppToken,
+        "Client-Id": CLIENT_ID,
+        "Content-type": "application/json",
+    };
+    const data = {
+        headers,
+        method: "DELETE",
+    };
+    console.log("[app:143]: deleting sub");
+    const result = await fetch(url, data);
+    if (result.status === 204) {
+        // 204	Successfully deleted the subscription.
+        console.log("[backend:667]: Subcription successfully deleted: ", streamerData.eventSubId);
+    } else if (result.status === 404) {
+        //404	The subscription was not found.
+        console.log("[backend:667]: Subcription not found: ", streamerData.eventSubId);
+    } else if (result.status === 401) {
+        //401	The caller failed authentication. Verify that your access token and client ID are valid.`;
+        console.log("[backend:670]: ERROR: ", await result.json());
+        console.log("[backend:670]: ERROR: ", result.text());
+    }
+    return;
 }
 
 //! --------------------------------------------------------- //
@@ -697,17 +681,6 @@ async function getStreamsById(id) {
         return null;
     }
 }
-function getRatio(raiders, viewers) {
-    // calculates ratio of raiders:viewers
-    const highestNum = Math.max(raiders, viewers);
-    const ratio = {
-        raider: viewers / highestNum,
-        streamer: raiders / highestNum,
-    };
-    // console.log("[backend:446]: ratio", ratio);
-    return ratio;
-}
-
 //! --------------------------------------------------------- //
 //*                       -- TMI.JS --                       //
 //! ------------------------------------------------------- //
@@ -784,6 +757,9 @@ function restartTmi(channelList) {
 //! ------------------------------------------------------- //
 async function startRaid(channel, username, viewers) {
     // starts a raid game
+    const channel = notification.event.to_broadcaster_user_name,
+        username = notification.event.from_broadcaster_user_name,
+        viewers = notification.event.viewers;
     console.log(`[backend:549]: Starting raid on channel: ${channel}, started by: ${username}`);
     //# HERE
     const streamerData = await dataBase.findOne({
@@ -826,21 +802,6 @@ async function startRaid(channel, username, viewers) {
         return result;
     }
 }
-
-async function getUserConfigOrDefaultValue(channelId, configName) {
-    // gets userConfig value or DEFAULT value
-    const streamerData = await dataBase.findOne({ channelId });
-    let result = DEFAULTS[configName].default;
-    if (streamerData && streamerData.userConfig) {
-        // we have userconfig
-        const userConfValue = streamerData.userConfig[configName];
-        if (Number.isInteger(userConfValue) || typeof userConfValue === "boolean") {
-            return userConfValue;
-        }
-    }
-    return result;
-}
-
 async function constructGamePackage(raiderUserName, raiderAmount, streamerData, channelId) {
     // constructs an object for a raid game
     const streamData = await getStreamsById(streamerData.channelId);
@@ -867,24 +828,7 @@ async function constructGamePackage(raiderUserName, raiderAmount, streamerData, 
         return null;
     }
 }
-
-function conditionHandler(channelId) {
-    // Checks if certain conditions are met and
-    // perform required tasks accodringly
-    // get raiders at/below 25% and set result
-    // checkRaiderHealthAndSetResult(channelId, 50, "halfHealth"); //TODO fix when gauge
-    // get raiders at/below 50% and set result
-    // checkRaiderHealthAndSetResult(channelId, 75, "halfHealth"); //TODO fix when gauge
-    // get raiders below 1% and set result
-    // checkRaiderHealthAndSetResult(channelId, 1, "dead");
-    // gametime has run out
-    // const gameEndResult = calculateGameEndResult(channelId);
-    // check if all raiders are dead and set result
-    // console.log("[backend:982]: gameEndResult", gameEndResult);
-    // setAllRaiderDeadCondition(channelId, gameEndResult);
-    // check if game is expired and set result
-    setGameExpiredResult(channelId);
-}
+//! -------------------- RESULT -------------------- //
 function setGameExpiredResult(channelId) {
     const channelRaidersData = channelRaiders[channelId].data,
         gamesArray = channelRaidersData.games;
@@ -918,110 +862,12 @@ function setGameExpiredResult(channelId) {
         sendFinalBroadcastTimeout(channelId);
     }
 }
-
-// function checkRaiderHealthAndSetResult(channelId, healthThreshold, stringName) {
-//     const gamesArray = channelRaiders[channelId].games;
-//     // checks if a specified raider has reached a specified health threshhold
-//     for (const game of gamesArray) {
-//         // check if raider is at 50% health
-//         let operand = false,
-//             name = game.raiderData.display_name;
-//         //TODO fix this to use -50 -> +50 when gauge
-//         if (healthThreshold == 50) {
-//             //TODO
-//             // name = game.streamerData.displayName;
-//             // if (
-//             //     game.raiderData.health >= healthThreshold &&
-//             //     !checkForExistingGameResult(
-//             //         game.gameResult,
-//             //         "string",
-//             //         parseString(strings[stringName], name, healthThreshold)
-//             //     )
-//             // ) {
-//             //     operand = true;
-//             // }
-//         } else if (healthThreshold == -50) {
-//             //TODO
-//             // if (
-//             //     game.raiderData.health <= healthThreshold &&
-//             //     !checkForExistingGameResult(
-//             //         game.gameResult,
-//             //         "string",
-//             //         parseString(strings[stringName], name, healthThreshold)
-//             //     )
-//             // ) {
-//             //     operand = true;
-//             // }
-//         }
-//         if (operand) {
-//             console.log(`[backend:957]: raider under ${healthThreshold}% and not in resultqueue`);
-//             setResult(
-//                 channelId,
-//                 game.raiderData.display_name,
-//                 parseString(strings[stringName], name, healthThreshold),
-//                 "gameInfoDuration"
-//             );
-//             attemptSendChatMessageToChannel(game.streamerData, parseString(strings[stringName], name, healthThreshold));
-//         }
-//     }
-// }
-// function calculateGameEndResult(channelId) {
-//     //TODO change to handle -50/+50 health gauge
-//     const gamesArray = channelRaiders[channelId].games;
-//     // handles calculating the end game result
-//     let alive = 0;
-//     const result = gamesArray.map((game) => {
-//         if (game.raiderData.health < 0) {
-//             alive++;
-//             return { name: game.raiderData.display_name, alive: true };
-//         } else if (game.raiderData.health > 0) {
-//             alive--;
-//             return { name: game.raiderData.display_name, alive: false };
-//         } else {
-//             return { name: game.raiderData.display_name, alive: null };
-//         }
-//     });
-//     return { result, alive };
-// }
-
-// function setAllRaiderDeadCondition(channelId, gameEnd) {
-//     const gamesArray = channelRaiders[channelId].games;
-//     // handles setting condition when all raiders are dead
-//     //! STREAMER WIN
-//     const maxHealth = Math.max(...gamesArray.map((game) => parseInt(game.raiderData.health)));
-//     if (maxHealth < 1 && channelRaiders[channelId].hasRunningGame) {
-//         // no more players
-//         // set endResult
-//         if (
-//             !checkForExistingGameResult(
-//                 gamesArray[0].gameResult,
-//                 "string",
-//                 parseString(strings.win, gamesArray[0].streamerData.displayName, gameEnd.result[0]?.name)
-//             )
-//         ) {
-//             setResult(
-//                 channelId,
-//                 gameEnd.result[0]?.name,
-//                 parseString(strings.win, gamesArray[0].streamerData.displayName, gameEnd.result[0]?.name),
-//                 "gameResultDuration"
-//             );
-//             attemptSendChatMessageToChannel(
-//                 gamesArray[0].streamerData,
-//                 parseString(strings.win, gamesArray[0].streamerData.displayName, gameEnd.result[0]?.name)
-//             );
-//         }
-//         // do final broadcast
-//         sendFinalBroadcastTimeout(channelId);
-//     }
-// }
-//! --------------------  -------------------- //
 function parseString(str) {
     // parses string and replaces "%s" with supplied argument
     var args = [].slice.call(arguments, 1),
         i = 0;
     return str.replace(/%s/g, () => args[i++]);
 }
-
 function checkForExistingGameResult(testArray, testKey, testValue) {
     // checks if a specified game result already exsists
     return testArray.some(function (o) {
@@ -1112,42 +958,8 @@ function handleBroadcastInterval(channelId) {
 }
 function broadcastInterval(channelId) {
     // handles setting coditions and attempting broadcast at an interval
-    conditionHandler(channelId);
+    setGameExpiredResult(channelId);
     attemptRaidBroadcast(channelId);
-}
-//! ---- FINAL ---- //
-async function sendFinalBroadcastTimeout(channelId) {
-    //TODO re-implement this
-    if (!channelRaiders[channelId].finalBroadcastTimeout) {
-        // sends a final broadcast after a timeOut(USER_CONFIG.gameResultDuration)
-        const timeout = await getUserConfigOrDefaultValue(channelId, "gameResultDuration");
-        console.log("[backend:713]:sending final broadcast in: ", timeout, " sec!");
-        channelRaiders[channelId].finalBroadcastTimeout = setTimeout(() => {
-            cleanUpChannelRaiderAndDoBroadcast(channelId);
-        }, timeout * 1000);
-    }
-}
-
-//! ---- CLEAN ---- //
-function cleanUpChannelRaiderAndDoBroadcast(channelId) {
-    // cleans up channelraider list, ends game and attempts a broadcast
-    try {
-        if (channelRaiders[channelId]) {
-            console.log("[backend:685]: cleaning up and sending final broadcast");
-            clearInterval(channelRaiders[channelId].interval);
-            channelRaiders[channelId].interval = null;
-            channelRaiders[channelId].hasRunningGame = false;
-            channelRaiders[channelId].finalBroadcastTimeout = null;
-            channelRaiders[channelId].data.games = [];
-            channelRaiders[channelId].data.games.push("GAME OVER");
-            attemptRaidBroadcast(channelId);
-            setTimeout(() => {
-                channelRaiders[channelId] = "null";
-            }, 2000);
-        }
-    } catch (err) {
-        console.log("[backend:1317]: ERROR: ", err);
-    }
 }
 //! ---- QUEUE ---- //
 function attemptRaidBroadcast(channelId) {
@@ -1183,7 +995,39 @@ async function sendRaidBroadcast(channelId) {
     const res = await fetch(url, { method: "POST", headers, body });
     console.log("[backend:503]: ", `Broadcasting to channelId: ${channelId}`, `Response: ${res.status}`);
 }
-
+//! ---- FINAL ---- //
+async function sendFinalBroadcastTimeout(channelId) {
+    //TODO re-implement this
+    if (!channelRaiders[channelId].finalBroadcastTimeout) {
+        // sends a final broadcast after a timeOut(USER_CONFIG.gameResultDuration)
+        const timeout = await getUserConfigOrDefaultValue(channelId, "gameResultDuration");
+        console.log("[backend:713]:sending final broadcast in: ", timeout, " sec!");
+        channelRaiders[channelId].finalBroadcastTimeout = setTimeout(() => {
+            cleanUpChannelRaiderAndDoBroadcast(channelId);
+        }, timeout * 1000);
+    }
+}
+//! ---- CLEAN ---- //
+function cleanUpChannelRaiderAndDoBroadcast(channelId) {
+    // cleans up channelraider list, ends game and attempts a broadcast
+    try {
+        if (channelRaiders[channelId]) {
+            console.log("[backend:685]: cleaning up and sending final broadcast");
+            clearInterval(channelRaiders[channelId].interval);
+            channelRaiders[channelId].interval = null;
+            channelRaiders[channelId].hasRunningGame = false;
+            channelRaiders[channelId].finalBroadcastTimeout = null;
+            channelRaiders[channelId].data.games = [];
+            channelRaiders[channelId].data.games.push("GAME OVER");
+            attemptRaidBroadcast(channelId);
+            setTimeout(() => {
+                channelRaiders[channelId] = "null";
+            }, 2000);
+        }
+    } catch (err) {
+        console.log("[backend:1317]: ERROR: ", err);
+    }
+}
 //! --------------------------------------------------------- //
 //*                       -- CHAT API --                     //
 //! ------------------------------------------------------- //
@@ -1206,7 +1050,6 @@ function attemptSendChatMessageToChannel(streamerData, message) {
         };
     }
 }
-
 async function sendChatMessageToChannel(message, channelId) {
     // sends a message to a specified channelID
     // not more often than every 5sec pr channel
@@ -1229,10 +1072,36 @@ async function sendChatMessageToChannel(message, channelId) {
     console.log(`[backend:1337]: Broadcast chat message result: ${res.status}: ${res.statusText}`);
 }
 //! --------------------------------------------------------- //
-//*                     -- JWT TOKEN --                      //
+//*                   -- AUTHORIZATION --                    //
 //! ------------------------------------------------------- //
-// Create and return a JWT for use by this service.
+// function isUserConfirmed(authorization) {
+//     const payload = verifyAndDecode(authorization);
+//     const { channel_id: channelId, opaque_user_id: opaqueUserId } = payload;
+//     // Bot abuse prevention:  don't allow a user to spam the button.
+//     if (userIsInCooldown(opaqueUserId)) {
+//         throw Boom.tooManyRequests(STRINGS.cooldown);
+//     }
+//     if (confirmOpaqueUser(channelId, opaqueUserId)) {
+//         return { result: true, data: payload };
+//     }
+//     return { result: false };
+// }
+function isUserConfirmed(req, res, next) {
+    const payload = verifyAndDecode(req.headers.authorization);
+    const { channel_id: channelId, opaque_user_id: opaqueUserId } = payload;
+    // Bot abuse prevention:  don't allow a user to spam the button.
+    if (userIsInCooldown(opaqueUserId)) {
+        throw Boom.tooManyRequests(STRINGS.cooldown);
+    }
+    if (confirmOpaqueUser(channelId, opaqueUserId)) {
+        res.locals["myData"] = payload;
+        next();
+        // return { result: true, data: payload };
+    }
+    throw Boom.unauthorized(STRINGS.invalidAuthHeader);
+}
 function makeServerToken(channelId) {
+    // Create and return a JWT for use by this service.
     // makes a JWT token
     const payload = {
         exp: Math.floor(Date.now() / 1000) + serverTokenDurationSec,
@@ -1245,7 +1114,35 @@ function makeServerToken(channelId) {
     };
     return jsonwebtoken.sign(payload, secret, { algorithm: "HS256" });
 }
-
 function confirmOpaqueUser(channelId, opaqueId) {
     return parseInt(channelId) === parseInt(opaqueId.replace("U", ""));
 }
+function verifyAndDecode(header) {
+    // Verify the header and the enclosed JWT.
+    if (header.startsWith(bearerPrefix)) {
+        try {
+            const token = header.substring(bearerPrefix.length);
+            return jsonwebtoken.verify(token, secret, {
+                algorithms: ["HS256"],
+            });
+        } catch (ex) {
+            //TODO change this //?
+            throw Boom.unauthorized(STRINGS.invalidJwt);
+        }
+    }
+    //TODO change this //?
+    throw Boom.unauthorized(STRINGS.invalidAuthHeader);
+}
+function userIsInCooldown(opaqueUserId, skipCooldown = false) {
+    // Check if the user is in cool-down.
+    const cooldown = userCooldowns[opaqueUserId];
+    const now = Date.now();
+    if (cooldown && cooldown > now) {
+        return true;
+    }
+    // Voting extensions must also track per-user votes to prevent skew.
+    userCooldowns[opaqueUserId] = now + skipCooldown ? userSkipCooldownMs : userCooldownMs;
+    return false;
+}
+
+//! --------------------  -------------------- //
