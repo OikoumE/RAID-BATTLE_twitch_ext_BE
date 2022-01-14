@@ -264,26 +264,38 @@ app.post(EVENTSUB_ENDPOINT_PATH, async (req, res) => {
         },
     });
 });
-
+const liveStreams = {};
 async function streamStatusHandler(eventNotification) {
-    const EXAMPLE_LIVE = {
+    // Handle response.
+    // const result = await getExtLiveStreams(); // ! buggy twitch api
+    // console.log("[backend:270]: result", result); // ! buggy twitch api
+
+    if (eventNotification.type && eventNotification.type === "live") {
+        liveStreams;
+        // ADD TO LIVE
+        const EXAMPLE_LIVE = {
             id: "40429073067",
             broadcaster_user_id: "93645775",
             broadcaster_user_login: "itsoik",
             broadcaster_user_name: "itsOiK",
             type: "live",
             started_at: "2022-01-14T06:17:44Z",
-        },
-        EXAMPLE_OFFLINE = {
+        };
+    } else {
+        // REMOVE FROM LIVE
+        const EXAMPLE_OFFLINE = {
             broadcaster_user_id: "93645775",
             broadcaster_user_login: "itsoik",
             broadcaster_user_name: "itsOiK",
         };
+    }
 
-    // Handle response.
-    const result = await getExtLiveStreams();
+    const liveStreamsDatabaseData = dataBase.find({ channelId: { $in: [] } });
+    //TODO add to liveStreams
+
     await sendGlobalBroadcast(result);
 }
+
 // streamStatusHandler();
 async function getExtLiveStreams() {
     const url = "https://api.twitch.tv/helix/extensions/live?extension_id=";

@@ -39,8 +39,8 @@ export class DataBase {
         }
         console.log(`[backend:301]: no document found with document:`, document);
     }
-    async find(collection = this.collection) {
-        const result = await this.client.db(this.dataBaseName).collection(collection).find().toArray();
+    async find(document = {}, collection = this.collection) {
+        const result = await this.client.db(this.dataBaseName).collection(collection).find(document).toArray();
         if (result) {
             return result;
         }
