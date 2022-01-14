@@ -13,8 +13,6 @@
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
  */
-// import Hapi from "@hapi/hapi"; //! remove
-// import ext from "commander"; //! remove
 import fs from "fs";
 import path from "path";
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -36,6 +34,14 @@ import fetch from "node-fetch";
 dotenv.config();
 
 //! ------------------------------------------------
+//! ------------------ REMINDER --------------------
+//! ---       line:57 - change before prod       ---
+//! ---       line:495 - change before prod      ---
+//! ---                                          ---
+//! ---                                          ---
+//! ---                                          ---
+//! ---                                          ---
+//! ------------------------------------------------
 
 import { DataBase } from "./modules/database/database.mjs";
 import { webhookCallback, getEventSubEndpoint, EventSubRegister } from "./modules/eventsub/index.mjs";
@@ -43,7 +49,7 @@ import { webhookCallback, getEventSubEndpoint, EventSubRegister } from "./module
 //! ------------------------------------------------
 
 // The developer rig uses self-signed certificates.  Node doesn't accept them
-// by default.  Do not use this in production.
+// by default.  Do not use this in production
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0"; //! ONLY WHEN DEV AND TESTING
 
 // Service state variables
@@ -63,13 +69,9 @@ let userCooldowns = {}; // spam prevention
 // Make a logger that logs critical errors to DB
 // log pr channelID: timestamp, error, scriptLocation
 
-// TODO change health range from -50 -> +50 to easier use gauge
-// TODO figure out a way to remove channels from channels to monitor list.
-
 //! --------------------------------------------------------- //
 //*                      -- MY VARS --                       //
 //! ------------------------------------------------------- //
-
 //* twitch api auth
 const APP_CLIENT_ID = process.env.APP_CLIENT_ID,
     APP_CLIENT_SECRET = process.env.APP_CLIENT_SECRET,
@@ -83,8 +85,8 @@ const ownerId = EXT_OWNER_ID,
     secret = Buffer.from(EXT_CLIENT_SECRET, "base64"),
     clientId = EXT_CLIENT_ID;
 
-let APP_ACCESS_TOKEN = null,
-    TOKEN_EXPIRE_DATE = null;
+let APP_ACCESS_TOKEN = process.env.APP_ACCESS_TOKEN || null,
+    TOKEN_EXPIRE_DATE = process.env.TOKEN_EXPIRE_DATE || null;
 
 const initialSupport = 0,
     channelRaiders = {},
@@ -161,6 +163,7 @@ app.use(
 //! ------------------------------------------------------- //
 async function onLaunch() {
     //this run when server starts up
+    await getAppAccessToken();
     dataBase = new DataBase();
     await dataBase.connect();
     console.log("[backend:130]: Server starting");
@@ -215,39 +218,104 @@ async function getUserConfigOrDefaultValue(channelId, configName) {
 //! --------------------------------------------------------- //
 //*                      -- ROUTE's --                       //
 //! ------------------------------------------------------- //
-
+const confirmUser = [isUserConfirmed, confirmOpaqueUser];
 // Handle an attempt to load a route in browser.
-app.get("/", (req, res) => return404(req, res));
+app.get("/", return404);
 
 // Handle adding new streamers to channels to watch for raids
-app.post("/addStreamerToChannels/", (req, res) => addStreamerToChannelsHandler(req, res));
+app.post("/addStreamerToChannels/", confirmUser, addStreamerToChannelsHandler);
 
 // Handle broadcaster requesting userConfig
-app.get("/requestUserConfig/", (req, res) => requestUserConfigHandler(req, res));
+app.get("/requestUserConfig/", confirmUser, requestUserConfigHandler);
 
 // Handle broadcaster updating userConfig
-app.post("/updateUserConfig/", (req, res) => updateUserConfigHandler(req, res));
-
-// Handle a viewer request to support the raider.
-app.post("/heal/", (req, res) => raiderSupportHandler(req, res)); // TODO change how we send and receive this
-
-// Handle a viewer request to support the streamer.
-app.post("/damage/", (req, res) => streamerSupportHandler(req, res));
-
-// Handle a viewer request ongoing game.
-app.get("/ongoingRaidGame/", (req, res) => ongoingRaidGameQueryHandler(req, res));
+app.post("/updateUserConfig/", confirmUser, updateUserConfigHandler);
 
 // Handle broadcasting a testraid
-app.post("/TESTRAID/", (req, res) => startTestRaidHandler(req, res));
+app.post("/TESTRAID/", confirmUser, startTestRaidHandler);
 
 // Handle stop broadcasting a testraid
-app.post("/TESTRAID/stop", (req, res) => stopTestRaidHandler(req, res));
+app.post("/TESTRAID/stop", confirmUser, stopTestRaidHandler);
+
+// Handle viewer requesting raidHistory
+app.get("/requestRaidHistory/", isUserConfirmed, requestRaidHistoryHandler);
+
+// Handle a viewer request to support the raider.
+app.post("/heal/", isUserConfirmed, raiderSupportHandler); // TODO change how we send and receive this
+
+// Handle a viewer request to support the streamer.
+app.post("/damage/", isUserConfirmed, streamerSupportHandler);
+
+// Handle a viewer request ongoing game.
+app.get("/ongoingRaidGame/", isUserConfirmed, ongoingRaidGameQueryHandler);
 
 //! ----- EVENTSUB ----- //
 // Handle stop broadcasting a testraid
-app.post(EVENTSUB_ENDPOINT_PATH, (req, res) => {
-    webhookCallback({ req, res, callbackObj: { startRaid, addNewStreamer, deleteEventSubEndpoint } });
+app.post(EVENTSUB_ENDPOINT_PATH, async (req, res) => {
+    await webhookCallback({
+        req,
+        res,
+        callbackObj: {
+            startRaid,
+            addNewStreamer,
+            deleteEventSubEndpoint,
+            streamStatusHandler,
+        },
+    });
 });
+
+async function streamStatusHandler(event) {
+    const EXAMPLE_LIVE = {
+            id: "40429073067",
+            broadcaster_user_id: "93645775",
+            broadcaster_user_login: "itsoik",
+            broadcaster_user_name: "itsOiK",
+            type: "live",
+            started_at: "2022-01-14T06:17:44Z",
+        },
+        EXAMPLE_OFFLINE = {
+            broadcaster_user_id: "93645775",
+            broadcaster_user_login: "itsoik",
+            broadcaster_user_name: "itsOiK",
+        };
+
+    // Handle response.
+    const result = await getExtLiveStreams();
+    await sendGlobalBroadcast(result);
+}
+
+async function getExtLiveStreams() {
+    const url = "https://api.twitch.tv/helix/extensions/live?extension_id=";
+    const result = await paginated_fetch(url);
+    // console.log("[backend:282]: result", result);
+    return result;
+}
+async function paginated_fetch(url, page = null, previousResponse = []) {
+    const appToken = await getAppAccessToken(),
+        headers = {
+            Authorization: `Bearer ${appToken}`,
+            "Client-Id": APP_CLIENT_ID,
+            "Content-type": "application/json",
+        };
+    return fetch(`${url}${process.env._EXT_CLIENT_ID}&first=100${page ? `&after={page}` : ""}`, {
+        headers,
+    })
+        .then((response) => response.json())
+        .then(async (newResponse) => {
+            console.log("[backend:315]: doing pagination");
+            if (newResponse.data) {
+                const response = [...previousResponse, ...newResponse.data]; // Combine the two arrays
+                if (newResponse.pagination && newResponse.data.length === 100) {
+                    return await paginated_fetch(url, newResponse.pagination, response);
+                }
+                return response;
+            }
+            return newResponse;
+        })
+        .catch((err) => {
+            console.log("[backend:311]: ERROR: ", err);
+        });
+}
 
 //! --------------------------------------------------------- //
 //*                       -- SERVER --                       //
@@ -272,80 +340,61 @@ function return200() {
 
 //! ---- ONGOING ---- //
 async function ongoingRaidGameQueryHandler(req, res) {
-    // Verify all requests.
-    const confirmed = isUserConfirmed(req.headers.authorization);
-    const { channel_id: channelId, opaque_user_id: opaqueUserId } = confirmed;
-    if (confirmed.result) {
-        const result = await dataBase.findOne({ channelId });
-        if (!result) {
-            addNewStreamer(channelId);
-        }
-        if (typeof channelRaiders[channelId] === "undefined") {
-            console.log(`[backend:415]: No active games on channel ${channelId}`);
-            res.sendStatus(204);
-            return;
-        } else if (channelRaiders[channelId] && typeof channelRaiders[channelId]?.data?.games === "undefined") {
-            console.log(`[backend:421]: No active games on channel ${channelId}`);
-            res.sendStatus(204);
-            return;
-        } else if (channelRaiders[channelId] && channelRaiders[channelId]?.data?.games.length < 1) {
-            console.log(`[backend:427]: No active games on channel ${channelId}`);
-            res.sendStatus(204);
-            return;
-        }
-        res.status(200).json(channelRaiders[channelId].data);
+    const { channelId, opaqueUserId } = res.locals;
+    const result = await dataBase.findOne({ channelId });
+    if (!result) {
+        addNewStreamer(channelId);
     }
+    if (typeof channelRaiders[channelId] === "undefined") {
+        console.log(`[backend:415]: No active games on channel ${channelId}`);
+        res.sendStatus(204);
+        return;
+    } else if (channelRaiders[channelId] && typeof channelRaiders[channelId]?.data?.games === "undefined") {
+        console.log(`[backend:421]: No active games on channel ${channelId}`);
+        res.sendStatus(204);
+        return;
+    } else if (channelRaiders[channelId] && channelRaiders[channelId]?.data?.games.length < 1) {
+        console.log(`[backend:427]: No active games on channel ${channelId}`);
+        res.sendStatus(204);
+        return;
+    }
+    res.json(channelRaiders[channelId].data);
 }
 //! ---- ADDSTREAMER ---- //
 async function addStreamerToChannelsHandler(req, res) {
-    // Verify all requests.
-    const confirmed = isUserConfirmed(req.headers.authorization);
-    const { channel_id: channelId, opaque_user_id: opaqueUserId } = confirmed;
-    if (confirmed.result) {
-        const result = await addNewStreamer(channelId);
-        res.status(200).json(result);
-    }
-    res.status(400).json(return400);
+    const { channelId, opaqueUserId } = res.locals;
+    const result = await addNewStreamer(channelId);
+    res.json({ result: "Added to list of channels to monitor for raid", data: result });
 }
 //! ---- REQUESTCONFIG ---- //
 async function requestUserConfigHandler(req, res) {
-    // Verify all requests.
-    const confirmed = isUserConfirmed(req.headers.authorization);
-    const { channel_id: channelId, opaque_user_id: opaqueUserId } = confirmed;
-    if (confirmed.result) {
-        const result = await dataBase.findOne({ channelId });
-        if (result.userConfig) {
-            res.status(200).json({
-                result: "Loaded user config",
-                data: { result: result.userConfig, defaults: DEFAULTS },
-            });
-            return;
-        }
-        res.status(200).json({
-            result: "Did not find config, hit save to store config",
-            data: { result: null, defaults: DEFAULTS },
+    const { channelId, opaqueUserId } = res.locals;
+    const result = await dataBase.findOne({ channelId });
+    if (result.userConfig) {
+        res.json({
+            result: "Loaded user config",
+            data: { result: result.userConfig, defaults: DEFAULTS },
         });
         return;
     }
-    res.status(400).json(return400);
+    res.json({
+        result: "Did not find config, hit save to store config",
+        data: { result: null, defaults: DEFAULTS },
+    });
+    return;
 }
 //! ---- UPDATECONFIG ---- //
 async function updateUserConfigHandler(req, res) {
-    // Verify all requests.
-    const confirmed = isUserConfirmed(req.headers.authorization);
-    const { channel_id: channelId, opaque_user_id: opaqueUserId } = confirmed;
-    if (confirmed.result) {
-        const jsonUpdateDocument = JSON.parse(req.body),
-            updateDocument = parseUserConfigUpdateDocument(jsonUpdateDocument);
-        await addNewStreamer(channelId);
-        const updateResult = await dataBase.updateOne({ channelId }, { $set: { userConfig: updateDocument } });
-        res.status(200).json({
-            result: "User Config updated!",
-            data: updateResult,
-        });
-        return;
-    }
-    res.status(400).json(return400);
+    const { channelId, opaqueUserId } = res.locals;
+    const jsonUpdateDocument = JSON.parse(req.body),
+        updateDocument = parseUserConfigUpdateDocument(jsonUpdateDocument);
+    await addNewStreamer(channelId);
+    const updateResult = await dataBase.updateOne({ channelId }, { $set: { userConfig: updateDocument } });
+    res.json({
+        result: "User Config updated!",
+        data: updateResult,
+    });
+    return;
 }
 //! ---- PARSECONFIG ---- //
 function parseUserConfigUpdateDocument(document) {
@@ -364,142 +413,185 @@ function parseUserConfigUpdateDocument(document) {
     }
     return parsedDoc;
 }
-//! ---- RAIDERSUPPORT ---- //
+//! ---- CLICKHANDLERS ---- //
 function raiderSupportHandler(req, res) {
-    // Verify all requests.
-    const confirmed = isUserConfirmed(req.headers.authorization);
-    const { channel_id: channelId, opaque_user_id: opaqueUserId } = confirmed;
-    if (confirmed.result) {
-        // const raider = req.params.raider;
-        // increase health on specific raider
-        if (channelRaiders[channelId]?.data?.games) {
-            clickSupportIncrement(channelId, channelRaiders[channelId].data.clickTracker.raider, opaqueUserId);
-            res.status(200).json(channelRaiders[channelId].data);
-            return; //channelRaiders[channelId].games;
-        }
+    const { channelId, opaqueUserId } = res.locals;
+    // const raider = req.params.raider;
+    // increase health on specific raider
+    if (channelRaiders[channelId]?.data?.games) {
+        clickSupportIncrement(channelId, "raider", opaqueUserId);
+        res.json(channelRaiders[channelId].data);
+        return; //channelRaiders[channelId].games;
     }
     console.log("[backend:493]: returning null");
-    return "NO ACTIVE GAMES RUNNING; STOP ALL RUNNING GAMES";
+    // return "NO ACTIVE GAMES RUNNING; STOP ALL RUNNING GAMES";
     //TODO figure out response
-    res.status(400).json(return400);
+    res.sendStatus(204);
 }
-//! ---- STREAMERSUPPORT ---- //
 function streamerSupportHandler(req, res) {
-    // Verify all requests.
-    const confirmed = isUserConfirmed(req.headers.authorization);
-    const { channel_id: channelId, opaque_user_id: opaqueUserId } = confirmed;
-    if (confirmed.result) {
-        if (channelRaiders[channelId]?.data?.games) {
-            clickSupportIncrement(channelId, channelRaiders[channelId].data.clickTracker.streamer, opaqueUserId);
-            res.status(200).json(channelRaiders[channelId].data);
-            return; //channelRaiders[channelId].games;
-        }
+    const { channelId, opaqueUserId } = res.locals;
+    if (channelRaiders[channelId]?.data?.games) {
+        clickSupportIncrement(channelId, "streamer", opaqueUserId);
+        res.json(channelRaiders[channelId].data);
+        return; //channelRaiders[channelId].games;
     }
     console.log("[backend:520]: returning null");
-    return "NO ACTIVE GAMES RUNNING; STOP ALL RUNNING GAMES";
+    // return "NO ACTIVE GAMES RUNNING; STOP ALL RUNNING GAMES";
     //TODO figure out response
-    res.status(400).json(return400);
+    res.sendStatus(204);
 }
 
-function clickSupportIncrement(channelId, clickTracker, clicker) {
-    // receives either
-    // channelRaiders[channelId].data.clickTracker.streamer
-    // or
-    // channelRaiders[channelId].data.clickTracker.raider
+function clickSupportIncrement(channelId, who, clicker) {
     // increments click counter and adds clicker to list if not already in list
-    clickTracker.clicks += 1;
-    if (!clickTracker.clickers.includes(clicker)) clickTracker.clickers.push(clicker);
     const clickTracker = channelRaiders[channelId].data.clickTracker,
         sTracker = clickTracker.streamer,
         rTracker = clickTracker.raider;
+    if (!clickTracker[who].clickers.includes(clicker)) clickTracker[who].clickers.push(clicker);
+    clickTracker[who].clicks += 1;
     const streamer = sTracker.clicks > 0 ? sTracker.clicks / sTracker.clickers.length : 0,
         raider = rTracker.clicks > 0 ? rTracker.clicks / rTracker.clickers.length : 0;
     channelRaiders[channelId].data.supportState = streamer - raider;
     return channelRaiders[channelId].data.supportState;
 }
 
-//! ---- STARTTESTRAID ---- //
+//! ---- START TESTRAID ---- //
 async function startTestRaidHandler(req, res) {
-    // Verify all requests.
-    const confirmed = isUserConfirmed(req.headers.authorization);
-    const { channel_id: channelId, opaque_user_id: opaqueUserId } = confirmed;
-    if (confirmed.result) {
-        let testRaidPayload,
-            startedRaid = "Null";
-        try {
-            testRaidPayload = JSON.parse(req.body);
-            const regex = /^[a-zA-Z0-9][a-zA-Z0-9_]{3,24}$/gs;
-            if (testRaidPayload && regex.test(testRaidPayload.testRaider)) {
-                // console.log("[backend:566]: testRaidPayload", testRaidPayload);
-                await addNewStreamer(channelId);
-                const channel = await dataBase.findOne({ channelId });
-                const startedRaid = await startRaid(
-                    channel.channelName,
-                    testRaidPayload.testRaider,
-                    testRaidPayload.testAmount
-                );
-                res.status(200).json(startedRaid);
-                return; //JSON.stringify(startedRaid);
-            }
-        } catch (err) {
-            console.log("[backend:541]: ERROR: JSON.parse \n", err);
+    const { channelId, opaqueUserId } = res.locals;
+    let testRaidPayload,
+        startedRaid = "Null";
+    try {
+        testRaidPayload = JSON.parse(req.body);
+        const regex = /^[a-zA-Z0-9][a-zA-Z0-9_]{3,24}$/gs;
+        if (testRaidPayload && regex.test(testRaidPayload.testRaider)) {
+            // console.log("[backend:566]: testRaidPayload", testRaidPayload);
+            await addNewStreamer(channelId);
+            const channel = await dataBase.findOne({ channelId });
+            const startedRaid = await startRaid(
+                channel.channelName,
+                testRaidPayload.testRaider,
+                testRaidPayload.testAmount
+            );
+            res.json(startedRaid);
+            return; //JSON.stringify(startedRaid);
         }
-        res.status(200).json(startedRaid);
-        return; //JSON.stringify(startedRaid);
+    } catch (err) {
+        console.log("[backend:541]: ERROR: JSON.parse \n", err);
     }
-    res.status(400).json(return400);
+    res.json(startedRaid);
+    return; //JSON.stringify(startedRaid);
 }
-
 //! ---- STOPTESTRAID ---- //
 async function stopTestRaidHandler(req, res) {
-    // Verify all requests.
-    const confirmed = isUserConfirmed(req.headers.authorization);
-    const { channel_id: channelId, opaque_user_id: opaqueUserId } = confirmed;
-    if (confirmed.result) {
-        cleanUpChannelRaiderAndDoBroadcast(channelId);
-        res.status(200).json({
-            result: `Stopped all raid-games on channel: ${channelId}`,
-        });
-        return;
-    }
-    res.status(400).json(return400);
+    const { channelId, opaqueUserId } = res.locals;
+    cleanUpChannelRaiderAndDoBroadcast(channelId);
+    res.json({
+        result: `Stopped all raid-games on channel: ${channelId}`,
+    });
+    return;
+}
+
+//! ---- RAIDHISTORY ---- //
+async function requestRaidHistoryHandler(req, res) {
+    const { channelId, opaqueUserId } = res.locals;
+    const channelIds = [];
+    channelIds.push(channelId);
+
+    const live = await getExtLiveStreams();
+    live.forEach((stream) => {
+        if (!channelIds.some((streamId) => streamId === stream.broadcaster_id)) {
+            channelIds.push(stream.broadcaster_id);
+        }
+    });
+    console.log("[backend:507]: channelIds", channelIds);
+
+    const result = await dataBase.find();
+    const filteredData = result.filter((data) => channelIds.includes(data.channelId));
+    const thing = {
+        thisStreamData: {
+            displayName: filteredData[0].displayName,
+            battleHistory: filteredData[0].battleHistory,
+            score: filteredData[0].score,
+        },
+        liveStreamsData: filteredData,
+    };
+
+    res.json({ result: "Loaded raid history", data: thing });
+    //..
 }
 
 //! --------------------------------------------------------- //
 //*                     -- LEADERBOARD --                    //
 //! ------------------------------------------------------- //
-// TODO update all docs with score + history
-// TODO rework healthbar thingy
-// TODO PLACEHOLDER
-// TODO PLACEHOLDER
-// TODO PLACEHOLDER
-
+// TODO update all docs with score + history before prod
 // const user = {
 //     score: 1,
-//     history: {
-//         raided: {
-//             by: "raider",
-//             win: true,
+//     battleHistory: [
+//         {
+//             vs: "raider",
+//             result: "loose",
 //         },
-//         raids: ["streamer1", "streamer2", "streamer3"],
-//     },
+//         {
+//             vs: "raider2",
+//             result: "win",
+//         },
+//     ],
 // };
 
-// class StateMachine {
-//     constructor() {
-//         //
-//         this.state = null;
-//     }
-// }
-// const thisState = new StateMachine();
+async function setStreamerWinBattleHistory(channelId, raiders) {
+    const result = await dataBase.updateOne(
+        { channelId },
+        {
+            $inc: { score: 1 },
+            $push: {
+                battleHistory: {
+                    $each: [
+                        {
+                            vs: raiders,
+                            result: "win",
+                        },
+                    ],
+                    $slice: -3,
+                },
+            },
+        }
+    );
+    return result;
+}
+
+async function setRaiderWinOrDraw(idArray, raiders, battleResult) {
+    const result = await dataBase.updateMany(
+        {
+            channelId: {
+                $in: idArray,
+            },
+        },
+        {
+            $inc: { score: 1 },
+            $push: {
+                battleHistory: {
+                    $each: [
+                        {
+                            vs: raiders,
+                            result: battleResult,
+                        },
+                    ],
+                    $slice: -3,
+                },
+            },
+        }
+    );
+    return result;
+}
 
 //! -------------------- DATABASE HANDLERS -------------------- //
 async function addNewStreamer(channelId) {
     // checks if user already in database and adds new streamer to database if user does not already exsist
-    const result = await checkEventSubUser(channelId);
+    const result = "7492a8fd-ae83-432c-8054-198d7e323f45"; //! DEV ONLY
+    // const result = await checkEventSubUser(channelId); //! REACTIVATE BEFORE PROD!
     if (result) {
         // we are happy
-        await continueAddingNewStreamer(channelId, result);
+        const response = await continueAddingNewStreamer(channelId, result);
+        return response;
     } else {
         await EventSubRegister(channelId);
         return;
@@ -530,7 +622,6 @@ async function continueAddingNewStreamer(channelId, registeredEventSub) {
 }
 async function addStreamerToDb(userData) {
     // adds streamer to database
-    //TODO add eventsub
     const result = await dataBase.insertOne({
         channelName: userData.display_name.toLowerCase(),
         displayName: userData.display_name,
@@ -538,10 +629,8 @@ async function addStreamerToDb(userData) {
         profilePicUrl: userData.profile_image_url,
         created: Date.now(),
         eventSubId: userData.eventSub,
-        stats: {
-            score: 0,
-            raids: [],
-        },
+        score: 0,
+        battleHistory: [],
     });
     return result;
 }
@@ -555,10 +644,9 @@ function parseTmiChannelListFromDb(result) {
 }
 //! -------------------- EVENTSUB HANDLERS -------------------- //
 async function checkEventSubUser(userId) {
+    //TODO adapt for raid, live, offline
     const eventSubs = await getEventSubEndpoint();
-    console.log("[backend:616]: eventSubs.data??????????", eventSubs.data);
     for (const i = 0; i < eventSubs.data.length; i++) {
-        //? eventSubs.data ???
         if (parseInt(eventSubs[i].condition.to_broadcaster_user_id) === parseInt(userId)) {
             if (eventSubs[i].status === "enabled") return eventSubs[i];
         }
@@ -585,6 +673,7 @@ async function checkEventSubUser(userId) {
         ],
     };
 }
+
 async function deleteEventSubEndpoint(channelId) {
     const streamerData = await dataBase.findOne({ channelId });
     const url = EVENTSUB_ENDPOINT + "?id=" + streamerData.eventSubId;
@@ -598,7 +687,7 @@ async function deleteEventSubEndpoint(channelId) {
         headers,
         method: "DELETE",
     };
-    console.log("[app:143]: deleting sub");
+    console.log("[backend:143]: deleting sub");
     const result = await fetch(url, data);
     if (result.status === 204) {
         // 204	Successfully deleted the subscription.
@@ -699,17 +788,6 @@ function startTmi(channels) {
     tmiClient.on("message", (channel, userstate, message, self) =>
         chatCommandHandler(channel, userstate, message, self)
     );
-    //! remove
-    // tmiClient.on("raided", async (channel, username, viewers) => {
-    //     // channel: String - Channel name being raided
-    //     // username: String - Username raiding the channel
-    //     // viewers: Integer - Viewers count
-    //     console.log(`[backend:536]: ${channel} was raided by: ${username} with ${viewers} viewers`);
-    //     channel = channel.replace("#", "");
-    //     viewers = parseInt(viewers);
-    //     await startRaid(channel, username, viewers);
-    // });
-    //! /remove
 }
 
 async function chatCommandHandler(channel, userstate, message, self) {
@@ -757,9 +835,6 @@ function restartTmi(channelList) {
 //! ------------------------------------------------------- //
 async function startRaid(channel, username, viewers) {
     // starts a raid game
-    const channel = notification.event.to_broadcaster_user_name,
-        username = notification.event.from_broadcaster_user_name,
-        viewers = notification.event.viewers;
     console.log(`[backend:549]: Starting raid on channel: ${channel}, started by: ${username}`);
     //# HERE
     const streamerData = await dataBase.findOne({
@@ -809,6 +884,7 @@ async function constructGamePackage(raiderUserName, raiderAmount, streamerData, 
         //! DEV && streamData.type == "live") {
         const raiderUserData = await getUser(`login=${raiderUserName}`),
             raiderData = {
+                channel_id: raiderUserData.id,
                 display_name: raiderUserData.display_name,
                 profile_image_url: raiderUserData.profile_image_url,
                 viewers: raiderAmount,
@@ -817,40 +893,55 @@ async function constructGamePackage(raiderUserName, raiderAmount, streamerData, 
             gameTimeObj = await constructGameTimeObject(streamerData),
             gameResult = [];
         return {
+            gameState: "running",
             streamerData,
             raiderData,
             gameTimeObj,
             gameResult,
         };
-        return gamePackage;
     } else {
         console.log("[backend:919]: ERROR: streamData", streamData);
         return null;
     }
 }
+
 //! -------------------- RESULT -------------------- //
-function setGameExpiredResult(channelId) {
+async function setGameExpiredResult(channelId) {
     const channelRaidersData = channelRaiders[channelId].data,
         gamesArray = channelRaidersData.games;
     // handles calculating the end game result when gameDuration is expired
+    if (gameExpired(gamesArray)) {
+        channelRaiders[channelId].data.games.forEach((game) => (game.gameState = "result"));
+    }
     if (gameExpired(gamesArray) && channelRaiders[channelId].hasRunningGame) {
-        const raiders = gamesArray.map((game) => game.raiderData.display_name);
+        channelRaiders[channelId].hasRunningGame = false;
+        const raiders = gamesArray.map((game) => game.raiderData.display_name),
+            raidersId = gamesArray.map((game) => game.raiderData.channel_id);
         let winner,
             defeated,
             stringToSend,
             draw = false;
         if (channelRaidersData.supportState > 5) {
+            console.log("[backend:878]: GAME RESULT: streamer won!");
             //? streamer win
             defeated = raiders.length > 1 ? raiders.join(", ") : raiders[0];
-            winner = gamesArray[0].streamerData.channelName;
+            winner = gamesArray[0].streamerData.displayName;
+            await setStreamerWinBattleHistory(channelId, raiders);
         } else if (channelRaidersData.supportState < -5) {
+            console.log("[backend:884]: GAME RESULT: raider(s) won!");
             //? raiders win
             winner = raiders.length > 1 ? raiders.join(", ") : raiders[0];
-            defeated = gamesArray[0].streamerData.channelName;
+            defeated = gamesArray[0].streamerData.displayName;
+            console.log("[backend:885]: raidersId", raidersId);
+            await setRaiderWinOrDraw(raidersId, raiders, "win");
         } else {
+            console.log("[backend:891]: GAME RESULT: draw!");
             //? Draw
             winner = raiders.length > 1 ? raiders.join(", ") : raiders[0];
-            defeated = gamesArray[0].streamerData.channelName;
+            defeated = gamesArray[0].streamerData.displayName;
+            raidersId.push(channelId);
+            console.log("[backend:9005]: raidersId", raidersId);
+            await setRaiderWinOrDraw(raidersId, raiders, "draw");
             draw = true;
         }
         stringToSend = `${winner} Gained more support than ${defeated}`;
@@ -995,6 +1086,29 @@ async function sendRaidBroadcast(channelId) {
     const res = await fetch(url, { method: "POST", headers, body });
     console.log("[backend:503]: ", `Broadcasting to channelId: ${channelId}`, `Response: ${res.status}`);
 }
+//! ---- SEND GLOBAL ---- //
+async function sendGlobalBroadcast(dataToSend) {
+    // Set the HTTP headers required by the Twitch API.
+    const headers = {
+        "Client-ID": clientId,
+        "Content-Type": "application/json",
+        Authorization: bearerPrefix + makeGlobalToken(),
+    };
+    // Create the POST body for the Twitch API request.
+    const body = JSON.stringify({
+        content_type: "application/json",
+        is_global_broadcast: true,
+        message: JSON.stringify({
+            dataToSend,
+            test: "ok",
+        }),
+        target: ["global"],
+    });
+    // Send the broadcast request to the Twitch API.
+    const url = "https://api.twitch.tv/helix/extensions/pubsub";
+    const res = await fetch(url, { method: "POST", headers, body });
+    console.log("[backend:503]: ", `Broadcasting to ALL channels, Response: ${res.status}`);
+}
 //! ---- FINAL ---- //
 async function sendFinalBroadcastTimeout(channelId) {
     //TODO re-implement this
@@ -1019,6 +1133,7 @@ function cleanUpChannelRaiderAndDoBroadcast(channelId) {
             channelRaiders[channelId].finalBroadcastTimeout = null;
             channelRaiders[channelId].data.games = [];
             channelRaiders[channelId].data.games.push("GAME OVER");
+            channelRaiders[channelId].data.gameState = "GAME OVER";
             attemptRaidBroadcast(channelId);
             setTimeout(() => {
                 channelRaiders[channelId] = "null";
@@ -1074,31 +1189,17 @@ async function sendChatMessageToChannel(message, channelId) {
 //! --------------------------------------------------------- //
 //*                   -- AUTHORIZATION --                    //
 //! ------------------------------------------------------- //
-// function isUserConfirmed(authorization) {
-//     const payload = verifyAndDecode(authorization);
-//     const { channel_id: channelId, opaque_user_id: opaqueUserId } = payload;
-//     // Bot abuse prevention:  don't allow a user to spam the button.
-//     if (userIsInCooldown(opaqueUserId)) {
-//         throw Boom.tooManyRequests(STRINGS.cooldown);
-//     }
-//     if (confirmOpaqueUser(channelId, opaqueUserId)) {
-//         return { result: true, data: payload };
-//     }
-//     return { result: false };
-// }
+
 function isUserConfirmed(req, res, next) {
     const payload = verifyAndDecode(req.headers.authorization);
     const { channel_id: channelId, opaque_user_id: opaqueUserId } = payload;
+    res.locals.channelId = channelId;
+    res.locals.opaqueUserId = opaqueUserId;
     // Bot abuse prevention:  don't allow a user to spam the button.
     if (userIsInCooldown(opaqueUserId)) {
         throw Boom.tooManyRequests(STRINGS.cooldown);
     }
-    if (confirmOpaqueUser(channelId, opaqueUserId)) {
-        res.locals["myData"] = payload;
-        next();
-        // return { result: true, data: payload };
-    }
-    throw Boom.unauthorized(STRINGS.invalidAuthHeader);
+    next();
 }
 function makeServerToken(channelId) {
     // Create and return a JWT for use by this service.
@@ -1114,9 +1215,21 @@ function makeServerToken(channelId) {
     };
     return jsonwebtoken.sign(payload, secret, { algorithm: "HS256" });
 }
-function confirmOpaqueUser(channelId, opaqueId) {
-    return parseInt(channelId) === parseInt(opaqueId.replace("U", ""));
+function makeGlobalToken() {
+    // Create and return a JWT for use by this service.
+    // makes a JWT token
+    const payload = {
+        exp: Math.floor(Date.now() / 1000) + serverTokenDurationSec,
+        user_id: ownerId, // extension owner ID for the call to Twitch PubSub
+        role: "external",
+        channel_id: "all",
+        pubsub_perms: {
+            send: ["global"],
+        },
+    };
+    return jsonwebtoken.sign(payload, secret, { algorithm: "HS256" });
 }
+
 function verifyAndDecode(header) {
     // Verify the header and the enclosed JWT.
     if (header.startsWith(bearerPrefix)) {
@@ -1145,4 +1258,10 @@ function userIsInCooldown(opaqueUserId, skipCooldown = false) {
     return false;
 }
 
-//! --------------------  -------------------- //
+//! ------ confirm user ------ //
+function confirmOpaqueUser(req, res, next) {
+    if (parseInt(res.locals.channelId) === parseInt(res.locals.opaqueUserId.replace("U", ""))) {
+        return next();
+    }
+    throw Boom.unauthorized(STRINGS.invalidAuthHeader); //TODO make own string
+}

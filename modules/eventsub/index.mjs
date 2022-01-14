@@ -4,6 +4,8 @@
 
 import fetch from "node-fetch";
 import crypto from "crypto";
+import dotenv from "dotenv";
+dotenv.config();
 
 // Notification request headers
 const TWITCH_MESSAGE_ID = "Twitch-Eventsub-Message-Id".toLowerCase();
@@ -18,35 +20,37 @@ const MESSAGE_TYPE_REVOCATION = "revocation";
 
 // Prepend this string to the HMAC that's created from the message
 const HMAC_PREFIX = "sha256=";
-const EVENTSUB_ENDPOINT = "https://api.twitch.tv/helix/eventsub/subscriptions";
+const EVENTSUB_ENDPOINT = "https://api.twitch.tv/helix/eventsub/subscriptions",
+    EVENTSUB_ENDPOINT_PATH = process.env.EVENTSUB_ENDPOINT_PATH;
 
 const CLIENT_ID = process.env.APP_CLIENT_ID,
     CLIENT_SECRET = process.env.APP_CLIENT_SECRET,
     APP_ACCESS_TOKEN = process.env.APP_ACCESS_TOKEN,
     EVENTSUB_SUBSCRIPTION_SECRET = process.env.EVENTSUB_SUBSCRIPTION_SECRET;
 
-export function webhookCallback({ req, res, callbackObj }) {
-    const { startRaid, addNewStreamer, deleteEventSubEndpoint } = callbackObj;
-
+export async function webhookCallback({ req, res, callbackObj }) {
+    const { startRaid, addNewStreamer, deleteEventSubEndpoint, streamStatusHandler } = callbackObj;
     let message = getHmacMessage(req);
     let hmac = HMAC_PREFIX + getHmac(EVENTSUB_SUBSCRIPTION_SECRET, message); // Signature to compare
     if (true === verifyMessage(hmac, req.headers[TWITCH_MESSAGE_SIGNATURE])) {
-        console.log("[app:74]: signatures match");
+        console.log("[index:74]: signatures match");
         // Get JSON object from body, so you can process the message.
         let notification = JSON.parse(req.body);
-        const channel = notification.event.to_broadcaster_user_name,
-            channelId = notification.event.to_broadcaster_user_id,
-            username = notification.event.from_broadcaster_user_name,
-            viewers = notification.event.viewers,
+        const channelId = notification.subscription.condition.broadcaster_user_id,
             eventType = notification.subscription.type;
         if (MESSAGE_TYPE_NOTIFICATION === req.headers[MESSAGE_TYPE]) {
             // TODO: Do something with the event's data.
-            console.log(`[app:79]: Event type: ${eventType}`);
-            console.log(`[app:80]: ${JSON.stringify(notification.event, null, 4)}`);
+            console.log(`[index:79]: Event type: ${eventType}`);
+            console.log(`[index:80]: ${JSON.stringify(notification.event, null, 4)}`);
             if (eventType === "channel.raid") {
+                const channel = notification.event.to_broadcaster_user_name,
+                    username = notification.event.from_broadcaster_user_name,
+                    viewers = notification.event.viewers;
                 await startRaid(channel, username, viewers);
             } else if (eventType === "user.authorization.revoke") {
                 await deleteEventSubEndpoint(channelId);
+            } else if (eventType === "channel.offline" || eventType === "channel.online") {
+                await streamStatusHandler(notification.event);
             }
             res.sendStatus(204);
         } else if (MESSAGE_TYPE_VERIFICATION === req.headers[MESSAGE_TYPE]) {
@@ -90,7 +94,7 @@ export async function getEventSubEndpoint() {
     };
     const result = await fetch(EVENTSUB_ENDPOINT, { headers });
     const result_json = await result.json();
-    console.log("[app:159]: result_json", result_json);
+    console.log("[index:159]: result_json", result_json);
     return result_json;
     const example = [
         {
@@ -112,23 +116,28 @@ export async function getEventSubEndpoint() {
     ];
 }
 
-export async function EventSubRegister(to_broadcaster_user_id) {
-    const subscriptionData = {
-        version: "1",
-        type: "channel.raid",
-        condition: {
-            to_broadcaster_user_id: to_broadcaster_user_id,
-        },
-        transport: {
-            method: "webhook",
-            callback: "https://raid-battle-twitch-ext.herokuapp.com/" + EVENTSUB_ENDPOINT_PATH,
-            // callback: "https://itsoik-eventsub.herokuapp.com/webhook/callback", //TODO change this
-            secret: EVENTSUB_SUBSCRIPTION_SECRET,
-        },
-    };
-    const _result = await postEventSubEndpoint(subscriptionData);
-    console.log("[app:128]: _result", _result);
-    // res.status(200).send(return200()); //TODO change this
+export async function EventSubRegister(broadcaster_user_id) {
+    //TODO "channel.online" + "channel.offline" for "LIVE NOW viewCOnfig.js"
+    const events = ["channel.raid", "channel.online", "channel.offline"];
+    events.forEach(async (event) => {
+        const subscriptionData = {
+            version: "1",
+            type: event,
+            condition: {},
+            transport: {
+                method: "webhook",
+                callback: "https://raid-battle-twitch-ext.herokuapp.com/" + EVENTSUB_ENDPOINT_PATH,
+                secret: EVENTSUB_SUBSCRIPTION_SECRET,
+            },
+        };
+        if (event === "channel.raid") {
+            subscriptionData.condition["to_broadcaster_user_id"] = broadcaster_user_id;
+        } else {
+            subscriptionData.condition["broadcaster_user_id"] = broadcaster_user_id;
+        }
+        const _result = await postEventSubEndpoint(subscriptionData);
+        console.log("[index:125]: _result", _result);
+    });
     return _result;
 }
 
@@ -145,7 +154,7 @@ async function postEventSubEndpoint(body) {
     };
     const result = await fetch(EVENTSUB_ENDPOINT, data);
     const result_json = await result.json();
-    console.log("[app:144]: result_json", result_json);
+    console.log("[index:144]: result_json", result_json);
     return result_json;
 }
 
@@ -168,7 +177,7 @@ async function registerRevokeAccessEventSub() {
         },
     };
     const _result = await postEventSubEndpoint(subscriptionData);
-    console.log("[app:128]: _result", _result);
+    console.log("[index:128]: _result", _result);
     // res.status(200).send(return200()); //TODO change this
     return _result;
 }

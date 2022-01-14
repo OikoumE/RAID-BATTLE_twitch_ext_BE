@@ -50,7 +50,14 @@ export class DataBase {
         const result = await this.client
             .db(this.dataBaseName)
             .collection(collection)
-            .updateOne(filterDocument, updateDocument);
+            .updateOne(filterDocument, updateDocument, { upsert: false });
+        return result;
+    }
+    async updateMany(filterDocument, updateDocument, collection = this.collection) {
+        const result = await this.client
+            .db(this.dataBaseName)
+            .collection(collection)
+            .updateMany(filterDocument, updateDocument, { upsert: false });
         return result;
     }
     async checkIfUserInDb(channelId, collection = this.collection) {
