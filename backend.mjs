@@ -45,6 +45,7 @@ dotenv.config();
 
 import { DataBase } from "./modules/database/database.mjs";
 import { webhookCallback, getEventSubEndpoint, EventSubRegister } from "./modules/eventsub/index.mjs";
+import { RaidRoulette } from "./modules/raidRoulette/raidRoulette.mjs";
 
 //! ------------------------------------------------
 
@@ -264,7 +265,7 @@ app.post(EVENTSUB_ENDPOINT_PATH, async (req, res) => {
     });
 });
 
-async function streamStatusHandler(event) {
+async function streamStatusHandler(eventNotification) {
     const EXAMPLE_LIVE = {
             id: "40429073067",
             broadcaster_user_id: "93645775",
@@ -283,7 +284,7 @@ async function streamStatusHandler(event) {
     const result = await getExtLiveStreams();
     await sendGlobalBroadcast(result);
 }
-
+// streamStatusHandler();
 async function getExtLiveStreams() {
     const url = "https://api.twitch.tv/helix/extensions/live?extension_id=";
     const result = await paginated_fetch(url);
