@@ -45,7 +45,6 @@ dotenv.config();
 
 import { DataBase } from "./modules/database/database.mjs";
 import { webhookCallback, getEventSubEndpoint, EventSubRegister } from "./modules/eventsub/index.mjs";
-import { RaidRoulette } from "./modules/raidRoulette/raidRoulette.mjs";
 
 //! ------------------------------------------------
 
@@ -121,7 +120,11 @@ const strings = {
     RAIDBATTLE_CHAT_INFO_TEXT:
         "RAID BATTLE is a game that is triggered when a channel that has the extension installed is being raided. The raiders & viewers can choose to support either the {RAIDER} or the {STREAMER} by clicking the respective buttons on screen",
 };
-
+const BATTLE_HISTORY = {
+    win: "Won",
+    lost: "Lost",
+    draw: "Draw",
+};
 const STRINGS = {
     secretEnv: usingValue("secret"),
     clientIdEnv: usingValue("client-id"),
@@ -238,11 +241,14 @@ app.post("/TESTRAID/", confirmUser, startTestRaidHandler);
 // Handle stop broadcasting a testraid
 app.post("/TESTRAID/stop", confirmUser, stopTestRaidHandler);
 
+// Handle getting Latest News
+app.get("/getLatestNews/", confirmUser, getLatestNewsHandler);
+
 // Handle viewer requesting raidHistory
 app.get("/requestRaidHistory/", isUserConfirmed, requestRaidHistoryHandler);
 
 // Handle a viewer request to support the raider.
-app.post("/heal/", isUserConfirmed, raiderSupportHandler); // TODO change how we send and receive this
+app.post("/heal/", isUserConfirmed, raiderSupportHandler);
 
 // Handle a viewer request to support the streamer.
 app.post("/damage/", isUserConfirmed, streamerSupportHandler);
@@ -264,43 +270,27 @@ app.post(EVENTSUB_ENDPOINT_PATH, async (req, res) => {
         },
     });
 });
-const liveStreams = {};
 async function streamStatusHandler(eventNotification) {
     // Handle response.
-    // const result = await getExtLiveStreams(); // ! buggy twitch api
-    // console.log("[backend:270]: result", result); // ! buggy twitch api
-
-    if (eventNotification.type && eventNotification.type === "live") {
-        liveStreams;
-        // ADD TO LIVE
-        const EXAMPLE_LIVE = {
-            id: "40429073067",
-            broadcaster_user_id: "93645775",
-            broadcaster_user_login: "itsoik",
-            broadcaster_user_name: "itsOiK",
-            type: "live",
-            started_at: "2022-01-14T06:17:44Z",
-        };
-    } else {
-        // REMOVE FROM LIVE
-        const EXAMPLE_OFFLINE = {
-            broadcaster_user_id: "93645775",
-            broadcaster_user_login: "itsoik",
-            broadcaster_user_name: "itsOiK",
-        };
+    let offlineStreamId = null;
+    if (!Object.keys(eventNotification).includes("type")) {
+        offlineStreamId = eventNotification.broadcaster_user_id;
     }
-
-    const liveStreamsDatabaseData = dataBase.find({ channelId: { $in: [] } });
-    //TODO add to liveStreams
-
-    await sendGlobalBroadcast(result);
+    const result = await getExtLiveStreams();
+    const liveStreamsArray = (liveStreamsArray = result
+        .filter((streamObj) => {
+            if (offlineStreamId != streamObj.broadcaster_id) return streamObj;
+        })
+        .map((streamObj) => {
+            return streamObj.broadcaster_id;
+        }));
+    const liveStreamsDatabaseData = await dataBase.find({ channelId: { $in: liveStreamsArray } });
+    await sendGlobalBroadcast(liveStreamsDatabaseData);
 }
 
-// streamStatusHandler();
 async function getExtLiveStreams() {
     const url = "https://api.twitch.tv/helix/extensions/live?extension_id=";
     const result = await paginated_fetch(url);
-    // console.log("[backend:282]: result", result);
     return result;
 }
 async function paginated_fetch(url, page = null, previousResponse = []) {
@@ -427,6 +417,36 @@ function parseUserConfigUpdateDocument(document) {
     return parsedDoc;
 }
 //! ---- CLICKHANDLERS ---- //
+async function getLatestNewsHandler(req, res) {
+    const { channelId, opaqueUserId } = res.locals;
+    const result = await dataBase.find({}, "LatestNews");
+    const example_news = [
+        {
+            date: "17.01.2022",
+            content: "Hello world!",
+        },
+        {
+            date: "12.01.2022",
+            content: "Hello world!",
+        },
+        {
+            date: "13.01.2022",
+            content: "Hello world!",
+        },
+        {
+            date: "14.01.2022",
+            content: "Hello world!",
+        },
+        {
+            date: "15.01.2022",
+            content: "Hello world!",
+        },
+    ];
+    res.json(example_news); //! DEV
+    // res.json(result);
+}
+
+//! ---- CLICKHANDLERS ---- //
 function raiderSupportHandler(req, res) {
     const { channelId, opaqueUserId } = res.locals;
     // const raider = req.params.raider;
@@ -516,7 +536,6 @@ async function requestRaidHistoryHandler(req, res) {
         }
     });
     console.log("[backend:507]: channelIds", channelIds);
-
     const result = await dataBase.find();
     const filteredData = result.filter((data) => channelIds.includes(data.channelId));
     const thing = {
@@ -527,40 +546,25 @@ async function requestRaidHistoryHandler(req, res) {
         },
         liveStreamsData: filteredData,
     };
-
     res.json({ result: "Loaded raid history", data: thing });
-    //..
 }
 
 //! --------------------------------------------------------- //
 //*                     -- LEADERBOARD --                    //
 //! ------------------------------------------------------- //
 // TODO update all docs with score + history before prod
-// const user = {
-//     score: 1,
-//     battleHistory: [
-//         {
-//             vs: "raider",
-//             result: "loose",
-//         },
-//         {
-//             vs: "raider2",
-//             result: "win",
-//         },
-//     ],
-// };
 
-async function setStreamerWinBattleHistory(channelId, raiders) {
+async function setStreamerBattleHistory(channelId, raiders, battleResult) {
     const result = await dataBase.updateOne(
         { channelId },
         {
-            $inc: { score: 1 },
+            $inc: { score: battleResult === BATTLE_HISTORY.win ? 1 : 0 },
             $push: {
                 battleHistory: {
                     $each: [
                         {
                             vs: raiders,
-                            result: "win",
+                            result: battleResult,
                         },
                     ],
                     $slice: -3,
@@ -598,6 +602,7 @@ async function setRaiderWinOrDraw(idArray, raiders, battleResult) {
 
 //! -------------------- DATABASE HANDLERS -------------------- //
 async function addNewStreamer(channelId) {
+    //TODO something.....
     // checks if user already in database and adds new streamer to database if user does not already exsist
     const result = "7492a8fd-ae83-432c-8054-198d7e323f45"; //! DEV ONLY
     // const result = await checkEventSubUser(channelId); //! REACTIVATE BEFORE PROD!
@@ -626,6 +631,9 @@ async function continueAddingNewStreamer(channelId, registeredEventSub) {
             data: result,
         };
     } else {
+        //TODO make this work with 3x calls from eventsub enabled
+        //TODO get user from DB
+        //TODO update user with new eventsubID's
         returnData = {
             result: "Already in the list of channels to monitor for raid",
             data: null,
@@ -641,7 +649,7 @@ async function addStreamerToDb(userData) {
         channelId: userData.id,
         profilePicUrl: userData.profile_image_url,
         created: Date.now(),
-        eventSubId: userData.eventSub,
+        eventSubId: [userData.eventSub],
         score: 0,
         battleHistory: [],
     });
@@ -659,6 +667,13 @@ function parseTmiChannelListFromDb(result) {
 async function checkEventSubUser(userId) {
     //TODO adapt for raid, live, offline
     const eventSubs = await getEventSubEndpoint();
+
+    eventSubs.data.filter((eSub) => {
+        eSub.status === "enabled" &&
+            (parseInt(eSub.condition.to_broadcaster_user_id) === parseInt(userId) ||
+                parseInt(eSub.condition.broadcaster_user_id) === parseInt(userId));
+    });
+
     for (const i = 0; i < eventSubs.data.length; i++) {
         if (parseInt(eventSubs[i].condition.to_broadcaster_user_id) === parseInt(userId)) {
             if (eventSubs[i].status === "enabled") return eventSubs[i];
@@ -798,16 +813,16 @@ function startTmi(channels) {
     tmiClient.connect().then(() => {
         console.log(`[backend:529]: Listening for messages on ${channels.length} channels`);
     });
-    tmiClient.on("message", (channel, userstate, message, self) =>
-        chatCommandHandler(channel, userstate, message, self)
+    tmiClient.on(
+        "message",
+        async (channel, userstate, message, self) => await chatCommandHandler(channel, userstate, message, self)
     );
 }
 
 async function chatCommandHandler(channel, userstate, message, self) {
     // checks if chatCommands are enabled and sends a message if it is
-    const streamerData = await dataBase.findOne({
-        channelName: channel.replace("#", "").toLowerCase(),
-    });
+    const channelName = channel.replace("#", "").toLowerCase();
+    const streamerData = await dataBase.findOne({ channelName });
     let chatCommandsEnabled = DEFAULTS.enableChatCommands.default;
     if (streamerData?.userConfig) {
         chatCommandsEnabled = streamerData.userConfig.enableChatCommands;
@@ -816,17 +831,103 @@ async function chatCommandHandler(channel, userstate, message, self) {
     if (self || !chatCommandsEnabled) return;
     // if message is of type chat and is a command
     if (userstate["message-type"] === "chat" && streamerData) {
-        if (message.startsWith("!raidbattle")) {
+        if (message.toLowerCase().startsWith("!raidbattle")) {
             if (message.toLowerCase().includes("madeby")) {
                 attemptSendChatMessageToChannel(streamerData, "Was made by @itsOiK");
                 return;
             }
-            // console.log(
-            //     `[backend:838]: Command: "${message}"  recognized on channel: ${channel}`
-            // );
-            // send message to chat
             attemptSendChatMessageToChannel(streamerData, strings.RAIDBATTLE_CHAT_INFO_TEXT);
+        } else if (
+            message.toLowerCase().startsWith("!raid") ||
+            message.toLowerCase().startsWith("!asd") //! DEV
+        ) {
+            if (
+                Object.keys(userstate.badges).includes("broadcaster") ||
+                Object.keys(userstate.badges).includes("moderator")
+            ) {
+                const rouletteString = await raidRoulette(channelName);
+                console.log("[backend:859]: rouletteString", rouletteString);
+                attemptSendChatMessageToChannel(streamerData, rouletteString);
+                return;
+            } else {
+                const notAllowedString = `Sorry, only ${channelName} or moderators can perform this command`;
+                console.log("[backend:869]: notAllowedString", notAllowedString);
+                attemptSendChatMessageToChannel(streamerData, notAllowedString);
+                return;
+            }
         }
+    }
+    const userstate_BROADCASTER_EXAMPLE = {
+        "badge-info": { subscriber: "33" },
+        badges: { broadcaster: "1", subscriber: "3012" },
+        "client-nonce": "xxxx",
+        color: "#FF4500",
+        "display-name": "itsOiK",
+        emotes: null,
+        "first-msg": false,
+        flags: null,
+        id: "xxxxx",
+        mod: false,
+        "room-id": "93645775",
+        subscriber: true,
+        "tmi-sent-ts": "1642451519773",
+        turbo: false,
+        "user-id": "93645775",
+        "user-type": null,
+        "emotes-raw": null,
+        "badge-info-raw": "subscriber/33",
+        "badges-raw": "broadcaster/1,subscriber/3012",
+        username: "itsoik",
+        "message-type": "chat",
+    };
+    const userstate_MODERATOR_EXAMPLE = {
+        "badge-info": null,
+        badges: { moderator: "1" },
+        "client-nonce": "xxxx",
+        color: "#9ACD32",
+        "display-name": "oik_does_python",
+        emotes: null,
+        "first-msg": false,
+        flags: null,
+        id: "xxxx",
+        mod: true,
+        "room-id": "93645775",
+        subscriber: false,
+        "tmi-sent-ts": "1642451276830",
+        turbo: false,
+        "user-id": "661035495",
+        "user-type": "mod",
+        "emotes-raw": null,
+        "badge-info-raw": null,
+        "badges-raw": "moderator/1",
+        username: "oik_does_python",
+        "message-type": "chat",
+    };
+}
+
+async function raidRoulette(currentChannel) {
+    const result = await getExtLiveStreams();
+    const liveStreams = result
+        .filter((streamData) => {
+            return streamData.broadcaster_name.toLowerCase() != currentChannel.toLowerCase();
+        })
+        .map((streamData) => {
+            return streamData.broadcaster_name;
+        });
+    if (liveStreams.length > 1) {
+        const randomLive = liveStreams[Math.floor(Math.random() * liveStreams.length)];
+        return `
+            There's ${liveStreams.length} other Raid Battler's currently live, we randomly chose: 
+            ${randomLive} as a suggestion for raiding. 
+            Copy-Paste this in in chat to raid them: /raid ${randomLive}
+        `;
+    } else if (liveStreams.length === 1) {
+        return `
+            There's one other Raid Battler currently live. 
+            Copy-Paste this in in chat to raid them: /raid ${liveStreams[0]}
+        `;
+    } else if (liveStreams.length === 0) {
+        return "There are no other Raid Battler's currently live";
     }
 }
 
@@ -939,28 +1040,29 @@ async function setGameExpiredResult(channelId) {
             //? streamer win
             defeated = raiders.length > 1 ? raiders.join(", ") : raiders[0];
             winner = gamesArray[0].streamerData.displayName;
-            await setStreamerWinBattleHistory(channelId, raiders);
+            await setStreamerBattleHistory(channelId, raiders, BATTLE_HISTORY.win);
+            await setRaiderWinOrDraw(raidersId, raiders, BATTLE_HISTORY.lost);
         } else if (channelRaidersData.supportState < -5) {
             console.log("[backend:884]: GAME RESULT: raider(s) won!");
             //? raiders win
             winner = raiders.length > 1 ? raiders.join(", ") : raiders[0];
             defeated = gamesArray[0].streamerData.displayName;
-            console.log("[backend:885]: raidersId", raidersId);
-            await setRaiderWinOrDraw(raidersId, raiders, "win");
+            await setStreamerBattleHistory(channelId, raiders, BATTLE_HISTORY.lost);
+            await setRaiderWinOrDraw(raidersId, raiders, BATTLE_HISTORY.win);
         } else {
             console.log("[backend:891]: GAME RESULT: draw!");
             //? Draw
             winner = raiders.length > 1 ? raiders.join(", ") : raiders[0];
             defeated = gamesArray[0].streamerData.displayName;
             raidersId.push(channelId);
-            console.log("[backend:9005]: raidersId", raidersId);
-            await setRaiderWinOrDraw(raidersId, raiders, "draw");
+            await setRaiderWinOrDraw(raidersId, raiders, BATTLE_HISTORY.draw);
             draw = true;
         }
         stringToSend = `${winner} Gained more support than ${defeated}`;
         if (draw) stringToSend = `It was a draw between ${winner} and ${defeated}`;
         if (!checkForExistingGameResult(gamesArray[0].gameResult, "string", stringToSend)) {
             setResult(channelId, raiders[0], stringToSend, "gameResultDuration");
+            gamesArray[0].streamerData = await dataBase.findOne({ channelId });
             attemptSendChatMessageToChannel(gamesArray[0].streamerData, stringToSend);
         }
         sendFinalBroadcastTimeout(channelId);
@@ -1112,7 +1214,7 @@ async function sendGlobalBroadcast(dataToSend) {
         content_type: "application/json",
         is_global_broadcast: true,
         message: JSON.stringify({
-            dataToSend,
+            data: dataToSend,
             test: "ok",
         }),
         target: ["global"],
@@ -1124,7 +1226,6 @@ async function sendGlobalBroadcast(dataToSend) {
 }
 //! ---- FINAL ---- //
 async function sendFinalBroadcastTimeout(channelId) {
-    //TODO re-implement this
     if (!channelRaiders[channelId].finalBroadcastTimeout) {
         // sends a final broadcast after a timeOut(USER_CONFIG.gameResultDuration)
         const timeout = await getUserConfigOrDefaultValue(channelId, "gameResultDuration");
@@ -1191,7 +1292,6 @@ async function sendChatMessageToChannel(message, channelId) {
             "Content-Type": "application/json",
         },
         body = JSON.stringify({
-            // text: message,
             text: message,
             extension_id: clientId,
             extension_version: CURRENT_VERSION,
@@ -1252,11 +1352,9 @@ function verifyAndDecode(header) {
                 algorithms: ["HS256"],
             });
         } catch (ex) {
-            //TODO change this //?
             throw Boom.unauthorized(STRINGS.invalidJwt);
         }
     }
-    //TODO change this //?
     throw Boom.unauthorized(STRINGS.invalidAuthHeader);
 }
 function userIsInCooldown(opaqueUserId, skipCooldown = false) {

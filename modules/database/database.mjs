@@ -15,7 +15,7 @@ export class DataBase {
             useUnifiedTopology: true,
         });
         this.dataBaseName = "RaidBattle";
-        this.collection = "TEST_COLLECTION";
+        this.collection = "TEST_COLLECTION"; //! CHANGE BEFORE PROD!
     }
     async connect() {
         try {
@@ -61,7 +61,7 @@ export class DataBase {
         return result;
     }
     async checkIfUserInDb(channelId, collection = this.collection) {
-        const result = await this.find(collection);
+        const result = await this.find({ channelId }, collection);
         for (const document of result) {
             if (document.channelId == channelId) {
                 return true;
