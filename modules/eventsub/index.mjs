@@ -39,7 +39,6 @@ export async function webhookCallback({ req, res, callbackObj }) {
         const channelId = notification.subscription.condition.broadcaster_user_id,
             eventType = notification.subscription.type;
         if (MESSAGE_TYPE_NOTIFICATION === req.headers[MESSAGE_TYPE]) {
-            // TODO: Do something with the event's data.
             console.log(`[index:79]: Event type: ${eventType}`);
             console.log(`[index:80]: ${JSON.stringify(notification.event, null, 4)}`);
             if (eventType === "channel.raid") {
@@ -117,7 +116,6 @@ export async function getEventSubEndpoint() {
 }
 
 export async function EventSubRegister(broadcaster_user_id) {
-    //TODO "channel.online" + "channel.offline" for "LIVE NOW viewCOnfig.js"
     const events = ["channel.raid", "channel.online", "channel.offline"];
     events.forEach(async (event) => {
         const subscriptionData = {
@@ -163,6 +161,8 @@ async function postEventSubEndpoint(body) {
 //! ------------------------------------------------------- //
 
 async function registerRevokeAccessEventSub() {
+    //! this is for noticing if a user revokes ext auth scopes
+    //! dont have scopes yet........
     const subscriptionData = {
         version: "1",
         type: "user.authorization.revoke",
@@ -172,12 +172,10 @@ async function registerRevokeAccessEventSub() {
         transport: {
             method: "webhook",
             callback: "https://raid-battle-twitch-ext.herokuapp.com/" + EVENTSUB_ENDPOINT_PATH,
-            // callback: "https://itsoik-eventsub.herokuapp.com/webhook/callback", //TODO change this
             secret: EVENTSUB_SUBSCRIPTION_SECRET,
         },
     };
     const _result = await postEventSubEndpoint(subscriptionData);
     console.log("[index:128]: _result", _result);
-    // res.status(200).send(return200()); //TODO change this
     return _result;
 }

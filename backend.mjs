@@ -108,7 +108,6 @@ const DEFAULTS = {
     gameInfoDuration: { default: 10, max: 20, min: 0 },
 };
 const strings = {
-    //TODO rework strings
     intro1: "Incoming Raid from: %s",
     intro2: "Get ready to Battle!",
     help: "Use !raidbattle for help on how to battle",
@@ -277,14 +276,17 @@ async function streamStatusHandler(eventNotification) {
         offlineStreamId = eventNotification.broadcaster_user_id;
     }
     const result = await getExtLiveStreams();
-    const liveStreamsArray = (liveStreamsArray = result
+    const liveStreamsArray = result
         .filter((streamObj) => {
             if (offlineStreamId != streamObj.broadcaster_id) return streamObj;
         })
         .map((streamObj) => {
             return streamObj.broadcaster_id;
-        }));
+        });
     const liveStreamsDatabaseData = await dataBase.find({ channelId: { $in: liveStreamsArray } });
+    for (var i = 0; i < liveStreamsDatabaseData.length; i++) {
+        liveStreamsDatabaseData[i].battleHistory = liveStreamsDatabaseData[i].battleHistory.slice(-3);
+    }
     await sendGlobalBroadcast(liveStreamsDatabaseData);
 }
 
@@ -457,8 +459,6 @@ function raiderSupportHandler(req, res) {
         return; //channelRaiders[channelId].games;
     }
     console.log("[backend:493]: returning null");
-    // return "NO ACTIVE GAMES RUNNING; STOP ALL RUNNING GAMES";
-    //TODO figure out response
     res.sendStatus(204);
 }
 function streamerSupportHandler(req, res) {
@@ -469,29 +469,43 @@ function streamerSupportHandler(req, res) {
         return; //channelRaiders[channelId].games;
     }
     console.log("[backend:520]: returning null");
-    // return "NO ACTIVE GAMES RUNNING; STOP ALL RUNNING GAMES";
-    //TODO figure out response
     res.sendStatus(204);
 }
-
 function clickSupportIncrement(channelId, who, clicker) {
     // increments click counter and adds clicker to list if not already in list
     const clickTracker = channelRaiders[channelId].data.clickTracker,
-        sTracker = clickTracker.streamer,
-        rTracker = clickTracker.raider;
-    if (!clickTracker[who].clickers.includes(clicker)) clickTracker[who].clickers.push(clicker);
-    clickTracker[who].clicks += 1;
+        { streamer: sTracker, raider: rTracker } = clickTracker;
+    const increaseWho = checkSupporter({ clickTracker, who, clicker });
+    console.log("[backend:480]: increaseWho", increaseWho);
+    clickTracker[increaseWho].clicks += 1;
     const streamer = sTracker.clicks > 0 ? sTracker.clicks / sTracker.clickers.length : 0,
         raider = rTracker.clicks > 0 ? rTracker.clicks / rTracker.clickers.length : 0;
     channelRaiders[channelId].data.supportState = streamer - raider;
     return channelRaiders[channelId].data.supportState;
 }
-
+function checkSupporter(supporterObj) {
+    // prevent cross-support
+    const { who, clicker, clickTracker } = supporterObj,
+        { streamer: sTracker, raider: rTracker } = clickTracker;
+    if (who === "streamer") {
+        if (rTracker.clickers.includes(clicker)) return "raider";
+        if (!sTracker.clickers.includes(clicker)) {
+            sTracker.clickers.push(clicker);
+        }
+        return "streamer";
+    } else if (who === "raider") {
+        if (sTracker.clickers.includes(clicker)) return "streamer";
+        if (!rTracker.clickers.includes(clicker)) {
+            rTracker.clickers.push(clicker);
+        }
+        return "raider";
+    }
+}
 //! ---- START TESTRAID ---- //
 async function startTestRaidHandler(req, res) {
     const { channelId, opaqueUserId } = res.locals;
     let testRaidPayload,
-        startedRaid = "Null";
+        startedRaid = {};
     try {
         testRaidPayload = JSON.parse(req.body);
         const regex = /^[a-zA-Z0-9][a-zA-Z0-9_]{3,24}$/gs;
@@ -504,11 +518,14 @@ async function startTestRaidHandler(req, res) {
                 testRaidPayload.testRaider,
                 testRaidPayload.testAmount
             );
-            res.json(startedRaid);
-            return; //JSON.stringify(startedRaid);
+            if (startedRaid) {
+                res.json(startedRaid);
+                return;
+            }
         }
     } catch (err) {
-        console.log("[backend:541]: ERROR: JSON.parse \n", err);
+        console.log("[backend:541]: ERROR: ", err);
+        startedRaid["error"] = err;
     }
     res.json(startedRaid);
     return; //JSON.stringify(startedRaid);
@@ -528,15 +545,18 @@ async function requestRaidHistoryHandler(req, res) {
     const { channelId, opaqueUserId } = res.locals;
     const channelIds = [];
     channelIds.push(channelId);
-
     const live = await getExtLiveStreams();
     live.forEach((stream) => {
         if (!channelIds.some((streamId) => streamId === stream.broadcaster_id)) {
             channelIds.push(stream.broadcaster_id);
         }
     });
-    console.log("[backend:507]: channelIds", channelIds);
     const result = await dataBase.find();
+    //? TODO add to db???
+    // console.log("[backend:553]: CHECK THIS POTENTIALLY ADD TO DB!?");
+    // console.log("[backend:507]: result", result);
+    // console.log("[backend:507]: channelIds", channelIds);
+
     const filteredData = result.filter((data) => channelIds.includes(data.channelId));
     const thing = {
         thisStreamData: {
@@ -549,60 +569,9 @@ async function requestRaidHistoryHandler(req, res) {
     res.json({ result: "Loaded raid history", data: thing });
 }
 
-//! --------------------------------------------------------- //
-//*                     -- LEADERBOARD --                    //
-//! ------------------------------------------------------- //
-// TODO update all docs with score + history before prod
-
-async function setStreamerBattleHistory(channelId, raiders, battleResult) {
-    const result = await dataBase.updateOne(
-        { channelId },
-        {
-            $inc: { score: battleResult === BATTLE_HISTORY.win ? 1 : 0 },
-            $push: {
-                battleHistory: {
-                    $each: [
-                        {
-                            vs: raiders,
-                            result: battleResult,
-                        },
-                    ],
-                    $slice: -3,
-                },
-            },
-        }
-    );
-    return result;
-}
-
-async function setRaiderWinOrDraw(idArray, raiders, battleResult) {
-    const result = await dataBase.updateMany(
-        {
-            channelId: {
-                $in: idArray,
-            },
-        },
-        {
-            $inc: { score: 1 },
-            $push: {
-                battleHistory: {
-                    $each: [
-                        {
-                            vs: raiders,
-                            result: battleResult,
-                        },
-                    ],
-                    $slice: -3,
-                },
-            },
-        }
-    );
-    return result;
-}
-
 //! -------------------- DATABASE HANDLERS -------------------- //
 async function addNewStreamer(channelId) {
-    //TODO something.....
+    //TODO fix for multi.....eventsub...
     // checks if user already in database and adds new streamer to database if user does not already exsist
     const result = "7492a8fd-ae83-432c-8054-198d7e323f45"; //! DEV ONLY
     // const result = await checkEventSubUser(channelId); //! REACTIVATE BEFORE PROD!
@@ -668,18 +637,21 @@ async function checkEventSubUser(userId) {
     //TODO adapt for raid, live, offline
     const eventSubs = await getEventSubEndpoint();
 
-    eventSubs.data.filter((eSub) => {
+    const enabledEventSubs = eventSubs.data.filter((eSub) => {
         eSub.status === "enabled" &&
             (parseInt(eSub.condition.to_broadcaster_user_id) === parseInt(userId) ||
                 parseInt(eSub.condition.broadcaster_user_id) === parseInt(userId));
     });
-
-    for (const i = 0; i < eventSubs.data.length; i++) {
-        if (parseInt(eventSubs[i].condition.to_broadcaster_user_id) === parseInt(userId)) {
-            if (eventSubs[i].status === "enabled") return eventSubs[i];
-        }
+    // for (const i = 0; i < eventSubs.data.length; i++) {
+    //     if (parseInt(eventSubs[i].condition.to_broadcaster_user_id) === parseInt(userId)) {
+    //         if (eventSubs[i].status === "enabled") return eventSubs[i];
+    //     }
+    // }
+    if (enabledEventSubs.length === 0) {
+        return false;
+    } else {
+        return enabledEventSubs;
     }
-    return false;
     const example = {
         data: [
             {
@@ -821,8 +793,8 @@ function startTmi(channels) {
 
 async function chatCommandHandler(channel, userstate, message, self) {
     // checks if chatCommands are enabled and sends a message if it is
-    const channelName = channel.replace("#", "").toLowerCase();
-    const streamerData = await dataBase.findOne({ channelName });
+    const channelName = channel.replace("#", "");
+    const streamerData = await dataBase.findOne({ channelName: channelName.toLowerCase() });
     let chatCommandsEnabled = DEFAULTS.enableChatCommands.default;
     if (streamerData?.userConfig) {
         chatCommandsEnabled = streamerData.userConfig.enableChatCommands;
@@ -842,8 +814,9 @@ async function chatCommandHandler(channel, userstate, message, self) {
             message.toLowerCase().startsWith("!asd") //! DEV
         ) {
             if (
-                Object.keys(userstate.badges).includes("broadcaster") ||
-                Object.keys(userstate.badges).includes("moderator")
+                userstate.badges &&
+                (Object.keys(userstate.badges).includes("broadcaster") ||
+                    Object.keys(userstate.badges).includes("moderator"))
             ) {
                 const rouletteString = await raidRoulette(channelName);
                 console.log("[backend:859]: rouletteString", rouletteString);
@@ -851,12 +824,12 @@ async function chatCommandHandler(channel, userstate, message, self) {
                 return;
             } else {
                 const notAllowedString = `Sorry, only ${channelName} or moderators can perform this command`;
-                console.log("[backend:869]: notAllowedString", notAllowedString);
                 attemptSendChatMessageToChannel(streamerData, notAllowedString);
                 return;
             }
         }
     }
+
     const userstate_BROADCASTER_EXAMPLE = {
         "badge-info": { subscriber: "33" },
         badges: { broadcaster: "1", subscriber: "3012" },
@@ -900,6 +873,29 @@ async function chatCommandHandler(channel, userstate, message, self) {
         "emotes-raw": null,
         "badge-info-raw": null,
         "badges-raw": "moderator/1",
+        username: "oik_does_python",
+        "message-type": "chat",
+    };
+    const userstate_EXAMPLE_NOMOD = {
+        "badge-info": null,
+        badges: null,
+        "client-nonce": "xx",
+        color: "#9ACD32",
+        "display-name": "oik_does_python",
+        emotes: null,
+        "first-msg": false,
+        flags: null,
+        id: "xx",
+        mod: false,
+        "room-id": "93645775",
+        subscriber: false,
+        "tmi-sent-ts": "1642544881730",
+        turbo: false,
+        "user-id": "661035495",
+        "user-type": null,
+        "emotes-raw": null,
+        "badge-info-raw": null,
+        "badges-raw": null,
         username: "oik_does_python",
         "message-type": "chat",
     };
@@ -949,8 +945,6 @@ function restartTmi(channelList) {
 //! ------------------------------------------------------- //
 async function startRaid(channel, username, viewers) {
     // starts a raid game
-    console.log(`[backend:549]: Starting raid on channel: ${channel}, started by: ${username}`);
-    //# HERE
     const streamerData = await dataBase.findOne({
             channelName: channel.toLowerCase(),
         }),
@@ -970,7 +964,12 @@ async function startRaid(channel, username, viewers) {
             },
         };
     }
-    if (!channelRaiders[channelId].data.games.some((game) => game.raiderData.raider === username)) {
+    if (
+        !channelRaiders[channelId].data.games.some((game) => {
+            return game.raiderData.display_name.toLowerCase() === username.toLowerCase();
+        })
+    ) {
+        console.log(`[backend:549]: Starting raid on channel: ${channel}, started by: ${username}`);
         let result = [];
         const gamePackage = await constructGamePackage(username, viewers, streamerData, channelId);
         if (gamePackage) {
@@ -989,6 +988,10 @@ async function startRaid(channel, username, viewers) {
         } else console.log("[backend:897]: ERROR: no 'gamePackage' constructed");
         console.log(`[backend:906]: StartRaid returned: ${result == [] ? "Null" : "channelRaiders[channelId]"}:`);
         return result;
+    } else {
+        console.log("[backend:989]: RAIDER already has game: ", username);
+        throw "[backend:989]: RAIDER already has game: " + username;
+        return null;
     }
 }
 async function constructGamePackage(raiderUserName, raiderAmount, streamerData, channelId) {
@@ -1024,11 +1027,9 @@ async function setGameExpiredResult(channelId) {
     const channelRaidersData = channelRaiders[channelId].data,
         gamesArray = channelRaidersData.games;
     // handles calculating the end game result when gameDuration is expired
-    if (gameExpired(gamesArray)) {
-        channelRaiders[channelId].data.games.forEach((game) => (game.gameState = "result"));
-    }
     if (gameExpired(gamesArray) && channelRaiders[channelId].hasRunningGame) {
         channelRaiders[channelId].hasRunningGame = false;
+        channelRaiders[channelId].data.games.forEach((game) => (game.gameState = "result"));
         const raiders = gamesArray.map((game) => game.raiderData.display_name),
             raidersId = gamesArray.map((game) => game.raiderData.channel_id);
         let winner,
@@ -1038,26 +1039,59 @@ async function setGameExpiredResult(channelId) {
         if (channelRaidersData.supportState > 5) {
             console.log("[backend:878]: GAME RESULT: streamer won!");
             //? streamer win
-            defeated = raiders.length > 1 ? raiders.join(", ") : raiders[0];
+            defeated = raiders; //.length > 1 ? raiders.join(", ") : raiders[0];
             winner = gamesArray[0].streamerData.displayName;
-            await setStreamerBattleHistory(channelId, raiders, BATTLE_HISTORY.win);
-            await setRaiderWinOrDraw(raidersId, raiders, BATTLE_HISTORY.lost);
+            await setStreamerBattleHistory({
+                channelId,
+                versus: defeated,
+                battleResult: BATTLE_HISTORY.win,
+                score: 1,
+            });
+            await setRaiderBattleHistory({
+                idArray: raidersId,
+                versus: [winner],
+                battleResult: BATTLE_HISTORY.lost,
+                score: 0,
+            });
         } else if (channelRaidersData.supportState < -5) {
             console.log("[backend:884]: GAME RESULT: raider(s) won!");
             //? raiders win
-            winner = raiders.length > 1 ? raiders.join(", ") : raiders[0];
+            winner = raiders; //.length > 1 ? raiders.join(", ") : raiders[0];
             defeated = gamesArray[0].streamerData.displayName;
-            await setStreamerBattleHistory(channelId, raiders, BATTLE_HISTORY.lost);
-            await setRaiderWinOrDraw(raidersId, raiders, BATTLE_HISTORY.win);
+            console.log("[backend:1051]: winner", winner);
+            await setStreamerBattleHistory({
+                channelId,
+                versus: winner,
+                battleResult: BATTLE_HISTORY.lost,
+                score: 0,
+            });
+            await setRaiderBattleHistory({
+                idArray: raidersId,
+                versus: [defeated],
+                battleResult: BATTLE_HISTORY.win,
+                score: 1,
+            });
         } else {
             console.log("[backend:891]: GAME RESULT: draw!");
             //? Draw
-            winner = raiders.length > 1 ? raiders.join(", ") : raiders[0];
+            winner = raiders; //.length > 1 ? raiders.join(", ") : raiders[0];
             defeated = gamesArray[0].streamerData.displayName;
-            raidersId.push(channelId);
-            await setRaiderWinOrDraw(raidersId, raiders, BATTLE_HISTORY.draw);
+            // raidersId.push(channelId);
+            await setStreamerBattleHistory({
+                channelId,
+                versus: winner,
+                battleResult: BATTLE_HISTORY.draw,
+                score: 1,
+            });
+            await setRaiderBattleHistory({
+                idArray: raidersId,
+                versus: [defeated],
+                battleResult: BATTLE_HISTORY.draw,
+                score: 1,
+            });
             draw = true;
         }
+
         stringToSend = `${winner} Gained more support than ${defeated}`;
         if (draw) stringToSend = `It was a draw between ${winner} and ${defeated}`;
         if (!checkForExistingGameResult(gamesArray[0].gameResult, "string", stringToSend)) {
@@ -1065,8 +1099,61 @@ async function setGameExpiredResult(channelId) {
             gamesArray[0].streamerData = await dataBase.findOne({ channelId });
             attemptSendChatMessageToChannel(gamesArray[0].streamerData, stringToSend);
         }
+        streamStatusHandler({});
         sendFinalBroadcastTimeout(channelId);
     }
+}
+
+//! -------------------- HISTORY-DB -------------------- //
+// update all docs with score + history before prod //! DEV
+async function setStreamerBattleHistory(battleHistoryObj) {
+    const { channelId, versus, battleResult, score } = battleHistoryObj;
+    const result = await dataBase.updateOne(
+        { channelId },
+        {
+            $inc: { score },
+            $push: {
+                battleHistory: {
+                    $each: [
+                        {
+                            vs: versus,
+                            result: battleResult,
+                            date: new Date(),
+                        },
+                    ],
+                    // $slice: -3, // store more than only last 3 games (for potential leaderboard / stats / rewards<s)
+                },
+            },
+        }
+    );
+    return result;
+}
+
+async function setRaiderBattleHistory(battleHistoryObj) {
+    const { idArray, versus, battleResult, score } = battleHistoryObj;
+    const result = await dataBase.updateMany(
+        {
+            channelId: {
+                $in: idArray,
+            },
+        },
+        {
+            $inc: { score },
+            $push: {
+                battleHistory: {
+                    $each: [
+                        {
+                            vs: versus,
+                            result: battleResult,
+                            date: new Date(),
+                        },
+                    ],
+                    // $slice: -3, // store more than only last 3 games (for potential leaderboard / stats / rewards<s)
+                },
+            },
+        }
+    );
+    return result;
 }
 function parseString(str) {
     // parses string and replaces "%s" with supplied argument
@@ -1096,7 +1183,6 @@ async function setResult(channelId, raider, string, durationName) {
         }
     }
 }
-
 //! --------------------------------------------------------- //
 //*                      -- TIMEKEEPER --                    //
 //! ------------------------------------------------------- //
@@ -1222,7 +1308,7 @@ async function sendGlobalBroadcast(dataToSend) {
     // Send the broadcast request to the Twitch API.
     const url = "https://api.twitch.tv/helix/extensions/pubsub";
     const res = await fetch(url, { method: "POST", headers, body });
-    console.log("[backend:503]: ", `Broadcasting to ALL channels, Response: ${res.status}`);
+    console.log("[backend:505]: ", `Broadcasting to ALL channels, Response: ${res.status}`);
 }
 //! ---- FINAL ---- //
 async function sendFinalBroadcastTimeout(channelId) {
@@ -1374,5 +1460,5 @@ function confirmOpaqueUser(req, res, next) {
     if (parseInt(res.locals.channelId) === parseInt(res.locals.opaqueUserId.replace("U", ""))) {
         return next();
     }
-    throw Boom.unauthorized(STRINGS.invalidAuthHeader); //TODO make own string
+    throw Boom.unauthorized(STRINGS.invalidAuthHeader);
 }
