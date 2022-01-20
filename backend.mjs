@@ -616,13 +616,15 @@ async function continueAddingNewStreamer(channelId, registeredEventSub) {
         //TODO get user from DB
         //TODO update user with new eventsubID's
         //TODO only add if database user dont have specified eventSubId
-        if (userExsist.eventSub)
-        const result = await dataBase.updateOne(
-            { channelId },
-            {
-                $set: { eventSub: { registeredEventSub } },
-            }
-        );
+        if (!userExsist.eventSub) {
+            //...
+            const result = await dataBase.updateOne(
+                { channelId },
+                {
+                    $set: { eventSub: { registeredEventSub } },
+                }
+            );
+        }
         console.log("[backend:612]: result", result);
         returnData = {
             result: "Already in the list of channels to monitor for raid",
