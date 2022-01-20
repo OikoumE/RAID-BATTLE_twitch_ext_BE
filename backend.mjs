@@ -1285,6 +1285,10 @@ async function sendRaidBroadcast(channelId) {
     // Send the broadcast request to the Twitch API.
     const url = "https://api.twitch.tv/helix/extensions/pubsub";
     const res = await fetch(url, { method: "POST", headers, body });
+    if (res.status > 400) {
+        console.log("[backend:1288]: ERROR:", res.body);
+        console.log("[backend:1288]: ERROR:", res.body());
+    }
     console.log("[backend:503]: ", `Broadcasting to channelId: ${channelId}`, `Response: ${res.status}`);
 }
 //! ---- SEND GLOBAL ---- //
