@@ -199,9 +199,7 @@ async function setDefaultUserConfigInDatabase() {
             },
         },
         "defaults"
-        //!!!!!!!!!
     );
-    // console.log("[backend:192]: result", dbResult);
 }
 
 async function getUserConfigOrDefaultValue(channelId, configName) {
@@ -303,6 +301,7 @@ async function paginated_fetch(url, page = null, previousResponse = []) {
             "Content-type": "application/json",
         };
     return fetch(`${url}${process.env._EXT_CLIENT_ID}&first=100${page ? `&after={page}` : ""}`, {
+        //! dev CHANGE TO CORRECT EXT_CLIENT_ID when prod
         headers,
     })
         .then((response) => response.json())
@@ -574,8 +573,8 @@ async function requestRaidHistoryHandler(req, res) {
 async function addNewStreamer(channelId) {
     //TODO fix for multi.....eventsub...
     // checks if user already in database and adds new streamer to database if user does not already exsist
-    const result = "7492a8fd-ae83-432c-8054-198d7e323f45"; //! DEV ONLY
-    // const result = await checkEventSubUser(channelId); //! REACTIVATE BEFORE PROD!
+    // const result = "7492a8fd-ae83-432c-8054-198d7e323f45"; //! DEV ONLY
+    const result = await checkEventSubUser(channelId); //! REACTIVATE BEFORE PROD!
     if (result) {
         // we are happy
         const response = await continueAddingNewStreamer(channelId, result);
@@ -586,6 +585,7 @@ async function addNewStreamer(channelId) {
     }
 }
 async function continueAddingNewStreamer(channelId, registeredEventSub) {
+    console.log("[backend:587]: registeredEventSub", registeredEventSub);
     const userExsist = await dataBase.checkIfUserInDb(channelId);
     let returnData;
     if (!userExsist) {
@@ -604,6 +604,15 @@ async function continueAddingNewStreamer(channelId, registeredEventSub) {
         //TODO make this work with 3x calls from eventsub enabled
         //TODO get user from DB
         //TODO update user with new eventsubID's
+
+        //TODO only add if database user dont have specified eventSubId
+        const result = await dataBase.updateOne(
+            { channelId },
+            {
+                eventSub: { registeredEventSub },
+            }
+        );
+        console.log("[backend:612]: result", result);
         returnData = {
             result: "Already in the list of channels to monitor for raid",
             data: null,
