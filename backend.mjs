@@ -255,7 +255,7 @@ app.get("/ongoingRaidGame/", isUserConfirmed, ongoingRaidGameQueryHandler);
 
 //! ----- EVENTSUB ----- //
 // Handle stop broadcasting a testraid
-app.post(EVENTSUB_ENDPOINT_PATH, async (req, res) => {
+app.post("/" + EVENTSUB_ENDPOINT_PATH, async (req, res) => {
     await webhookCallback({
         req,
         res,
@@ -609,7 +609,7 @@ async function continueAddingNewStreamer(channelId, registeredEventSub) {
         const result = await dataBase.updateOne(
             { channelId },
             {
-                eventSub: { registeredEventSub },
+                $set: { eventSub: { registeredEventSub } },
             }
         );
         console.log("[backend:612]: result", result);
