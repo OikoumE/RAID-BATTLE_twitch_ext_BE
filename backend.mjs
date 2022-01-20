@@ -668,7 +668,11 @@ async function checkEventSubUser(userId) {
     //         if (eventSubs[i].status === "enabled") return eventSubs[i];
     //     }
     // }
+    console.log("[backend:670]: ---------------------------------");
+    console.log("[backend:670]: ---------------------------------");
     console.log("[backend:670]: enabledEventSubs", enabledEventSubs);
+    console.log("[backend:670]: ---------------------------------");
+    console.log("[backend:670]: ---------------------------------");
     if (enabledEventSubs.length === 0) {
         return false;
     } else {
