@@ -584,7 +584,6 @@ async function addNewStreamer(channelId) {
     console.log("[backend:579]: checkEventSubUser typeof", typeof result);
     if (result) {
         // we are happy
-        console.log("[backend:579]: continueAddingNewStreamer", result);
         if (result) {
             const response = await continueAddingNewStreamer(channelId, result);
             return response;
@@ -596,7 +595,6 @@ async function addNewStreamer(channelId) {
     }
 }
 async function continueAddingNewStreamer(channelId, registeredEventSub) {
-    console.log("[backend:587]: registeredEventSub", registeredEventSub);
     const userExsist = await dataBase.checkIfUserInDb(channelId);
     let returnData;
     if (!userExsist) {
@@ -624,8 +622,8 @@ async function continueAddingNewStreamer(channelId, registeredEventSub) {
                     $set: { eventSub: { registeredEventSub } },
                 }
             );
+            console.log("[backend:612]: result", result);
         }
-        console.log("[backend:612]: result", result);
         returnData = {
             result: "Already in the list of channels to monitor for raid",
             data: null,
