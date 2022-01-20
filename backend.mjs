@@ -29,22 +29,17 @@ import dotenv from "dotenv";
 import tmi from "tmi.js";
 import fetch from "node-fetch";
 
-// const cors = require("cors");
-
 dotenv.config();
-
-//! ------------------------------------------------
-//! ------------------ REMINDER --------------------
-//! ---       line:57 - change before prod       ---
-//! ---       line:495 - change before prod      ---
-//! ---                                          ---
-//! ---                                          ---
-//! ---                                          ---
-//! ---                                          ---
-//! ------------------------------------------------
 
 import { DataBase } from "./modules/database/database.mjs";
 import { webhookCallback, getEventSubEndpoint, EventSubRegister } from "./modules/eventsub/index.mjs";
+
+//TODO potentially request auth on config:
+// -   [channel.raid](https://dev.twitch.tv/docs/eventsub/eventsub-subscription-types#channelraid)
+// -   [stream.online](https://dev.twitch.tv/docs/eventsub/eventsub-subscription-types#streamonline)
+// -   [stream.offline](https://dev.twitch.tv/docs/eventsub/eventsub-subscription-types#streamoffline)
+// -   [user.authorization.grant](https://dev.twitch.tv/docs/eventsub/eventsub-subscription-types#userauthorizationgrant)
+// -   [user.authorization.revoke](https://dev.twitch.tv/docs/eventsub/eventsub-subscription-types#userauthorizationrevoke)
 
 //! ------------------------------------------------
 
