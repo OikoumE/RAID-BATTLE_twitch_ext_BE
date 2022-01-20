@@ -646,7 +646,7 @@ async function addStreamerToDb(userData) {
         channelId: userData.id,
         profilePicUrl: userData.profile_image_url,
         created: Date.now(),
-        eventSub: [userData.eventSub],
+        eventSub: userData.eventSub,
         score: 0,
         battleHistory: [],
     });
