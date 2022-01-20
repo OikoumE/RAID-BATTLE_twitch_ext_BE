@@ -93,7 +93,9 @@ export async function getEventSubEndpoint() {
     };
     const result = await fetch(EVENTSUB_ENDPOINT, { headers });
     const result_json = await result.json();
-    console.log("[index:159]: result_json", result_json);
+    console.log("[index:95]: result_json", result_json);
+    console.log("[index:96]: result_json.data[0].transport", result_json.data[0].transport);
+    console.log("[index:97]: result_json.data[0].condition", result_json.data[0].condition);
     return result_json;
     const example = [
         {
@@ -168,7 +170,7 @@ async function registerRevokeAccessEventSub() {
         version: "1",
         type: "user.authorization.revoke",
         condition: {
-            client_id: APP_CLIENT_ID,
+            client_id: CLIENT_ID,
         },
         transport: {
             method: "webhook",
