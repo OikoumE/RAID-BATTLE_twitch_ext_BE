@@ -302,7 +302,7 @@ async function paginated_fetch(url, page = null, previousResponse = []) {
             "Client-Id": APP_CLIENT_ID,
             "Content-type": "application/json",
         };
-    return fetch(`${url}${process.env._EXT_CLIENT_ID}&first=100${page ? `&after={page}` : ""}`, {
+    return fetch(`${url}${process.env.EXT_CLIENT_ID}&first=100${page ? `&after={page}` : ""}`, {
         headers,
     })
         .then((response) => response.json())
