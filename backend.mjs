@@ -307,10 +307,10 @@ async function paginated_fetch(url, page = null, previousResponse = []) {
     })
         .then((response) => response.json())
         .then(async (newResponse) => {
-            console.log("[backend:315]: doing pagination");
             if (newResponse.data) {
                 const response = [...previousResponse, ...newResponse.data]; // Combine the two arrays
                 if (newResponse.pagination && newResponse.data.length === 100) {
+                    console.log("[backend:315]: doing pagination");
                     return await paginated_fetch(url, newResponse.pagination, response);
                 }
                 return response;
@@ -546,6 +546,7 @@ async function requestRaidHistoryHandler(req, res) {
     const channelIds = [];
     channelIds.push(channelId);
     const live = await getExtLiveStreams();
+    console.log("[backend:548]: live", live);
     live.forEach((stream) => {
         if (!channelIds.some((streamId) => streamId === stream.broadcaster_id)) {
             channelIds.push(stream.broadcaster_id);
