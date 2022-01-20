@@ -548,31 +548,25 @@ async function stopTestRaidHandler(req, res) {
 //! ---- RAIDHISTORY ---- //
 async function requestRaidHistoryHandler(req, res) {
     const { channelId, opaqueUserId } = res.locals;
-    const channelIds = [];
-    channelIds.push(channelId);
-    const live = await getExtLiveStreams();
-    live.forEach((stream) => {
-        console.log("[backend:550]: stream.broadcaster_id", stream.broadcaster_id);
-        if (!channelIds.some((streamId) => streamId === stream.broadcaster_id)) {
-            channelIds.push(stream.broadcaster_id);
-        }
-    });
-    const result = await dataBase.find();
-    //? TODO add to db???
-    // console.log("[backend:553]: CHECK THIS POTENTIALLY ADD TO DB!?");
-    // console.log("[backend:507]: result", result);
-    // console.log("[backend:507]: channelIds", channelIds);
 
-    const filteredData = result.filter((data) => channelIds.includes(data.channelId));
-    const thing = {
-        thisStreamData: {
-            displayName: filteredData[0].displayName,
-            battleHistory: filteredData[0].battleHistory,
-            score: filteredData[0].score,
-        },
-        liveStreamsData: filteredData,
-    };
-    res.json({ result: "Loaded raid history", data: thing });
+    const live = await getExtLiveStreams(),
+        liveExtStream = live.map((stream) => stream.broadcaster_id);
+
+    const result = await dataBase.find({ channelId: liveExtStream }),
+        liveExtStreamsData = result.filter((streamData) => {
+            return streamData.broadcaster_id != channelId;
+        });
+
+    const thisStream = await dataBase.findOne({ channelId }),
+        data = {
+            thisStreamData: {
+                displayName: thisStream.displayName,
+                battleHistory: thisStream.battleHistory,
+                score: thisStream.score,
+            },
+            liveStreamsData: liveExtStreamsData,
+        };
+    res.json({ result: "Loaded raid history", data });
 }
 
 //! -------------------- DATABASE HANDLERS -------------------- //
