@@ -94,8 +94,10 @@ export async function getEventSubEndpoint() {
     const result = await fetch(EVENTSUB_ENDPOINT, { headers });
     const result_json = await result.json();
     console.log("[index:95]: result_json", result_json);
-    console.log("[index:96]: result_json.data[0].transport", result_json.data[0].transport);
-    console.log("[index:97]: result_json.data[0].condition", result_json.data[0].condition);
+    result_json.data.forEach((res) => {
+        console.log("[index:96]: transport", res.transport);
+        console.log("[index:97]: condition", res.condition);
+    });
     return result_json;
     const example = [
         {

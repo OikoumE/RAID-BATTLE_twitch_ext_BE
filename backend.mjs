@@ -581,7 +581,8 @@ async function addNewStreamer(channelId) {
     // const result = "7492a8fd-ae83-432c-8054-198d7e323f45"; //! DEV ONLY
     const result = await checkEventSubUser(channelId); //! REACTIVATE BEFORE PROD!
     console.log("[backend:579]: checkEventSubUser", result);
-    if (!result.error || result.length > 0 || !result) {
+    console.log("[backend:579]: checkEventSubUser typeof", typeof result);
+    if (result) {
         // we are happy
         console.log("[backend:579]: continueAddingNewStreamer", result);
         if (result) {
@@ -589,6 +590,7 @@ async function addNewStreamer(channelId) {
             return response;
         }
     } else {
+        console.log("[backend:591]: EventSubRegister", channelId);
         await EventSubRegister(channelId);
         return;
     }
