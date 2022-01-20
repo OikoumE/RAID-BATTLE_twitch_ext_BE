@@ -575,7 +575,7 @@ async function addNewStreamer(channelId) {
     // checks if user already in database and adds new streamer to database if user does not already exsist
     // const result = "7492a8fd-ae83-432c-8054-198d7e323f45"; //! DEV ONLY
     const result = await checkEventSubUser(channelId); //! REACTIVATE BEFORE PROD!
-    if (result) {
+    if (!result.error) {
         // we are happy
         const response = await continueAddingNewStreamer(channelId, result);
         return response;

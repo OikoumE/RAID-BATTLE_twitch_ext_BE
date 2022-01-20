@@ -21,30 +21,30 @@ export class DataBase {
         try {
             await this.client.connect();
         } catch (e) {
-            console.log("[backend:276]: e", e);
+            console.log("[database:276]: e", e);
         }
     }
     async insertOne(document, collection = this.collection) {
         const result = await this.client.db(this.dataBaseName).collection(collection).insertOne(document);
         if (result) {
-            console.log(`[backend:287]: new db entry added at`, result.insertedId);
+            console.log(`[database:287]: new db entry added at`, result.insertedId);
             return result;
         }
-        console.log(`[backend:293]: no documents added:`, result);
+        console.log(`[database:293]: no documents added:`, result);
     }
     async findOne(document, collection = this.collection) {
         const result = await this.client.db(this.dataBaseName).collection(collection).findOne(document);
         if (result) {
             return result;
         }
-        console.log(`[backend:301]: no document found with document:`, document);
+        console.log(`[database:301]: no document found with document:`, document);
     }
     async find(document = {}, collection = this.collection) {
         const result = await this.client.db(this.dataBaseName).collection(collection).find(document).toArray();
         if (result) {
             return result;
         }
-        console.log(`[backend:302]: no documents found:`, result);
+        console.log(`[database:302]: no documents found:`, result);
     }
     async updateOne(filterDocument, updateDocument, collection = this.collection) {
         const result = await this.client
