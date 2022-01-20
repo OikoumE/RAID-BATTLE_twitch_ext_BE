@@ -659,9 +659,11 @@ async function checkEventSubUser(userId) {
     const eventSubs = await getEventSubEndpoint();
 
     const enabledEventSubs = eventSubs.data.filter((eSub) => {
-        eSub.status === "enabled" &&
+        return (
+            eSub.status === "enabled" &&
             (parseInt(eSub.condition.to_broadcaster_user_id) === parseInt(userId) ||
-                parseInt(eSub.condition.broadcaster_user_id) === parseInt(userId));
+                parseInt(eSub.condition.broadcaster_user_id) === parseInt(userId))
+        );
     });
     // for (const i = 0; i < eventSubs.data.length; i++) {
     //     if (parseInt(eventSubs[i].condition.to_broadcaster_user_id) === parseInt(userId)) {
