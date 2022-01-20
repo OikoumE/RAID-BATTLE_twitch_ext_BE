@@ -255,6 +255,9 @@ app.get("/ongoingRaidGame/", isUserConfirmed, ongoingRaidGameQueryHandler);
 
 //! ----- EVENTSUB ----- //
 // Handle stop broadcasting a testraid
+app.get("/" + EVENTSUB_ENDPOINT_PATH, async (req, res) => {
+    console.log("[backend:258]: EVENTSUB_ENDPOINT_PATH", EVENTSUB_ENDPOINT_PATH);
+});
 app.post("/" + EVENTSUB_ENDPOINT_PATH, async (req, res) => {
     console.log("[backend:258]: EVENTSUB_ENDPOINT_PATH", EVENTSUB_ENDPOINT_PATH);
     await webhookCallback({
@@ -368,6 +371,7 @@ async function ongoingRaidGameQueryHandler(req, res) {
 //! ---- ADDSTREAMER ---- //
 async function addStreamerToChannelsHandler(req, res) {
     const { channelId, opaqueUserId } = res.locals;
+    console.log("[backend:373]: channelId", channelId);
     const result = await addNewStreamer(channelId);
     res.json({ result: "Added to list of channels to monitor for raid", data: result });
 }

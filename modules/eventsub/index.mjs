@@ -118,6 +118,7 @@ export async function getEventSubEndpoint() {
 }
 
 export async function EventSubRegister(broadcaster_user_id) {
+    console.log("[index:120]: broadcaster_user_id", broadcaster_user_id);
     const events = ["channel.raid", "stream.online", "stream.offline"];
     events.forEach(async (event) => {
         const subscriptionData = {
