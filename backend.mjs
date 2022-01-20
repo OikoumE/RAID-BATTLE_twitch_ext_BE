@@ -602,6 +602,7 @@ async function addNewStreamer(channelId) {
 }
 async function continueAddingNewStreamer(channelId, registeredEventSub) {
     const userExsist = await dataBase.checkIfUserInDb(channelId);
+    console.log("[backend:604]: userExsist", userExsist);
     let returnData;
     if (!userExsist) {
         const userData = await getUser(`id=${channelId}`);
