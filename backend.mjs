@@ -548,7 +548,9 @@ async function requestRaidHistoryHandler(req, res) {
     const live = await getExtLiveStreams();
     console.log("[backend:548]: live", live);
     live.forEach((stream) => {
+        console.log("[backend:550]: stream.broadcaster_id", stream.broadcaster_id);
         if (!channelIds.some((streamId) => streamId === stream.broadcaster_id)) {
+            console.log("[backend:551]: streamId", streamId);
             channelIds.push(stream.broadcaster_id);
         }
     });
