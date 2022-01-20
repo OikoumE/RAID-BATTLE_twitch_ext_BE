@@ -556,7 +556,10 @@ async function requestRaidHistoryHandler(req, res) {
         liveExtStreamsData = result.filter((streamData) => {
             return streamData.broadcaster_id != channelId;
         });
-
+    console.log("[backend:558]: live", live);
+    console.log("[backend:559]: liveExtStream", liveExtStream);
+    console.log("[backend:560]: result", result);
+    console.log("[backend:561]: liveExtStreamsData", liveExtStreamsData);
     const thisStream = await dataBase.findOne({ channelId }),
         data = {
             thisStreamData: {
