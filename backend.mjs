@@ -152,7 +152,7 @@ function missingValue(name, variable) {
 const app = express();
 
 const port = process.env.PORT || 8085;
-const ip = process.env.IP || "0.0.0.0";
+const ip = "0.0.0.0"; //! DEV
 app.use(cors());
 app.use(
     express.raw({
