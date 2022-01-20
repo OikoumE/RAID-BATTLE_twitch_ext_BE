@@ -619,7 +619,7 @@ async function continueAddingNewStreamer(channelId, registeredEventSub) {
         //TODO make this work with 3x calls from eventsub enabled
         //TODO get user from DB
         //TODO update user with new eventsubID's
-        //TODO only add if database user dont have specified eventSubId
+        //TODO only add if database user dont have specified eventSub
         if (!userExsist.eventSub) {
             //...
             const result = await dataBase.updateOne(
@@ -645,7 +645,7 @@ async function addStreamerToDb(userData) {
         channelId: userData.id,
         profilePicUrl: userData.profile_image_url,
         created: Date.now(),
-        eventSubId: [userData.eventSub],
+        eventSub: [userData.eventSub],
         score: 0,
         battleHistory: [],
     });
@@ -699,7 +699,7 @@ async function checkEventSubUser(userId) {
 
 async function deleteEventSubEndpoint(channelId) {
     const streamerData = await dataBase.findOne({ channelId });
-    const url = EVENTSUB_ENDPOINT + "?id=" + streamerData.eventSubId;
+    const url = EVENTSUB_ENDPOINT + "?id=" + streamerData.eventSub;
     const myAppToken = APP_ACCESS_TOKEN;
     const headers = {
         Authorization: `Bearer ` + myAppToken,
@@ -714,10 +714,10 @@ async function deleteEventSubEndpoint(channelId) {
     const result = await fetch(url, data);
     if (result.status === 204) {
         // 204	Successfully deleted the subscription.
-        console.log("[backend:667]: Subcription successfully deleted: ", streamerData.eventSubId);
+        console.log("[backend:667]: Subcription successfully deleted: ", streamerData.eventSub);
     } else if (result.status === 404) {
         //404	The subscription was not found.
-        console.log("[backend:667]: Subcription not found: ", streamerData.eventSubId);
+        console.log("[backend:667]: Subcription not found: ", streamerData.eventSub);
     } else if (result.status === 401) {
         //401	The caller failed authentication. Verify that your access token and client ID are valid.`;
         console.log("[backend:670]: ERROR: ", await result.json());
