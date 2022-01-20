@@ -553,9 +553,18 @@ async function requestRaidHistoryHandler(req, res) {
         liveExtStream = live.map((stream) => stream.broadcaster_id);
 
     const result = await dataBase.find({ channelId: { $in: liveExtStream } }),
-        liveExtStreamsData = result.filter((streamData) => {
-            return streamData.broadcaster_id != channelId;
-        });
+        liveExtStreamsData = result
+            .filter((streamData) => {
+                return streamData.channelId != channelId;
+            })
+            .map((streamData) => {
+                if (streamData.channelId != channelId)
+                    return {
+                        channelId: streamData.channelId,
+                        score: streamData.score,
+                        displayName: streamData.displayName,
+                    };
+            });
     console.log("[backend:558]: live", live);
     console.log("[backend:559]: liveExtStream", liveExtStream);
     console.log("[backend:560]: result", result);
