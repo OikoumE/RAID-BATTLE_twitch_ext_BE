@@ -129,11 +129,11 @@ export async function EventSubRegister(broadcaster_user_id) {
             condition: {},
             transport: {
                 method: "webhook",
-                // callback: "https://raid-battle-twitch-ext.herokuapp.com/" + EVENTSUB_ENDPOINT_PATH, //* prod
                 callback: "https://raidbattle-test.herokuapp.com/" + EVENTSUB_ENDPOINT_PATH, //! dev
                 secret: EVENTSUB_SUBSCRIPTION_SECRET,
             },
         };
+        // callback: "https://raid-battle-twitch-ext.herokuapp.com/" + EVENTSUB_ENDPOINT_PATH, //* prod
         if (event === "channel.raid") {
             subscriptionData.condition["to_broadcaster_user_id"] = broadcaster_user_id;
         } else {

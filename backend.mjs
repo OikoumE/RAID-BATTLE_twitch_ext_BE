@@ -50,7 +50,7 @@ import { webhookCallback, getEventSubEndpoint, EventSubRegister } from "./module
 
 // The developer rig uses self-signed certificates.  Node doesn't accept them
 // by default.  Do not use this in production
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0"; //! ONLY WHEN DEV AND TESTING
+// process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0"; //! ONLY WHEN DEV AND TESTING
 
 // Service state variables
 const serverTokenDurationSec = 30; // our tokens for pubsub expire after 30 seconds
@@ -258,6 +258,7 @@ app.get("/ongoingRaidGame/", isUserConfirmed, ongoingRaidGameQueryHandler);
 app.get("/" + EVENTSUB_ENDPOINT_PATH, async (req, res) => {
     console.log("[backend:258]: EVENTSUB_ENDPOINT_PATH", EVENTSUB_ENDPOINT_PATH);
 });
+console.log("[backend:260]: EVENTSUB_ENDPOINT_PATH", EVENTSUB_ENDPOINT_PATH);
 app.post("/" + EVENTSUB_ENDPOINT_PATH, async (req, res) => {
     console.log("[backend:258]: EVENTSUB_ENDPOINT_PATH", EVENTSUB_ENDPOINT_PATH);
     await webhookCallback({
@@ -667,6 +668,7 @@ async function checkEventSubUser(userId) {
     //         if (eventSubs[i].status === "enabled") return eventSubs[i];
     //     }
     // }
+    console.log("[backend:670]: enabledEventSubs", enabledEventSubs);
     if (enabledEventSubs.length === 0) {
         return false;
     } else {
