@@ -95,24 +95,7 @@ export async function getEventSubEndpoint() {
     const result_json = await result.json();
     // console.log("[index:95]: result_json", result_json);
     return result_json;
-    const example = [
-        {
-            id: "xxxxx",
-            status: "enabled",
-            type: "channel.raid",
-            version: "1",
-            condition: {
-                from_broadcaster_user_id: "",
-                to_broadcaster_user_id: "93645775",
-            },
-            created_at: "2022-01-12T18:42:21.779827161Z",
-            transport: {
-                method: "webhook",
-                callback: "xxxx",
-            },
-            cost: 0,
-        },
-    ];
+
 }
 
 export async function EventSubRegister(broadcaster_user_id) {
