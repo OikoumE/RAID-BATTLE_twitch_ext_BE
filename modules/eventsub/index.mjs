@@ -177,6 +177,6 @@ async function registerRevokeAccessEventSub() {
         },
     };
     const _result = await postEventSubEndpoint(subscriptionData);
-    console.log("[index:128]: _result", _result);
+    // console.log("[index:128]: _result", _result);
     return _result;
 }
