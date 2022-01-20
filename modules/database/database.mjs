@@ -64,7 +64,7 @@ export class DataBase {
         const result = await this.find({ channelId }, collection);
         for (const document of result) {
             if (document.channelId == channelId) {
-                return true;
+                return document;
             }
         }
         return false;

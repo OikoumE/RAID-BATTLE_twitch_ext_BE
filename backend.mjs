@@ -581,7 +581,6 @@ async function addNewStreamer(channelId) {
     // checks if user already in database and adds new streamer to database if user does not already exsist
     // const result = "7492a8fd-ae83-432c-8054-198d7e323f45"; //! DEV ONLY
     const result = await checkEventSubUser(channelId); //! REACTIVATE BEFORE PROD!
-    console.log("[backend:579]: checkEventSubUser", result);
     console.log("[backend:579]: checkEventSubUser typeof", typeof result);
     if (result) {
         // we are happy
@@ -617,6 +616,7 @@ async function continueAddingNewStreamer(channelId, registeredEventSub) {
         //TODO get user from DB
         //TODO update user with new eventsubID's
         //TODO only add if database user dont have specified eventSubId
+        if (userExsist.eventSub)
         const result = await dataBase.updateOne(
             { channelId },
             {
@@ -657,7 +657,6 @@ function parseTmiChannelListFromDb(result) {
 async function checkEventSubUser(userId) {
     //TODO adapt for raid, live, offline
     const eventSubs = await getEventSubEndpoint();
-
     const enabledEventSubs = eventSubs.data.filter((eSub) => {
         return (
             eSub.status === "enabled" &&
@@ -665,16 +664,6 @@ async function checkEventSubUser(userId) {
                 parseInt(eSub.condition.broadcaster_user_id) === parseInt(userId))
         );
     });
-    // for (const i = 0; i < eventSubs.data.length; i++) {
-    //     if (parseInt(eventSubs[i].condition.to_broadcaster_user_id) === parseInt(userId)) {
-    //         if (eventSubs[i].status === "enabled") return eventSubs[i];
-    //     }
-    // }
-    console.log("[backend:670]: ---------------------------------");
-    console.log("[backend:670]: ---------------------------------");
-    console.log("[backend:670]: enabledEventSubs", enabledEventSubs);
-    console.log("[backend:670]: ---------------------------------");
-    console.log("[backend:670]: ---------------------------------");
     if (enabledEventSubs.length === 0) {
         return false;
     } else {
