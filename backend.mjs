@@ -234,7 +234,6 @@ app.post("/damage/", isUserConfirmed, streamerSupportHandler);
 // Handle a viewer request ongoing game.
 app.get("/ongoingRaidGame/", isUserConfirmed, ongoingRaidGameQueryHandler);
 
-//! ----- EVENTSUB ----- //
 // Handle EventSub notifications from twitch
 app.post("/" + EVENTSUB_ENDPOINT_PATH, async (req, res) => {
     await webhookCallback({
@@ -248,6 +247,14 @@ app.post("/" + EVENTSUB_ENDPOINT_PATH, async (req, res) => {
         },
     });
 });
+//! --------------------------------------------------------- //
+//*                       -- SERVER --                       //
+//! ------------------------------------------------------- //
+const server = app.listen(port, ip, () => {
+    const time = new Date();
+    console.log(`[backend:254]: ${time} - HTTP - server running at ${ip}:${port}/`);
+});
+//! ----- EVENTSUB ----- //
 async function streamStatusHandler(eventNotification) {
     // Handle response (stream.offline/online)
     let offlineStreamId = null;
@@ -305,13 +312,7 @@ async function paginated_fetch(url, page = null, previousResponse = []) {
             console.log("[backend:311]: ERROR: ", err);
         });
 }
-//! --------------------------------------------------------- //
-//*                       -- SERVER --                       //
-//! ------------------------------------------------------- //
-const server = app.listen(port, ip, () => {
-    const time = Date.now();
-    console.log(`${time} - HTTP - server running at ${ip}:${port}/`);
-});
+
 //! --------------------------------------------------------- //
 //*                   -- ROUTE HANDLERS --                   //
 //! ------------------------------------------------------- //
@@ -329,20 +330,21 @@ function return200() {
 async function ongoingRaidGameQueryHandler(req, res) {
     const { channelId, opaqueUserId } = res.locals;
     const result = await dataBase.findOne({ channelId });
+    console.log("[backend:332]: result", result);
     if (!result) {
         addNewStreamer(channelId);
     }
     if (typeof channelRaiders[channelId] === "undefined") {
         console.log(`[backend:415]: No active games on channel ${channelId}`);
-        res.sendStatus(204);
+        res.sendStatus(200).json(result);
         return;
     } else if (channelRaiders[channelId] && typeof channelRaiders[channelId]?.data?.games === "undefined") {
         console.log(`[backend:421]: No active games on channel ${channelId}`);
-        res.sendStatus(204);
+        res.sendStatus(200).json(result);
         return;
     } else if (channelRaiders[channelId] && channelRaiders[channelId]?.data?.games.length < 1) {
         console.log(`[backend:427]: No active games on channel ${channelId}`);
-        res.sendStatus(204);
+        res.sendStatus(200).json(result);
         return;
     }
     res.json(formatGameData(channelId));
