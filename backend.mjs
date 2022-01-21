@@ -348,7 +348,7 @@ async function ongoingRaidGameQueryHandler(req, res) {
         res.sendStatus(204);
         return;
     }
-    res.json(formatGameData());
+    res.json(formatGameData(channelId));
 }
 //! ---- ADDSTREAMER ---- //
 async function addStreamerToChannelsHandler(req, res) {
@@ -442,7 +442,7 @@ function raiderSupportHandler(req, res) {
     // increase health on specific raider
     if (channelRaiders[channelId]?.data?.games) {
         clickSupportIncrement(channelId, "raider", opaqueUserId);
-        res.json(formatGameData());
+        res.json(formatGameData(channelId));
         return; //channelRaiders[channelId].games;
     }
     console.log("[backend:493]: returning null");
@@ -452,7 +452,7 @@ function streamerSupportHandler(req, res) {
     const { channelId, opaqueUserId } = res.locals;
     if (channelRaiders[channelId]?.data?.games) {
         clickSupportIncrement(channelId, "streamer", opaqueUserId);
-        res.json(formatGameData());
+        res.json(formatGameData(channelId));
         return; //channelRaiders[channelId].games;
     }
     console.log("[backend:520]: returning null");
@@ -505,7 +505,7 @@ async function startTestRaidHandler(req, res) {
                 testRaidPayload.testAmount
             );
             if (startedRaid) {
-                res.json(formatGameData());
+                res.json(formatGameData(channelId));
                 return;
             }
         }
@@ -1187,7 +1187,7 @@ function attemptRaidBroadcast(channelId) {
     }
 }
 //! ---- SEND ---- //
-function formatGameData() {
+function formatGameData(channelId) {
     const gameData = channelRaiders[channelId].data.games.map((game) => {
         const { gameState, streamerData, raiderData, gameTimeObj, gameResult } = game;
         const mappedStreamer = streamerData.map((streamer) => {
@@ -1218,7 +1218,7 @@ async function sendRaidBroadcast(channelId) {
     const body = JSON.stringify({
         content_type: "application/json",
         broadcaster_id: channelId,
-        message: formatGameData(),
+        message: formatGameData(channelId),
         target: ["broadcast"],
     });
     console.log("[backend:1203]: JSON.stringify(channelRaiders[channelId].data", channelRaiders[channelId].data);
