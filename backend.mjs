@@ -717,6 +717,7 @@ async function getAppAccessToken() {
             APP_ACCESS_TOKEN = data.access_token;
             process.env.APP_ACCESS_TOKEN = APP_ACCESS_TOKEN;
             TOKEN_EXPIRE_DATE = Date.now() + data.expires_in * 1000;
+            console.log("[backend:719]: TOKEN_EXPIRE_DATE", TOKEN_EXPIRE_DATE);
         } else {
             //
         }
