@@ -134,12 +134,10 @@ function missingValue(name, variable) {
     const option = name.charAt(0);
     return `Extension ${name} required.\nUse argument "-${option} <${name}>" or environment variable "${variable}".`;
 }
-
 //! --------------------------------------------------------- //
 //*                      -- EXPRESS --                       //
 //! ------------------------------------------------------- //
 const app = express();
-
 const port = process.env.PORT || 8085;
 const ip = "0.0.0.0";
 app.use(cors());
@@ -149,7 +147,6 @@ app.use(
         type: "application/json",
     })
 );
-
 //! --------------------------------------------------------- //
 //*                     -- ON LAUNCH --                      //
 //! ------------------------------------------------------- //
@@ -200,7 +197,6 @@ async function getUserConfigOrDefaultValue(channelId, configName) {
     }
     return result;
 }
-
 //! --------------------------------------------------------- //
 //*                      -- ROUTE's --                       //
 //! ------------------------------------------------------- //
@@ -414,7 +410,6 @@ async function getLatestNewsHandler(req, res) {
 async function inserLatestNewsInDb() {
     //! happens on launch
     const result = await dataBase.find({}, "LatestNews");
-
     const add_news = {
         date: new Date(),
         content: {
@@ -435,7 +430,6 @@ async function inserLatestNewsInDb() {
         await dataBase.insertOne(add_news, "LatestNews");
     }
 }
-
 //! ---- CLICKHANDLERS ---- //
 function raiderSupportHandler(req, res) {
     const { channelId, opaqueUserId } = res.locals;
@@ -526,7 +520,6 @@ async function stopTestRaidHandler(req, res) {
     });
     return;
 }
-
 //! ---- RAIDHISTORY ---- //
 async function requestRaidHistoryHandler(req, res) {
     const { channelId, opaqueUserId } = res.locals;
@@ -650,28 +643,7 @@ async function checkEventSubUser(userId) {
         }
     }
     throw `unable to getEventSubEndpoint: ${eventSubs}`;
-    const example = {
-        data: [
-            {
-                id: "xxxxx",
-                status: "enabled",
-                type: "channel.raid",
-                version: "1",
-                condition: {
-                    from_broadcaster_user_id: "",
-                    to_broadcaster_user_id: "93645775",
-                },
-                created_at: "2022-01-12T18:42:21.779827161Z",
-                transport: {
-                    method: "webhook",
-                    callback: "xxxx",
-                },
-                cost: 0,
-            },
-        ],
-    };
 }
-
 async function deleteEventSubEndpoint(channelId) {
     const streamerData = await dataBase.findOne({ channelId });
     const url = EVENTSUB_ENDPOINT + "?id=" + streamerData.eventSub;
@@ -700,7 +672,6 @@ async function deleteEventSubEndpoint(channelId) {
     }
     return;
 }
-
 //! --------------------------------------------------------- //
 //*                      -- TWITCH API --                    //
 //! ------------------------------------------------------- //
@@ -790,7 +761,6 @@ function startTmi(channels) {
         async (channel, userstate, message, self) => await chatCommandHandler(channel, userstate, message, self)
     );
 }
-
 async function chatCommandHandler(channel, userstate, message, self) {
     // checks if chatCommands are enabled and sends a message if it is
     const channelName = channel.replace("#", "");
@@ -827,7 +797,6 @@ async function chatCommandHandler(channel, userstate, message, self) {
         }
     }
 }
-
 async function raidRoulette(currentChannel) {
     const result = await getExtLiveStreams();
     const liveStreams = result
@@ -853,7 +822,6 @@ async function raidRoulette(currentChannel) {
         return "There are no other Raid Battler's currently live";
     }
 }
-
 function restartTmi(channelList) {
     // restarts TMI.js
     if (tmiClient) {
@@ -866,7 +834,6 @@ function restartTmi(channelList) {
         startTmi(channelList);
     });
 }
-
 //! --------------------------------------------------------- //
 //*                  -- GAME CONDITION --                    //
 //! ------------------------------------------------------- //
@@ -886,7 +853,6 @@ async function startRaid(channel, username, viewers) {
             enableOverlayButton,
             battleHistory: battleHistory.slice(-3),
         };
-
     if (typeof channelRaiders[channelId] !== "object") {
         channelRaiders[channelId] = {
             interval: null,
@@ -957,12 +923,12 @@ async function constructGamePackage(raiderUserName, raiderAmount, streamerData, 
         return null;
     }
 }
-
 //! -------------------- RESULT -------------------- //
 async function setGameExpiredResult(channelId) {
     // handles calculating the end game result when gameDuration is expired
     const channelRaidersData = channelRaiders[channelId].data,
-        gamesArray = channelRaidersData.games;
+        { streamerData, games: gamesArray } = channelRaidersData;
+
     if (gameExpired(gamesArray) && channelRaiders[channelId].hasRunningGame) {
         channelRaiders[channelId].hasRunningGame = false;
         channelRaiders[channelId].data.games.forEach((game) => (game.gameState = "result"));
@@ -976,7 +942,7 @@ async function setGameExpiredResult(channelId) {
             console.log("[backend:878]: GAME RESULT: streamer won!");
             //? streamer win
             defeated = raiders; //.length > 1 ? raiders.join(", ") : raiders[0];
-            winner = gamesArray[0].streamerData.displayName;
+            winner = streamerData.displayName;
             await setStreamerBattleHistory({
                 channelId,
                 versus: defeated,
@@ -993,7 +959,7 @@ async function setGameExpiredResult(channelId) {
             console.log("[backend:884]: GAME RESULT: raider(s) won!");
             //? raiders win
             winner = raiders; //.length > 1 ? raiders.join(", ") : raiders[0];
-            defeated = gamesArray[0].streamerData.displayName;
+            defeated = streamerData.displayName;
             console.log("[backend:1051]: winner", winner);
             await setStreamerBattleHistory({
                 channelId,
@@ -1011,7 +977,7 @@ async function setGameExpiredResult(channelId) {
             console.log("[backend:891]: GAME RESULT: draw!");
             //? Draw
             winner = raiders; //.length > 1 ? raiders.join(", ") : raiders[0];
-            defeated = gamesArray[0].streamerData.displayName;
+            defeated = streamerData.displayName;
             // raidersId.push(channelId);
             await setStreamerBattleHistory({
                 channelId,
@@ -1029,16 +995,25 @@ async function setGameExpiredResult(channelId) {
         }
         stringToSend = `${winner} Gained more support than ${defeated}`;
         if (draw) stringToSend = `It was a draw between ${winner} and ${defeated}`;
-        if (!checkForExistingGameResult(gamesArray[0].gameResult, "string", stringToSend)) {
+
+        if (
+            !gamesArray.some((game) => {
+                return checkForExistingGameResult(game.gameResult, "string", stringToSend);
+            })
+        ) {
             setResult(channelId, raiders[0], stringToSend, "gameResultDuration");
-            gamesArray[0].streamerData = await dataBase.findOne({ channelId });
-            attemptSendChatMessageToChannel(gamesArray[0].streamerData, stringToSend);
+            attemptSendChatMessageToChannel(streamerData, stringToSend);
         }
+
+        // if (!checkForExistingGameResult(gamesArray[0].gameResult, "string", stringToSend)) {
+        //     setResult(channelId, raiders[0], stringToSend, "gameResultDuration");
+        //     streamerData = await dataBase.findOne({ channelId });
+        //     attemptSendChatMessageToChannel(streamerData, stringToSend);
+        // }
         streamStatusHandler({});
         sendFinalBroadcastTimeout(channelId);
     }
 }
-
 //! -------------------- HISTORY-DB -------------------- //
 // update all docs with score + history before prod //! DEV
 async function setStreamerBattleHistory(battleHistoryObj) {
@@ -1062,7 +1037,6 @@ async function setStreamerBattleHistory(battleHistoryObj) {
     );
     return result;
 }
-
 async function setRaiderBattleHistory(battleHistoryObj) {
     const { idArray, versus, battleResult, score } = battleHistoryObj;
     const result = await dataBase.updateMany(
@@ -1103,12 +1077,24 @@ function checkForExistingGameResult(testArray, testKey, testValue) {
 }
 async function setResult(channelId, raider, string, durationName) {
     // sets a result on a game if a special condition is met
+
+    // channelRaiders[channelId].data.games.forEach((game) => {
+    //     if (game.raiderData.display_name.toLowerCase() == raider?.toLowerCase()) {
+    //         const addedTime = await getUserConfigOrDefaultValue(channelId, durationName);
+    //         const resultExpires = Date.now() + addedTime * 1000;
+    //         raiderGame.gameResult.push({
+    //             resultExpires,
+    //             string,
+    //         });
+    //     }
+    // });
+
     for (let i = 0; i < channelRaiders[channelId].data.games.length; i++) {
         const raiderGame = channelRaiders[channelId].data.games[i];
         if (raiderGame.raiderData.display_name.toLowerCase() == raider?.toLowerCase()) {
             const addedTime = await getUserConfigOrDefaultValue(channelId, durationName);
             const resultExpires = Date.now() + addedTime * 1000;
-            channelRaiders[channelId].data.games[i].gameResult.push({
+            raiderGame.gameResult.push({
                 resultExpires,
                 string,
             });
@@ -1165,7 +1151,6 @@ async function calculateGameDuration(introDuration, streamerData) {
     }
     return gameDuration;
 }
-
 //! --------------------------------------------------------- //
 //*                      -- BROADCAST --                     //
 //! ------------------------------------------------------- //
@@ -1200,10 +1185,8 @@ function attemptRaidBroadcast(channelId) {
 }
 //! ---- SEND ---- //
 function formatGameData(channelId) {
-    console.log("[backend:1205]: gameData", JSON.stringify(channelRaiders[channelId].data));
     return JSON.stringify(channelRaiders[channelId].data);
 }
-
 async function sendRaidBroadcast(channelId) {
     // Set the HTTP headers required by the Twitch API.
     const headers = {
@@ -1335,7 +1318,6 @@ async function sendChatMessageToChannel(message, channelId) {
 //! --------------------------------------------------------- //
 //*                   -- AUTHORIZATION --                    //
 //! ------------------------------------------------------- //
-
 function isUserConfirmed(req, res, next) {
     const payload = verifyAndDecode(req.headers.authorization);
     const { channel_id: channelId, opaque_user_id: opaqueUserId } = payload;
@@ -1375,7 +1357,6 @@ function makeGlobalToken() {
     };
     return jsonwebtoken.sign(payload, secret, { algorithm: "HS256" });
 }
-
 function verifyAndDecode(header) {
     // Verify the header and the enclosed JWT.
     if (header.startsWith(bearerPrefix)) {
@@ -1401,7 +1382,6 @@ function userIsInCooldown(opaqueUserId, skipCooldown = false) {
     userCooldowns[opaqueUserId] = now + skipCooldown ? userSkipCooldownMs : userCooldownMs;
     return false;
 }
-
 //! ------ confirm user ------ //
 function confirmOpaqueUser(req, res, next) {
     if (parseInt(res.locals.channelId) === parseInt(res.locals.opaqueUserId.replace("U", ""))) {
