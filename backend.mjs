@@ -417,14 +417,16 @@ async function inserLatestNewsInDb() {
     const add_news = {
         date: new Date(),
         content: {
-            title: "New version of RAID BATTLE:", text: [
+            title: "New version of RAID BATTLE:",
+            text: [
                 'added "Latest News" to config page',
-                'updated support level indicator from "healtbar" to a Gauge',
-                'added animations to clicks to better indicate something happens when clicking',
-                'added "viewerpanel" (can be toggled off/on) with info about last 3 raids',
+                "updated support level indicator",
+                "added animations to clicks",
+                'added "viewerpanel"',
                 'added "live Raid Battler`s" to viewerpanel',
+                "added info about last 3 raids`s to viewerpanel",
                 'added "RaidRoulette" chat command <!raid>',
-                ],
+            ],
         },
     };
     if (!result.some((news) => news.content === add_news.content)) {
