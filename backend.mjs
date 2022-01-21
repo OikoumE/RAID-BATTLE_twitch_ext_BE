@@ -160,6 +160,7 @@ async function onLaunch() {
     console.log("[backend:130]: Server starting");
     const dataBaseUserData = await dataBase.find();
     const result = parseTmiChannelListFromDb(dataBaseUserData);
+    inserLatestNewsInDb(); //! dev
     await setDefaultUserConfigInDatabase();
     startTmi(result);
     // Periodically clear cool-down tracking to prevent unbounded growth due to
@@ -239,13 +240,9 @@ app.post("/damage/", isUserConfirmed, streamerSupportHandler);
 app.get("/ongoingRaidGame/", isUserConfirmed, ongoingRaidGameQueryHandler);
 
 //! ----- EVENTSUB ----- //
-// Handle stop broadcasting a testraid
-app.get("/" + EVENTSUB_ENDPOINT_PATH, async (req, res) => {
-    console.log("[backend:258]: EVENTSUB_ENDPOINT_PATH", EVENTSUB_ENDPOINT_PATH);
-});
+// Handle EventSub notifications from twitch
 console.log("[backend:260]: EVENTSUB_ENDPOINT_PATH", EVENTSUB_ENDPOINT_PATH);
 app.post("/" + EVENTSUB_ENDPOINT_PATH, async (req, res) => {
-    console.log("[backend:258]: EVENTSUB_ENDPOINT_PATH", EVENTSUB_ENDPOINT_PATH);
     await webhookCallback({
         req,
         res,
@@ -412,30 +409,33 @@ function parseUserConfigUpdateDocument(document) {
 async function getLatestNewsHandler(req, res) {
     const { channelId, opaqueUserId } = res.locals;
     const result = await dataBase.find({}, "LatestNews");
-    const example_news = [
-        {
-            date: "2022-01-20T07:58:49.618Z",
-            content: "testing date!",
-        },
-        {
-            date: "2022-01-20T07:58:49.618Z",
-            content: "Hello world!",
-        },
-        {
-            date: "2022-01-20T07:58:49.618Z",
-            content: "Hello world!",
-        },
-        {
-            date: "2022-01-20T07:58:49.618Z",
-            content: "Hello world!",
-        },
-        {
-            date: "2022-01-20T07:58:49.618Z",
-            content: "Hello world!",
-        },
-    ];
+
     res.json(example_news); //! DEV
-    // res.json(result);
+}
+async function inserLatestNewsInDb() {
+    //! on launch
+    const result = await dataBase.find({}, "LatestNews");
+    const day = "20",
+        month = "01";
+    const add_news = {
+        date: `2022-${month}-${day}T00:00:00.618Z`,
+        content: "testing date!",
+    };
+    const add_news2 = {
+        date: Date.now(),
+        content: "testing date!",
+    };
+
+    console.log("[backend:426]: ------------------------------");
+    console.log("[backend:422]: add_news", add_news.date);
+    console.log("[backend:422]: add_news2", add_news2.date);
+    console.log("[backend:422]: datenow", Date.now());
+    console.log("[backend:426]: ------------------------------");
+
+    if (!result.some((news) => news.date === add_news.date)) {
+        await dataBase.insertOne(add_news, "LatestNews");
+        await dataBase.insertOne(add_news2, "LatestNews");
+    }
 }
 
 //! ---- CLICKHANDLERS ---- //
