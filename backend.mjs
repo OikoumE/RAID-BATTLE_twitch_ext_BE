@@ -417,7 +417,7 @@ async function getLatestNewsHandler(req, res) {
     console.log("[backend:414]: -.-");
     console.log("[backend:413]: sortedNews", sortedNews);
     console.log("[backend:414]: -.---------------------------------");
-    res.json(sortedNews.slice(-1));
+    res.json(sortedNews.slice(0, 1));
 }
 async function inserLatestNewsInDb() {
     //! happens on launch
@@ -426,7 +426,7 @@ async function inserLatestNewsInDb() {
     const add_news = {
         date: new Date(),
         content: {
-            title: "New version of RAID BATTLE!",
+            title: "lalalal o lal ao",
             text: [
                 'added "Latest News" to config page',
                 "updated support level indicator",
