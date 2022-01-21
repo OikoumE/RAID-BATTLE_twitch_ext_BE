@@ -413,18 +413,22 @@ async function getLatestNewsHandler(req, res) {
 }
 async function inserLatestNewsInDb() {
     //! happens on launch
-    // change day/month to add news to DB
     const result = await dataBase.find({}, "LatestNews");
-    result.forEach((news) => {
-        console.log("[backend:418]: news.date", news.date);
-        console.log("[backend:420]: new Date(news.date)", new Date(news.date));
-    });
-
     const add_news = {
         date: new Date(),
-        content: "added date1!",
+        content: {
+            title: "New version of RAID BATTLE:", text: [
+                'added "Latest News" to config page',
+                'updated support level indicator from "healtbar" to a Gauge',
+                'added animations to clicks to better indicate something happens when clicking',
+                'added "viewerpanel" (can be toggled off/on) with info about last 3 raids',
+                'added "live Raid Battler`s" to viewerpanel',
+                'added "RaidRoulette" chat command <!raid>',
+                ],
+        },
     };
     if (!result.some((news) => news.content === add_news.content)) {
+        console.log('[backend:427]: Adding new "news" to database', add_news);
         await dataBase.insertOne(add_news, "LatestNews");
     }
 }
