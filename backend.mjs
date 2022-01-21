@@ -409,15 +409,16 @@ function parseUserConfigUpdateDocument(document) {
 async function getLatestNewsHandler(req, res) {
     const { channelId, opaqueUserId } = res.locals;
     const result = await dataBase.find({}, "LatestNews");
-
-    res.json(example_news); //! DEV
+    res.json(result);
 }
 async function inserLatestNewsInDb() {
     //! on launch
     const result = await dataBase.find({}, "LatestNews");
+    const day = 21,
+        month = 0; // the month is 0-indexed,
     const add_news = {
-        date: new Date(),
-        content: "testing date!",
+        date: new Date(2022, month, day),
+        content: "added date!",
     };
 
     console.log("[backend:426]: ------------------------------");
@@ -525,10 +526,8 @@ async function stopTestRaidHandler(req, res) {
 //! ---- RAIDHISTORY ---- //
 async function requestRaidHistoryHandler(req, res) {
     const { channelId, opaqueUserId } = res.locals;
-
     const live = await getExtLiveStreams(),
         liveExtStream = live.map((stream) => stream.broadcaster_id);
-
     const result = await dataBase.find({ channelId: { $in: liveExtStream } }),
         liveExtStreamsData = result
             .filter((streamData) => {
@@ -542,10 +541,6 @@ async function requestRaidHistoryHandler(req, res) {
                         displayName: streamData.displayName,
                     };
             });
-    console.log("[backend:558]: live", live);
-    console.log("[backend:559]: liveExtStream", liveExtStream);
-    console.log("[backend:560]: result", result);
-    console.log("[backend:561]: liveExtStreamsData", liveExtStreamsData);
     const thisStream = await dataBase.findOne({ channelId }),
         data = {
             thisStreamData: {
@@ -577,7 +572,6 @@ async function addNewStreamer(channelId) {
 }
 async function continueAddingNewStreamer(channelId, registeredEventSub) {
     const userExsist = await dataBase.checkIfUserInDb(channelId);
-    console.log("[backend:604]: userExsist", userExsist);
     let returnData;
     if (!userExsist) {
         const userData = await getUser(`id=${channelId}`);
