@@ -415,26 +415,18 @@ async function getLatestNewsHandler(req, res) {
 async function inserLatestNewsInDb() {
     //! on launch
     const result = await dataBase.find({}, "LatestNews");
-    const day = "20",
-        month = "01";
     const add_news = {
-        date: `2022-${month}-${day}T00:00:00.618Z`,
-        content: "testing date!",
-    };
-    const add_news2 = {
-        date: Date.now(),
+        date: new Date(),
         content: "testing date!",
     };
 
     console.log("[backend:426]: ------------------------------");
     console.log("[backend:422]: add_news", add_news.date);
-    console.log("[backend:422]: add_news2", add_news2.date);
-    console.log("[backend:422]: datenow", Date.now());
+    console.log("[backend:422]: new date", new Date());
     console.log("[backend:426]: ------------------------------");
 
     if (!result.some((news) => news.date === add_news.date)) {
         await dataBase.insertOne(add_news, "LatestNews");
-        await dataBase.insertOne(add_news2, "LatestNews");
     }
 }
 
