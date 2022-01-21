@@ -1201,7 +1201,10 @@ async function sendRaidBroadcast(channelId) {
         message: JSON.stringify(channelRaiders[channelId].data),
         target: ["broadcast"],
     });
-    console.log("[backend:1203]: JSON.stringify(channelRaiders[channelId].data",JSON.stringify(channelRaiders[channelId].data);
+    console.log(
+        "[backend:1203]: JSON.stringify(channelRaiders[channelId].data",
+        JSON.stringify(channelRaiders[channelId].data)
+    );
     // Send the broadcast request to the Twitch API.
     const url = "https://api.twitch.tv/helix/extensions/pubsub";
     try {
