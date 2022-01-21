@@ -542,7 +542,7 @@ async function requestRaidHistoryHandler(req, res) {
         data = {
             thisStreamData: {
                 displayName: thisStream.displayName,
-                battleHistory: thisStream.battleHistory,
+                battleHistory: thisStream.battleHistory.slice(-3),
                 score: thisStream.score,
             },
             liveStreamsData: liveExtStreamsData,
@@ -843,14 +843,13 @@ async function startRaid(channel, username, viewers) {
             channelName: channel.toLowerCase(),
         }),
         { channelName, displayName, channelId, profilePicUrl, score, userConfig, battleHistory } = streamerData,
-        { enableOverlayButton } = userConfig,
         mappedStreamer = {
             channelName,
             displayName,
             channelId,
             profilePicUrl,
             score,
-            enableOverlayButton,
+            userConfig,
             battleHistory: battleHistory.slice(-3),
         };
     if (typeof channelRaiders[channelId] !== "object") {
@@ -1201,7 +1200,6 @@ async function sendRaidBroadcast(channelId) {
         message: formatGameData(channelId),
         target: ["broadcast"],
     });
-    console.log("[backend:1203]: JSON.stringify(channelRaiders[channelId].data", channelRaiders[channelId].data);
     // Send the broadcast request to the Twitch API.
     const url = "https://api.twitch.tv/helix/extensions/pubsub";
     try {
@@ -1215,6 +1213,7 @@ async function sendRaidBroadcast(channelId) {
         console.log("[backend:503]: ", `Broadcasting to channelId: ${channelId}`, `Response: ${res.status}`);
     } catch (err) {
         console.log("[backend:1215]: ERROR:", err);
+        //! limit is  5KiB! check size of data
     }
 }
 //! ---- SEND GLOBAL ---- //
@@ -1280,6 +1279,7 @@ function attemptSendChatMessageToChannel(streamerData, message) {
     // checks if USER_CONFIG.enableChatOutput is true and sends message
     if (streamerData.userConfig) {
         if (!streamerData.userConfig.enableChatOutput) {
+            console.log("[backend:1282]: dont send message");
             // dont send message if user has disabled chat output in config
             return;
         }
