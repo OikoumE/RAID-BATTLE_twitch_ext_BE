@@ -289,7 +289,7 @@ async function paginated_fetch(url, page = null, previousResponse = []) {
             "Client-Id": APP_CLIENT_ID,
             "Content-type": "application/json",
         };
-    return fetch(`${url}${process.env._EXT_CLIENT_ID}&first=100${page ? `&after={page}` : ""}`, {
+    return fetch(`${url}${process.env.EXT_CLIENT_ID}&first=100${page ? `&after={page}` : ""}`, {
         //! dev CHANGE TO CORRECT EXT_CLIENT_ID when prod
         headers,
     })
@@ -429,7 +429,7 @@ async function inserLatestNewsInDb() {
             ],
         },
     };
-    if (!result.some((news) => news.content === add_news.content)) {
+    if (!result.some((news) => news.title === add_news.title)) {
         console.log('[backend:427]: Adding new "news" to database', add_news);
         await dataBase.insertOne(add_news, "LatestNews");
     }

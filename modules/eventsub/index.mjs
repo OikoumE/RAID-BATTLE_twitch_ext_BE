@@ -23,8 +23,8 @@ const HMAC_PREFIX = "sha256=";
 const EVENTSUB_ENDPOINT = "https://api.twitch.tv/helix/eventsub/subscriptions",
     EVENTSUB_ENDPOINT_PATH = process.env.EVENTSUB_ENDPOINT_PATH;
 
-const CLIENT_ID = process.env.APP_CLIENT_ID,
-    CLIENT_SECRET = process.env.APP_CLIENT_SECRET,
+const APP_CLIENT_ID = process.env.APP_CLIENT_ID,
+    APP_CLIENT_SECRET = process.env.APP_CLIENT_SECRET,
     APP_ACCESS_TOKEN = process.env.APP_ACCESS_TOKEN,
     EVENTSUB_SUBSCRIPTION_SECRET = process.env.EVENTSUB_SUBSCRIPTION_SECRET;
 
@@ -89,13 +89,12 @@ function verifyMessage(hmac, verifySignature) {
 export async function getEventSubEndpoint() {
     const headers = {
         Authorization: `Bearer ` + APP_ACCESS_TOKEN,
-        "Client-Id": CLIENT_ID,
+        "Client-Id": APP_CLIENT_ID,
     };
     const result = await fetch(EVENTSUB_ENDPOINT, { headers });
     const result_json = await result.json();
     // console.log("[index:95]: result_json", result_json);
     return result_json;
-
 }
 
 export async function EventSubRegister(broadcaster_user_id) {
@@ -108,11 +107,10 @@ export async function EventSubRegister(broadcaster_user_id) {
             condition: {},
             transport: {
                 method: "webhook",
-                callback: "https://raidbattle-test.herokuapp.com/" + EVENTSUB_ENDPOINT_PATH, //! dev
+                callback: "https://raidbattle.herokuapp.com/" + EVENTSUB_ENDPOINT_PATH,
                 secret: EVENTSUB_SUBSCRIPTION_SECRET,
             },
         };
-        // callback: "https://raid-battle-twitch-ext.herokuapp.com/" + EVENTSUB_ENDPOINT_PATH, //* prod
         if (event === "channel.raid") {
             subscriptionData.condition["to_broadcaster_user_id"] = broadcaster_user_id;
         } else {
@@ -127,7 +125,7 @@ export async function EventSubRegister(broadcaster_user_id) {
 async function postEventSubEndpoint(body) {
     const headers = {
         Authorization: `Bearer ` + APP_ACCESS_TOKEN,
-        "Client-Id": CLIENT_ID,
+        "Client-Id": APP_CLIENT_ID,
         "Content-type": "application/json",
     };
     const data = {
@@ -152,11 +150,11 @@ async function registerRevokeAccessEventSub() {
         version: "1",
         type: "user.authorization.revoke",
         condition: {
-            client_id: CLIENT_ID,
+            client_id: APP_CLIENT_ID,
         },
         transport: {
             method: "webhook",
-            callback: "https://raid-battle-twitch-ext.herokuapp.com/" + EVENTSUB_ENDPOINT_PATH,
+            callback: "https://raidbattle.herokuapp.com/" + EVENTSUB_ENDPOINT_PATH,
             secret: EVENTSUB_SUBSCRIPTION_SECRET,
         },
     };
