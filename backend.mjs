@@ -710,6 +710,7 @@ async function deleteEventSubEndpoint(channelId) {
 async function getAppAccessToken() {
     // gets APP_ACCESS_TOKEN token from twitch
     if (!APP_ACCESS_TOKEN || Date.now() >= TOKEN_EXPIRE_DATE) {
+        console.log("[backend:712]: WARNING APP_ACCESS_TOKEN EXPIRED; MAKING NEW!");
         const endpoint = `https://id.twitch.tv/oauth2/token?client_id=${APP_CLIENT_ID}&client_secret=${APP_CLIENT_SECRET}&grant_type=client_credentials`;
         const result = await fetch(endpoint, { method: "POST" });
         if (result.ok) {
