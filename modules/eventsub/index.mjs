@@ -87,6 +87,7 @@ function verifyMessage(hmac, verifySignature) {
 }
 
 export async function getEventSubEndpoint() {
+    console.log("[index:89]: APP_ACCESS_TOKEN", APP_ACCESS_TOKEN);
     const headers = {
         Authorization: `Bearer ` + APP_ACCESS_TOKEN,
         "Client-Id": APP_CLIENT_ID,
