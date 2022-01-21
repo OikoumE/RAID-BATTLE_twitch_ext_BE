@@ -330,21 +330,22 @@ function return200() {
 async function ongoingRaidGameQueryHandler(req, res) {
     const { channelId, opaqueUserId } = res.locals;
     const result = await dataBase.findOne({ channelId });
+    const { userConfig } = result;
     console.log("[backend:332]: result", result);
     if (!result) {
         addNewStreamer(channelId);
     }
     if (typeof channelRaiders[channelId] === "undefined") {
         console.log(`[backend:415]: No active games on channel ${channelId}`);
-        res.sendStatus(200).json(result);
+        res.json(userConfig);
         return;
     } else if (channelRaiders[channelId] && typeof channelRaiders[channelId]?.data?.games === "undefined") {
         console.log(`[backend:421]: No active games on channel ${channelId}`);
-        res.sendStatus(200).json(result);
+        res.json(userConfig);
         return;
     } else if (channelRaiders[channelId] && channelRaiders[channelId]?.data?.games.length < 1) {
         console.log(`[backend:427]: No active games on channel ${channelId}`);
-        res.sendStatus(200).json(result);
+        res.json(userConfig);
         return;
     }
     res.json(formatGameData(channelId));
