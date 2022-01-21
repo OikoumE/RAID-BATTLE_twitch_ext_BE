@@ -348,7 +348,7 @@ async function ongoingRaidGameQueryHandler(req, res) {
         res.sendStatus(204);
         return;
     }
-    res.json(channelRaiders[channelId].data);
+    res.json(formatGameData());
 }
 //! ---- ADDSTREAMER ---- //
 async function addStreamerToChannelsHandler(req, res) {
@@ -442,7 +442,7 @@ function raiderSupportHandler(req, res) {
     // increase health on specific raider
     if (channelRaiders[channelId]?.data?.games) {
         clickSupportIncrement(channelId, "raider", opaqueUserId);
-        res.json(channelRaiders[channelId].data);
+        res.json(formatGameData());
         return; //channelRaiders[channelId].games;
     }
     console.log("[backend:493]: returning null");
@@ -452,7 +452,7 @@ function streamerSupportHandler(req, res) {
     const { channelId, opaqueUserId } = res.locals;
     if (channelRaiders[channelId]?.data?.games) {
         clickSupportIncrement(channelId, "streamer", opaqueUserId);
-        res.json(channelRaiders[channelId].data);
+        res.json(formatGameData());
         return; //channelRaiders[channelId].games;
     }
     console.log("[backend:520]: returning null");
@@ -505,7 +505,7 @@ async function startTestRaidHandler(req, res) {
                 testRaidPayload.testAmount
             );
             if (startedRaid) {
-                res.json(startedRaid);
+                res.json(formatGameData());
                 return;
             }
         }
@@ -1187,6 +1187,26 @@ function attemptRaidBroadcast(channelId) {
     }
 }
 //! ---- SEND ---- //
+function formatGameData() {
+    const gameData = channelRaiders[channelId].data.games.map((game) => {
+        const { gameState, streamerData, raiderData, gameTimeObj, gameResult } = game;
+        const mappedStreamer = streamerData.map((streamer) => {
+            const { channelName, displayName, channelId, profilePicUrl, score, userConfig } = streamer;
+            const { enableOverlayButton } = userConfig;
+            return { channelName, displayName, channelId, profilePicUrl, score, enableOverlayButton };
+        });
+        return {
+            gameState,
+            gameTimeObj,
+            gameResult,
+            raiderData,
+            streamerData: mappedStreamer,
+        };
+    });
+    console.log("[backend:1205]: gameData", JSON.stringify(gameData));
+    return JSON.stringify(gameData);
+}
+
 async function sendRaidBroadcast(channelId) {
     // Set the HTTP headers required by the Twitch API.
     const headers = {
@@ -1198,7 +1218,7 @@ async function sendRaidBroadcast(channelId) {
     const body = JSON.stringify({
         content_type: "application/json",
         broadcaster_id: channelId,
-        message: JSON.stringify(channelRaiders[channelId].data),
+        message: formatGameData(),
         target: ["broadcast"],
     });
     console.log("[backend:1203]: JSON.stringify(channelRaiders[channelId].data", channelRaiders[channelId].data);
@@ -1209,7 +1229,7 @@ async function sendRaidBroadcast(channelId) {
         if (res.status > 400) {
             console.log("[backend:1287]: ERROR:", res.status);
             // console.log("[backend:1288]: ERROR:", res.body);
-            const jsondata = await res.json;
+            const jsondata = res.json;
             console.log("[backend:1290]: ERROR:", jsondata);
         }
         console.log("[backend:503]: ", `Broadcasting to channelId: ${channelId}`, `Response: ${res.status}`);
