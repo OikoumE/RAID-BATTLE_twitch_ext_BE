@@ -1201,19 +1201,16 @@ async function sendRaidBroadcast(channelId) {
         message: JSON.stringify(channelRaiders[channelId].data),
         target: ["broadcast"],
     });
-    console.log(
-        "[backend:1203]: JSON.stringify(channelRaiders[channelId].data",
-        JSON.stringify(channelRaiders[channelId].data)
-    );
+    console.log("[backend:1203]: JSON.stringify(channelRaiders[channelId].data", channelRaiders[channelId].data);
     // Send the broadcast request to the Twitch API.
     const url = "https://api.twitch.tv/helix/extensions/pubsub";
     try {
         const res = await fetch(url, { method: "POST", headers, body });
         if (res.status > 400) {
             console.log("[backend:1287]: ERROR:", res.status);
-            console.log("[backend:1288]: ERROR:", res.body);
-            console.log("[backend:1290]: ERROR:", res.json);
-            console.log("[backend:1289]: ERROR:", res.JSON());
+            // console.log("[backend:1288]: ERROR:", res.body);
+            const jsondata = await res.json;
+            console.log("[backend:1290]: ERROR:", jsondata);
         }
         console.log("[backend:503]: ", `Broadcasting to channelId: ${channelId}`, `Response: ${res.status}`);
     } catch (err) {
