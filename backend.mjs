@@ -170,7 +170,6 @@ async function onLaunch() {
     }, userCooldownClearIntervalMs);
 }
 onLaunch();
-
 async function setDefaultUserConfigInDatabase() {
     // handles setting database.defaultConfig to values in DEFAULTS
     const dbResult = await dataBase.updateOne(
@@ -187,7 +186,6 @@ async function setDefaultUserConfigInDatabase() {
         "defaults"
     );
 }
-
 async function getUserConfigOrDefaultValue(channelId, configName) {
     // gets userConfig value or DEFAULT value
     const streamerData = await dataBase.findOne({ channelId });
@@ -255,12 +253,14 @@ app.post("/" + EVENTSUB_ENDPOINT_PATH, async (req, res) => {
     });
 });
 async function streamStatusHandler(eventNotification) {
-    // Handle response.
+    // Handle response (stream.offline/online)
     let offlineStreamId = null;
     if (!Object.keys(eventNotification).includes("type")) {
+        // add offline stream to array to exclude from rest of code
         offlineStreamId = eventNotification.broadcaster_user_id;
     }
     const result = await getExtLiveStreams();
+    //grab EXT live streams and filter/map channelId's
     const liveStreamsArray = result
         .filter((streamObj) => {
             if (offlineStreamId != streamObj.broadcaster_id) return streamObj;
@@ -268,13 +268,15 @@ async function streamStatusHandler(eventNotification) {
         .map((streamObj) => {
             return streamObj.broadcaster_id;
         });
+    // serach DB for channelId's
     const liveStreamsDatabaseData = await dataBase.find({ channelId: { $in: liveStreamsArray } });
-    for (var i = 0; i < liveStreamsDatabaseData.length; i++) {
-        liveStreamsDatabaseData[i].battleHistory = liveStreamsDatabaseData[i].battleHistory.slice(-3);
-    }
-    await sendGlobalBroadcast(liveStreamsDatabaseData);
+    // extract wanted data and send
+    const dataTosend = liveStreamsDatabaseData.map((liveStream) => {
+        const { score, channelId, displayName } = liveStream;
+        return { score, channelId, displayName };
+    });
+    await sendGlobalBroadcast(dataTosend);
 }
-
 async function getExtLiveStreams() {
     const url = "https://api.twitch.tv/helix/extensions/live?extension_id=";
     const result = await paginated_fetch(url);
@@ -307,7 +309,6 @@ async function paginated_fetch(url, page = null, previousResponse = []) {
             console.log("[backend:311]: ERROR: ", err);
         });
 }
-
 //! --------------------------------------------------------- //
 //*                       -- SERVER --                       //
 //! ------------------------------------------------------- //
@@ -328,7 +329,6 @@ function return400() {
 function return200() {
     return "<style> html { background-color: #000000;} </style><img src='https://http.cat/200.jpg' />";
 }
-
 //! ---- ONGOING ---- //
 async function ongoingRaidGameQueryHandler(req, res) {
     const { channelId, opaqueUserId } = res.locals;
