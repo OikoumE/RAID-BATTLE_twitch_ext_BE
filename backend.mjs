@@ -407,17 +407,10 @@ function parseUserConfigUpdateDocument(document) {
 }
 //! ---- NEWS HANDLER ---- //
 async function getLatestNewsHandler(req, res) {
-    const { channelId, opaqueUserId } = res.locals;
-    const result = await dataBase.find({}, "LatestNews");
-
-    console.log("[backend:414]: -.---------------------------------");
-    console.log("[backend:413]: result", result);
-
-    const sortedNews = result.sort((a, b) => b.date - a.date);
-    console.log("[backend:414]: -.-");
-    console.log("[backend:413]: sortedNews", sortedNews);
-    console.log("[backend:414]: -.---------------------------------");
-    res.json(sortedNews.slice(0, 1));
+    const { channelId, opaqueUserId } = res.locals,
+        result = await dataBase.find({}, "LatestNews"),
+        sortedNews = result.sort((a, b) => b.date - a.date);
+    res.json(sortedNews.slice(0, 2));
 }
 async function inserLatestNewsInDb() {
     //! happens on launch
@@ -426,7 +419,7 @@ async function inserLatestNewsInDb() {
     const add_news = {
         date: new Date(),
         content: {
-            title: "lalalal o lal ao",
+            title: "New version of RAID BATTLE!",
             text: [
                 'added "Latest News" to config page',
                 "updated support level indicator",
@@ -569,18 +562,22 @@ async function requestRaidHistoryHandler(req, res) {
 //! -------------------- DATABASE HANDLERS -------------------- //
 async function addNewStreamer(channelId) {
     // checks if user already in database and adds new streamer to database if user does not already exsist
-    const result = await checkEventSubUser(channelId); //! REACTIVATE BEFORE PROD!
-    console.log("[backend:579]: checkEventSubUser typeof", typeof result);
-    if (result) {
-        // we are happy
+    try {
+        const result = await checkEventSubUser(channelId);
+        console.log("[backend:579]: checkEventSubUser typeof", typeof result);
         if (result) {
-            const response = await continueAddingNewStreamer(channelId, result);
-            return response;
+            // we are happy
+            if (result) {
+                const response = await continueAddingNewStreamer(channelId, result);
+                return response;
+            }
+        } else {
+            console.log("[backend:591]: EventSubRegister", channelId);
+            await EventSubRegister(channelId);
+            return;
         }
-    } else {
-        console.log("[backend:591]: EventSubRegister", channelId);
-        await EventSubRegister(channelId);
-        return;
+    } catch (err) {
+        console.log("[backend:578]: ERROR: ", err);
     }
 }
 async function continueAddingNewStreamer(channelId, registeredEventSub) {
@@ -640,18 +637,21 @@ function parseTmiChannelListFromDb(result) {
 //! -------------------- EVENTSUB HANDLERS -------------------- //
 async function checkEventSubUser(userId) {
     const eventSubs = await getEventSubEndpoint();
-    const enabledEventSubs = eventSubs.data.filter((eSub) => {
-        return (
-            eSub.status === "enabled" &&
-            (parseInt(eSub.condition.to_broadcaster_user_id) === parseInt(userId) ||
-                parseInt(eSub.condition.broadcaster_user_id) === parseInt(userId))
-        );
-    });
-    if (enabledEventSubs.length === 0) {
-        return false;
-    } else {
-        return enabledEventSubs;
+    if (eventSubs) {
+        const enabledEventSubs = eventSubs.data.filter((eSub) => {
+            return (
+                eSub.status === "enabled" &&
+                (parseInt(eSub.condition.to_broadcaster_user_id) === parseInt(userId) ||
+                    parseInt(eSub.condition.broadcaster_user_id) === parseInt(userId))
+            );
+        });
+        if (enabledEventSubs.length === 0) {
+            return false;
+        } else {
+            return enabledEventSubs;
+        }
     }
+    throw `unable to getEventSubEndpoint: ${eventSubs}`;
     const example = {
         data: [
             {
