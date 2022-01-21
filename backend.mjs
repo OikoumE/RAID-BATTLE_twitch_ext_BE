@@ -94,6 +94,7 @@ const DEFAULTS = {
     enableChatOutput: { default: true },
     enableChatCommands: { default: true },
     gameInfoDuration: { default: 10, max: 20, min: 0 },
+    enableOverlayButton: { default: true },
 };
 const strings = {
     intro1: "Incoming Raid from: %s",
@@ -874,7 +875,18 @@ async function startRaid(channel, username, viewers) {
     const streamerData = await dataBase.findOne({
             channelName: channel.toLowerCase(),
         }),
-        channelId = streamerData?.channelId;
+        { channelName, displayName, channelId, profilePicUrl, score, userConfig, battleHistory } = streamerData,
+        { enableOverlayButton } = userConfig,
+        mappedStreamer = {
+            channelName,
+            displayName,
+            channelId,
+            profilePicUrl,
+            score,
+            enableOverlayButton,
+            battleHistory: battleHistory.slice(-3),
+        };
+
     if (typeof channelRaiders[channelId] !== "object") {
         channelRaiders[channelId] = {
             interval: null,
@@ -887,6 +899,7 @@ async function startRaid(channel, username, viewers) {
                     streamer: { clicks: 0, clickers: [] },
                     raider: { clicks: 0, clickers: [] },
                 },
+                streamerData: mappedStreamer,
             },
         };
     }
@@ -935,13 +948,12 @@ async function constructGamePackage(raiderUserName, raiderAmount, streamerData, 
             gameResult = [];
         return {
             gameState: "running",
-            streamerData,
             raiderData,
             gameTimeObj,
             gameResult,
         };
     } else {
-        console.log("[backend:919]: ERROR: streamData", streamData);
+        console.log("[backend:919]: ERROR: streamData, is streamer live?:", streamData);
         return null;
     }
 }
@@ -1188,23 +1200,8 @@ function attemptRaidBroadcast(channelId) {
 }
 //! ---- SEND ---- //
 function formatGameData(channelId) {
-    const gameData = channelRaiders[channelId].data.games.map((game) => {
-        const { gameState, streamerData, raiderData, gameTimeObj, gameResult } = game;
-        const mappedStreamer = streamerData.map((streamer) => {
-            const { channelName, displayName, channelId, profilePicUrl, score, userConfig } = streamer;
-            const { enableOverlayButton } = userConfig;
-            return { channelName, displayName, channelId, profilePicUrl, score, enableOverlayButton };
-        });
-        return {
-            gameState,
-            gameTimeObj,
-            gameResult,
-            raiderData,
-            streamerData: mappedStreamer,
-        };
-    });
-    console.log("[backend:1205]: gameData", JSON.stringify(gameData));
-    return JSON.stringify(gameData);
+    console.log("[backend:1205]: gameData", JSON.stringify(channelRaiders[channelId].data));
+    return JSON.stringify(channelRaiders[channelId].data);
 }
 
 async function sendRaidBroadcast(channelId) {
