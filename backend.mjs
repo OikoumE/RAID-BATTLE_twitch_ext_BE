@@ -405,14 +405,15 @@ function parseUserConfigUpdateDocument(document) {
     }
     return parsedDoc;
 }
-//! ---- CLICKHANDLERS ---- //
+//! ---- NEWS HANDLER ---- //
 async function getLatestNewsHandler(req, res) {
     const { channelId, opaqueUserId } = res.locals;
     const result = await dataBase.find({}, "LatestNews");
     res.json(result);
 }
 async function inserLatestNewsInDb() {
-    //! on launch
+    //! happens on launch
+    // change day/month to add news to DB
     const result = await dataBase.find({}, "LatestNews");
     const day = 21,
         month = 0; // the month is 0-indexed,
@@ -420,12 +421,6 @@ async function inserLatestNewsInDb() {
         date: new Date(2022, month, day),
         content: "added date!",
     };
-
-    console.log("[backend:426]: ------------------------------");
-    console.log("[backend:422]: add_news", add_news.date);
-    console.log("[backend:422]: new date", new Date());
-    console.log("[backend:426]: ------------------------------");
-
     if (!result.some((news) => news.date === add_news.date)) {
         await dataBase.insertOne(add_news, "LatestNews");
     }
