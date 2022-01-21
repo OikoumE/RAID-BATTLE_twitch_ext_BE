@@ -438,7 +438,7 @@ async function inserLatestNewsInDb() {
             ],
         },
     };
-    if (!result.some((news) => news.title === add_news.title)) {
+    if (!result.some((news) => news.content.title === add_news.content.title)) {
         console.log('[backend:427]: Adding new "news" to database', add_news);
         await dataBase.insertOne(add_news, "LatestNews");
     }
