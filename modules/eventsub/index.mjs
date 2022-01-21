@@ -86,10 +86,10 @@ function verifyMessage(hmac, verifySignature) {
     return crypto.timingSafeEqual(Buffer.from(hmac), Buffer.from(verifySignature));
 }
 
-export async function getEventSubEndpoint() {
-    console.log("[index:89]: new APP_ACCESS_TOKEN", APP_ACCESS_TOKEN);
+export async function getEventSubEndpoint(appToken) {
+    console.log("[index:89]: new APP_ACCESS_TOKEN", appToken);
     const headers = {
-        Authorization: `Bearer ` + APP_ACCESS_TOKEN,
+        Authorization: `Bearer ` + appToken,
         "Client-Id": APP_CLIENT_ID,
     };
     const result = await fetch(EVENTSUB_ENDPOINT, { headers });
