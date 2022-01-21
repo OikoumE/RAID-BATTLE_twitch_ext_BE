@@ -415,13 +415,16 @@ async function inserLatestNewsInDb() {
     //! happens on launch
     // change day/month to add news to DB
     const result = await dataBase.find({}, "LatestNews");
-    const day = 21,
-        month = 0; // the month is 0-indexed,
+    result.forEach((news) => {
+        console.log("[backend:418]: news.date", news.date);
+        console.log("[backend:420]: new Date(news.date)", new Date(news.date));
+    });
+
     const add_news = {
-        date: new Date(2022, month, day),
-        content: "added date!",
+        date: new Date(),
+        content: "added date1!",
     };
-    if (!result.some((news) => news.date === add_news.date)) {
+    if (!result.some((news) => news.content === add_news.content)) {
         await dataBase.insertOne(add_news, "LatestNews");
     }
 }
