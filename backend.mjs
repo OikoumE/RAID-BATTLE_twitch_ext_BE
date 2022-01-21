@@ -239,7 +239,6 @@ app.get("/ongoingRaidGame/", isUserConfirmed, ongoingRaidGameQueryHandler);
 
 //! ----- EVENTSUB ----- //
 // Handle EventSub notifications from twitch
-console.log("[backend:260]: EVENTSUB_ENDPOINT_PATH", EVENTSUB_ENDPOINT_PATH);
 app.post("/" + EVENTSUB_ENDPOINT_PATH, async (req, res) => {
     await webhookCallback({
         req,
@@ -354,7 +353,6 @@ async function ongoingRaidGameQueryHandler(req, res) {
 //! ---- ADDSTREAMER ---- //
 async function addStreamerToChannelsHandler(req, res) {
     const { channelId, opaqueUserId } = res.locals;
-    console.log("[backend:373]: channelId", channelId);
     const result = await addNewStreamer(channelId);
     res.json({ result: "Added to list of channels to monitor for raid", data: result });
 }
@@ -465,7 +463,6 @@ function clickSupportIncrement(channelId, who, clicker) {
     const clickTracker = channelRaiders[channelId].data.clickTracker,
         { streamer: sTracker, raider: rTracker } = clickTracker;
     const increaseWho = checkSupporter({ clickTracker, who, clicker });
-    console.log("[backend:480]: increaseWho", increaseWho);
     clickTracker[increaseWho].clicks += 1;
     const streamer = sTracker.clicks > 0 ? sTracker.clicks / sTracker.clickers.length : 0,
         raider = rTracker.clicks > 0 ? rTracker.clicks / rTracker.clickers.length : 0;
@@ -564,7 +561,6 @@ async function addNewStreamer(channelId) {
     // checks if user already in database and adds new streamer to database if user does not already exsist
     try {
         const result = await checkEventSubUser(channelId);
-        console.log("[backend:579]: checkEventSubUser typeof", typeof result);
         if (result) {
             // we are happy
             if (result) {
@@ -1207,12 +1203,18 @@ async function sendRaidBroadcast(channelId) {
     });
     // Send the broadcast request to the Twitch API.
     const url = "https://api.twitch.tv/helix/extensions/pubsub";
-    const res = await fetch(url, { method: "POST", headers, body });
-    if (res.status > 400) {
-        console.log("[backend:1288]: ERROR:", res.body);
-        console.log("[backend:1288]: ERROR:", res.body());
+    try {
+        const res = await fetch(url, { method: "POST", headers, body });
+        if (res.status > 400) {
+            console.log("[backend:1287]: ERROR:", res.status);
+            console.log("[backend:1288]: ERROR:", res.body());
+            console.log("[backend:1289]: ERROR:", res.JSON());
+            console.log("[backend:1290]: ERROR:", res.json());
+        }
+        console.log("[backend:503]: ", `Broadcasting to channelId: ${channelId}`, `Response: ${res.status}`);
+    } catch (err) {
+        console.log("[backend:1215]: ERROR:", err);
     }
-    console.log("[backend:503]: ", `Broadcasting to channelId: ${channelId}`, `Response: ${res.status}`);
 }
 //! ---- SEND GLOBAL ---- //
 async function sendGlobalBroadcast(dataToSend) {

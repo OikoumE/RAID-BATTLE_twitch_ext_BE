@@ -93,7 +93,7 @@ export async function getEventSubEndpoint(appToken) {
     };
     const result = await fetch(EVENTSUB_ENDPOINT, { headers });
     const result_json = await result.json();
-    console.log("[index:95]:getEventSubEndpoint result_json", result_json);
+    // console.log("[index:95]:getEventSubEndpoint result_json", result_json);
     return result_json;
 }
 
