@@ -409,15 +409,24 @@ function parseUserConfigUpdateDocument(document) {
 async function getLatestNewsHandler(req, res) {
     const { channelId, opaqueUserId } = res.locals;
     const result = await dataBase.find({}, "LatestNews");
-    res.json(result);
+
+    console.log("[backend:414]: -.---------------------------------");
+    console.log("[backend:413]: result", result);
+
+    const sortedNews = result.sort((a, b) => b.date - a.date);
+    console.log("[backend:414]: -.-");
+    console.log("[backend:413]: sortedNews", sortedNews);
+    console.log("[backend:414]: -.---------------------------------");
+    res.json(sortedNews.slice(-1));
 }
 async function inserLatestNewsInDb() {
     //! happens on launch
     const result = await dataBase.find({}, "LatestNews");
+
     const add_news = {
         date: new Date(),
         content: {
-            title: "New version of RAID BATTLE:",
+            title: "New version of RAID BATTLE!",
             text: [
                 'added "Latest News" to config page',
                 "updated support level indicator",
