@@ -72,14 +72,13 @@ const ObjectId = require("mongodb").ObjectId;
 const mongoUri = process.env.MONGODB_URL;
 
 //* twitch api auth
-const APP_CLIENT_ID =
-        process.env.APP_CLIENT_ID || "epcjd8cqin8efwuwgs9m8ubpjnbw90",
+const APP_CLIENT_ID = process.env.APP_CLIENT_ID || "epcjd8cqin8efwuwgs9m8ubpjnbw90",
     APP_CLIENT_SECRET = process.env.APP_CLIENT_SECRET || "",
     CURRENT_VERSION = process.env.CURRENT_VERSION;
 // CURRENT_VERSION = "0.0.4";
 
-let APP_ACCESS_TOKEN = null,
-    TOKEN_EXPIRE_DATE = null;
+let APP_ACCESS_TOKEN = process.env.APP_ACCESS_TOKEN || null,
+    TOKEN_EXPIRE_DATE = process.env.TOKEN_EXPIRE_DATE || null;
 
 const initialSupport = 50,
     channelRaiders = {},
@@ -122,12 +121,7 @@ function herokuPingerTimerouter() {
     // handles setting an interval of Math.random() to ping heroku to keep app alive
     //* no need after setting up proper VPS
     let nextTimeout =
-        Math.floor(
-            Math.random() * 5 +
-                Math.floor(Math.random() * KEEP_HEROKU_ALIVE_INTERVAL)
-        ) *
-        60 *
-        1000;
+        Math.floor(Math.random() * 5 + Math.floor(Math.random() * KEEP_HEROKU_ALIVE_INTERVAL)) * 60 * 1000;
     // nextTimeout < 5 ? herokuPingerTimerouter() : nextTimeout;
     return nextTimeout;
 }
@@ -141,9 +135,7 @@ async function herokuPinger() {
             console.log(
                 "[backend:107]: HerokuPinger returned: ",
                 res.status,
-                `, PINGED@: ${date.toLocaleTimeString()}, next ping in  - ${Math.floor(
-                    nextTimeout / 1000 / 60
-                )} min`
+                `, PINGED@: ${date.toLocaleTimeString()}, next ping in  - ${Math.floor(nextTimeout / 1000 / 60)} min`
             )
         );
         herokuPinger();
@@ -192,10 +184,7 @@ const serverOptions = {
     },
 };
 const serverPathRoot = path.resolve(__dirname, "..", "conf", "server");
-if (
-    fs.existsSync(serverPathRoot + ".crt") &&
-    fs.existsSync(serverPathRoot + ".key")
-) {
+if (fs.existsSync(serverPathRoot + ".crt") && fs.existsSync(serverPathRoot + ".key")) {
     serverOptions.tls = {
         // If you need a certificate, execute "npm run cert".
         cert: fs.readFileSync(serverPathRoot + ".crt"),
@@ -216,11 +205,7 @@ function getOption(optionName, environmentName) {
         console.log("[backend:214]:", STRINGS[optionName + "Missing"]);
         process.exit(1);
     })();
-    console.log(
-        `[backend:217]: Using "${
-            optionName == "secret" ? "REDACTED" : option
-        }" for ${optionName}`
-    );
+    console.log(`[backend:217]: Using "${optionName == "secret" ? "REDACTED" : option}" for ${optionName}`);
     return option;
 }
 
@@ -353,8 +338,7 @@ function userIsInCooldown(opaqueUserId, skipCooldown = false) {
         return true;
     }
     // Voting extensions must also track per-user votes to prevent skew.
-    userCooldowns[opaqueUserId] =
-        now + skipCooldown ? userSkipCooldownMs : userCooldownMs;
+    userCooldowns[opaqueUserId] = now + skipCooldown ? userSkipCooldownMs : userCooldownMs;
     return false;
 }
 
@@ -386,16 +370,10 @@ async function ongoingRaidGameQueryHandler(req) {
     if (typeof channelRaiders[channelId] === "undefined") {
         console.log(`[backend:415]: ${noActiveGameString}`);
         return null;
-    } else if (
-        channelRaiders[channelId] &&
-        typeof channelRaiders[channelId].games === "undefined"
-    ) {
+    } else if (channelRaiders[channelId] && typeof channelRaiders[channelId].games === "undefined") {
         console.log(`[backend:421]: ${noActiveGameString}`);
         return null;
-    } else if (
-        channelRaiders[channelId] &&
-        channelRaiders[channelId].games.length < 1
-    ) {
+    } else if (channelRaiders[channelId] && channelRaiders[channelId].games.length < 1) {
         console.log(`[backend:427]: ${noActiveGameString}`);
         return null;
     }
@@ -456,10 +434,7 @@ async function updateUserConfigHandler(req) {
         const jsonUpdateDocument = JSON.parse(req.payload),
             updateDocument = parseUserConfigUpdateDocument(jsonUpdateDocument);
         await addNewStreamer(channelId);
-        const updateResult = await dataBase.updateOne(
-            { channelId },
-            { $set: { userConfig: updateDocument } }
-        );
+        const updateResult = await dataBase.updateOne({ channelId }, { $set: { userConfig: updateDocument } });
         return JSON.stringify({
             result: "User Config updated!",
             data: updateResult,
@@ -476,9 +451,7 @@ function parseUserConfigUpdateDocument(document) {
             const max = DEFAULTS[key].max,
                 min = DEFAULTS[key].min;
             if (!key.toLowerCase().includes("enable")) {
-                parsedDoc[key] = parseInt(
-                    value > max ? max : value < min ? min : value
-                );
+                parsedDoc[key] = parseInt(value > max ? max : value < min ? min : value);
             } else {
                 parsedDoc[key] = value ? true : false;
             }
@@ -499,16 +472,12 @@ function raiderSupportHandler(req) {
     // increase health on specific raider
     if (channelRaiders[channelId]?.games) {
         for (const gameObj of channelRaiders[channelId].games) {
-            if (
-                gameObj.raiderData.display_name.toLowerCase() ==
-                raider.toLowerCase()
-            ) {
+            if (gameObj.raiderData.display_name.toLowerCase() == raider.toLowerCase()) {
                 if (gameObj.raiderData.health < 100) {
                     console.log(
                         `[backend:487]: increase health on : ${raider} in stream: ${channelId}, by ${opaqueUserId}`
                     );
-                    gameObj.raiderData.health =
-                        gameObj.raiderData.health + gameObj.supportRatio.raider;
+                    gameObj.raiderData.health = gameObj.raiderData.health + gameObj.supportRatio.raider;
                 }
                 break;
             }
@@ -528,9 +497,7 @@ function streamerSupportHandler(req) {
         throw Boom.tooManyRequests(STRINGS.cooldown);
     }
     if (channelRaiders[channelId] && channelRaiders[channelId].games) {
-        console.log(
-            `[backend:627]: reduce health on all raiders in stream: ${channelId}, by ${opaqueUserId}`
-        );
+        console.log(`[backend:627]: reduce health on all raiders in stream: ${channelId}, by ${opaqueUserId}`);
         for (const gameObj of channelRaiders[channelId].games) {
             if (gameObj.raiderData.health > 0) {
                 //! DURING TEST
@@ -538,8 +505,7 @@ function streamerSupportHandler(req) {
                     gameObj.raiderData.health = gameObj.raiderData.health - 20;
                 }
                 //! DURING TEST
-                gameObj.raiderData.health =
-                    gameObj.raiderData.health - gameObj.supportRatio.streamer;
+                gameObj.raiderData.health = gameObj.raiderData.health - gameObj.supportRatio.streamer;
             }
         }
         return channelRaiders[channelId].games;
@@ -619,48 +585,28 @@ class DataBase {
         }
     }
     async insertOne(document, collection = this.collection) {
-        const result = await this.client
-            .db(this.dataBaseName)
-            .collection(collection)
-            .insertOne(document);
+        const result = await this.client.db(this.dataBaseName).collection(collection).insertOne(document);
         if (result) {
-            console.log(
-                `[backend:287]: new db entry added at`,
-                result.insertedId
-            );
+            console.log(`[backend:287]: new db entry added at`, result.insertedId);
             return result;
         }
         console.log(`[backend:293]: no documents added:`, result);
     }
     async findOne(document, collection = this.collection) {
-        const result = await this.client
-            .db(this.dataBaseName)
-            .collection(collection)
-            .findOne(document);
+        const result = await this.client.db(this.dataBaseName).collection(collection).findOne(document);
         if (result) {
             return result;
         }
-        console.log(
-            `[backend:301]: no document found with document:`,
-            document
-        );
+        console.log(`[backend:301]: no document found with document:`, document);
     }
     async find(collection = this.collection) {
-        const result = await this.client
-            .db(this.dataBaseName)
-            .collection(collection)
-            .find()
-            .toArray();
+        const result = await this.client.db(this.dataBaseName).collection(collection).find().toArray();
         if (result) {
             return result;
         }
         console.log(`[backend:302]: no documents found:`, result);
     }
-    async updateOne(
-        filterDocument,
-        updateDocument,
-        collection = this.collection
-    ) {
+    async updateOne(filterDocument, updateDocument, collection = this.collection) {
         const result = await this.client
             .db(this.dataBaseName)
             .collection(collection)
@@ -730,6 +676,7 @@ async function getAppAccessToken() {
         const result = await fetch(endpoint, { method: "POST" });
         if (result.ok) {
             const data = await result.json();
+            console.log("[backend:678]: APP_ACCESS_TOKEN", APP_ACCESS_TOKEN);
             APP_ACCESS_TOKEN = data.access_token;
             process.env.APP_ACCESS_TOKEN = APP_ACCESS_TOKEN;
             TOKEN_EXPIRE_DATE = Date.now() + data.expires_in * 1000;
@@ -801,9 +748,7 @@ function startTmi(channels) {
         channels,
     });
     tmiClient.connect().then(() => {
-        console.log(
-            `[backend:529]: Listening for messages on ${channels.length} channels`
-        );
+        console.log(`[backend:529]: Listening for messages on ${channels.length} channels`);
     });
     tmiClient.on("message", (channel, userstate, message, self) =>
         chatCommandHandler(channel, userstate, message, self)
@@ -812,9 +757,7 @@ function startTmi(channels) {
         // channel: String - Channel name being raided
         // username: String - Username raiding the channel
         // viewers: Integer - Viewers count
-        console.log(
-            `[backend:536]: ${channel} was raided by: ${username} with ${viewers} viewers`
-        );
+        console.log(`[backend:536]: ${channel} was raided by: ${username} with ${viewers} viewers`);
         channel = channel.replace("#", "");
         viewers = parseInt(viewers);
         await startRaid(channel, username, viewers);
@@ -836,20 +779,12 @@ async function chatCommandHandler(channel, userstate, message, self) {
     if (userstate["message-type"] === "chat" && streamerData) {
         if (message.startsWith("!raidbattle")) {
             if (message.toLowerCase().includes("madeby")) {
-                attemptSendChatMessageToChannel(
-                    streamerData,
-                    "Was made by @itsOiK"
-                );
+                attemptSendChatMessageToChannel(streamerData, "Was made by @itsOiK");
                 return;
             }
             // send message to chat
-            console.log(
-                `[backend:838]: Command: "${message}"  recognized on channel: ${channel}`
-            );
-            attemptSendChatMessageToChannel(
-                streamerData,
-                strings.RAIDBATTLE_CHAT_INFO_TEXT
-            );
+            console.log(`[backend:838]: Command: "${message}"  recognized on channel: ${channel}`);
+            attemptSendChatMessageToChannel(streamerData, strings.RAIDBATTLE_CHAT_INFO_TEXT);
         }
     }
 }
@@ -872,9 +807,7 @@ function restartTmi(channelList) {
 //! ------------------------------------------------------- //
 async function startRaid(channel, username, viewers) {
     // starts a raid game
-    console.log(
-        `[backend:549]: Starting raid on channel: ${channel}, started by: ${username}`
-    );
+    console.log(`[backend:549]: Starting raid on channel: ${channel}, started by: ${username}`);
     //# HERE
     const streamerData = await dataBase.findOne({ channelName: channel }),
         channelId = streamerData.channelId;
@@ -886,32 +819,15 @@ async function startRaid(channel, username, viewers) {
             finalBroadcastTimeout: null,
         };
     }
-    if (
-        !channelRaiders[channelId].games.some(
-            (game) => game.raiderData.raider === username
-        )
-    ) {
+    if (!channelRaiders[channelId].games.some((game) => game.raiderData.raider === username)) {
         let result = [];
-        const gamePackage = await constructGamePackage(
-            username,
-            viewers,
-            streamerData,
-            channelId
-        );
+        const gamePackage = await constructGamePackage(username, viewers, streamerData, channelId);
         if (gamePackage) {
-            setResult(
-                channelId,
-                username,
-                parseString(strings.intro1, username),
-                "introDuration"
-            );
+            setResult(channelId, username, parseString(strings.intro1, username), "introDuration");
             attemptSendChatMessageToChannel(
                 streamerData,
                 `Incoming raid from ${username} - get ready for RAID-BATTLE ${
-                    (await getUserConfigOrDefaultValue(
-                        channelId,
-                        "enableChatCommands"
-                    ))
+                    (await getUserConfigOrDefaultValue(channelId, "enableChatCommands"))
                         ? "(type !RAIDBATTLE for info)"
                         : ""
                 }`
@@ -919,11 +835,7 @@ async function startRaid(channel, username, viewers) {
             handleBroadcastInterval(channelId);
             result = channelRaiders[channelId].games;
         }
-        console.log(
-            `[backend:906]: StartRaid returned: ${
-                result == [] ? "Null" : "channelRaiders[channelId].games"
-            }:`
-        );
+        console.log(`[backend:906]: StartRaid returned: ${result == [] ? "Null" : "channelRaiders[channelId].games"}:`);
         return result;
     }
 }
@@ -939,12 +851,7 @@ async function getUserConfigOrDefaultValue(channelId, configName) {
     return result;
 }
 
-async function constructGamePackage(
-    raiderUserName,
-    raiderAmount,
-    streamerData,
-    channelId
-) {
+async function constructGamePackage(raiderUserName, raiderAmount, streamerData, channelId) {
     // constructs an object for a raid game
     const streamData = await getStreamsById(streamerData.channelId);
     if (streamData && streamData.type == "live") {
@@ -1021,19 +928,14 @@ function checkRaiderHealthAndSetResult(channelId, healthThreshold, stringName) {
             }
         }
         if (operand) {
-            console.log(
-                `[backend:957]: raider under ${healthThreshold}% and not in resultqueue`
-            );
+            console.log(`[backend:957]: raider under ${healthThreshold}% and not in resultqueue`);
             setResult(
                 channelId,
                 game.raiderData.display_name,
                 parseString(strings[stringName], name, healthThreshold),
                 "gameInfoDuration"
             );
-            attemptSendChatMessageToChannel(
-                game.streamerData,
-                parseString(strings[stringName], name, healthThreshold)
-            );
+            attemptSendChatMessageToChannel(game.streamerData, parseString(strings[stringName], name, healthThreshold));
         }
     }
 }
@@ -1067,11 +969,7 @@ function setGameExpiredResult(channelId, gameEnd) {
             defeated = gamesArray[0].streamerData.displayName;
         }
         if (
-            !checkForExistingGameResult(
-                gamesArray[0].gameResult,
-                "string",
-                parseString(strings.win, winner, defeated)
-            )
+            !checkForExistingGameResult(gamesArray[0].gameResult, "string", parseString(strings.win, winner, defeated))
         ) {
             console.log("[backend:1078]: gameEnd.result", gameEnd.result);
             setResult(
@@ -1080,10 +978,7 @@ function setGameExpiredResult(channelId, gameEnd) {
                 parseString(strings.win, winner, defeated),
                 "gameResultDuration"
             );
-            attemptSendChatMessageToChannel(
-                gamesArray[0].streamerData,
-                parseString(strings.win, winner, defeated)
-            );
+            attemptSendChatMessageToChannel(gamesArray[0].streamerData, parseString(strings.win, winner, defeated));
         }
         sendFinalBroadcastTimeout(channelId);
     }
@@ -1092,9 +987,7 @@ function setAllRaiderDeadCondition(channelId, gameEnd) {
     const gamesArray = channelRaiders[channelId].games;
     // handles setting condition when all raiders are dead
     //! STREAMER WIN
-    const maxHealth = Math.max(
-        ...gamesArray.map((game) => parseInt(game.raiderData.health))
-    );
+    const maxHealth = Math.max(...gamesArray.map((game) => parseInt(game.raiderData.health)));
     if (maxHealth < 1 && channelRaiders[channelId].hasRunningGame) {
         // no more players
         // set endResult
@@ -1102,30 +995,18 @@ function setAllRaiderDeadCondition(channelId, gameEnd) {
             !checkForExistingGameResult(
                 gamesArray[0].gameResult,
                 "string",
-                parseString(
-                    strings.win,
-                    gamesArray[0].streamerData.displayName,
-                    gameEnd.result[0].name
-                )
+                parseString(strings.win, gamesArray[0].streamerData.displayName, gameEnd.result[0].name)
             )
         ) {
             setResult(
                 channelId,
                 gameEnd.result[0].name,
-                parseString(
-                    strings.win,
-                    gamesArray[0].streamerData.displayName,
-                    gameEnd.result[0].name
-                ),
+                parseString(strings.win, gamesArray[0].streamerData.displayName, gameEnd.result[0].name),
                 "gameResultDuration"
             );
             attemptSendChatMessageToChannel(
                 gamesArray[0].streamerData,
-                parseString(
-                    strings.win,
-                    gamesArray[0].streamerData.displayName,
-                    gameEnd.result[0].name
-                )
+                parseString(strings.win, gamesArray[0].streamerData.displayName, gameEnd.result[0].name)
             );
         }
         // do final broadcast
@@ -1152,14 +1033,8 @@ async function setResult(channelId, raider, string, durationName) {
     // channelRaiders[channelId] == Array
     for (let i = 0; i < channelRaiders[channelId].games.length; i++) {
         const raiderGame = channelRaiders[channelId].games[i];
-        if (
-            raiderGame.raiderData.display_name.toLowerCase() ==
-            raider.toLowerCase()
-        ) {
-            const addedTime = await getUserConfigOrDefaultValue(
-                channelId,
-                durationName
-            );
+        if (raiderGame.raiderData.display_name.toLowerCase() == raider.toLowerCase()) {
+            const addedTime = await getUserConfigOrDefaultValue(channelId, durationName);
             const resultExpires = Date.now() + addedTime * 1000;
             channelRaiders[channelId].games[i].gameResult.push({
                 resultExpires,
@@ -1175,9 +1050,7 @@ async function setResult(channelId, raider, string, durationName) {
 //! ------------------------------------------------------- //
 function gameExpired(gamesArray) {
     // calculates if gameDuration of a game has expired
-    const gameDuration = Math.max(
-        ...gamesArray.map((game) => game.gameTimeObj.gameDuration)
-    );
+    const gameDuration = Math.max(...gamesArray.map((game) => game.gameTimeObj.gameDuration));
     if (gameDuration >= Date.now() / 1000) {
         //* GAME NOT EXPIRED
         return false;
@@ -1189,20 +1062,13 @@ async function constructGameTimeObject(streamerData) {
     // handles creating the gameTimeObj: {gameDuration, introDuration, gameResultDuration}
     const introDuration = await calculateIntroDuration(streamerData),
         gameDuration = await calculateGameDuration(introDuration, streamerData),
-        gameResultDuration = await getUserConfigOrDefaultValue(
-            streamerData.channelId,
-            "gameDuration"
-        );
+        gameResultDuration = await getUserConfigOrDefaultValue(streamerData.channelId, "gameDuration");
     return { introDuration, gameDuration, gameResultDuration };
 }
 async function calculateIntroDuration(streamerData) {
     // set introDuration on gameTimeObj
     introDuration = Math.floor(
-        Date.now() / 1000 +
-            (await getUserConfigOrDefaultValue(
-                streamerData.channelId,
-                "introDuration"
-            ))
+        Date.now() / 1000 + (await getUserConfigOrDefaultValue(streamerData.channelId, "introDuration"))
     );
     return introDuration;
 }
@@ -1210,33 +1076,21 @@ async function calculateGameDuration(introDuration, streamerData) {
     // set gameDuration on gameTimeObj
     // if there are more than 0 games in the list use extendGameDuration
     const userConfig = streamerData.userConfig;
-    if (
-        channelRaiders[streamerData.channelId].games &&
-        channelRaiders[streamerData.channelId].games.length >= 1
-    ) {
+    if (channelRaiders[streamerData.channelId].games && channelRaiders[streamerData.channelId].games.length >= 1) {
         // using extendGameDuration if ongoing game
         const ongoingGame = Math.max(
-            ...channelRaiders[streamerData.channelId].games.map(
-                (game) => game.gameTimeObj.gameDuration
-            )
+            ...channelRaiders[streamerData.channelId].games.map((game) => game.gameTimeObj.gameDuration)
         );
         let extraTime = 0;
         if (userConfig && userConfig.extendGameDurationEnabled) {
-            extraTime = await getUserConfigOrDefaultValue(
-                streamerData.channelId,
-                "extendGameDuration"
-            );
+            extraTime = await getUserConfigOrDefaultValue(streamerData.channelId, "extendGameDuration");
         }
         gameDuration = Math.floor(ongoingGame + extraTime);
     } else {
         // using streamerData if no other games are running
         // or DEFAULTS if no streamerData.userConfig
         gameDuration = Math.floor(
-            introDuration +
-                (await getUserConfigOrDefaultValue(
-                    streamerData.channelId,
-                    "gameDuration"
-                ))
+            introDuration + (await getUserConfigOrDefaultValue(streamerData.channelId, "gameDuration"))
         );
     }
     return gameDuration;
@@ -1264,15 +1118,8 @@ function broadcastInterval(channelId) {
 async function sendFinalBroadcastTimeout(channelId) {
     if (!channelRaiders[channelId].finalBroadcastTimeout) {
         // sends a final broadcast after a timeOut(USER_CONFIG.gameResultDuration)
-        const timeout = await getUserConfigOrDefaultValue(
-            channelId,
-            "gameResultDuration"
-        );
-        console.log(
-            "[backend:713]:sending final broadcast in: ",
-            timeout,
-            " sec!"
-        );
+        const timeout = await getUserConfigOrDefaultValue(channelId, "gameResultDuration");
+        console.log("[backend:713]:sending final broadcast in: ", timeout, " sec!");
         channelRaiders[channelId].finalBroadcastTimeout = setTimeout(() => {
             cleanUpChannelRaiderAndDoBroadcast(channelId);
         }, timeout * 1000);
@@ -1284,9 +1131,7 @@ function cleanUpChannelRaiderAndDoBroadcast(channelId) {
     // cleans up channelraider list, ends game and attempts a broadcast
     try {
         if (channelRaiders[channelId]) {
-            console.log(
-                "[backend:685]: cleaning up and sending final broadcast"
-            );
+            console.log("[backend:685]: cleaning up and sending final broadcast");
             clearInterval(channelRaiders[channelId].interval);
             channelRaiders[channelId].interval = null;
             channelRaiders[channelId].hasRunningGame = false;
@@ -1313,11 +1158,7 @@ function attemptRaidBroadcast(channelId) {
         channelCooldowns[channelId] = { time: now + channelCooldownMs };
     } else if (!cooldown.trigger) {
         // It isn't; schedule a delayed broadcast if we haven't already done so.
-        cooldown.trigger = setTimeout(
-            sendRaidBroadcast,
-            now - cooldown.time,
-            channelId
-        );
+        cooldown.trigger = setTimeout(sendRaidBroadcast, now - cooldown.time, channelId);
     }
 }
 //! ---- SEND ---- //
@@ -1338,11 +1179,7 @@ async function sendRaidBroadcast(channelId) {
     // Send the broadcast request to the Twitch API.
     const url = "https://api.twitch.tv/helix/extensions/pubsub";
     const res = await fetch(url, { method: "POST", headers, body });
-    console.log(
-        "[backend:503]: ",
-        `Broadcasting to channelId: ${channelId}`,
-        `Response: ${res.status}`
-    );
+    console.log("[backend:503]: ", `Broadcasting to channelId: ${channelId}`, `Response: ${res.status}`);
 }
 
 //! --------------------------------------------------------- //
@@ -1372,9 +1209,7 @@ async function sendChatMessageToChannel(message, channelId) {
     // sends a message to a specified channelID
     // not more often than every 5sec pr channel
     // Maximum: 280 characters.
-    console.log(
-        `[backend:1321]: sending message: "${message}" to channel: "${channelId}"`
-    );
+    console.log(`[backend:1321]: sending message: "${message}" to channel: "${channelId}"`);
     const jwtToken = makeServerToken(channelId);
     const url = `https://api.twitch.tv/helix/extensions/chat?broadcaster_id=${channelId}`,
         headers = {
