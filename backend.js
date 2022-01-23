@@ -676,7 +676,6 @@ async function getAppAccessToken() {
         const result = await fetch(endpoint, { method: "POST" });
         if (result.ok) {
             const data = await result.json();
-            console.log("[backend:678]: APP_ACCESS_TOKEN", APP_ACCESS_TOKEN);
             APP_ACCESS_TOKEN = data.access_token;
             process.env.APP_ACCESS_TOKEN = APP_ACCESS_TOKEN;
             TOKEN_EXPIRE_DATE = Date.now() + data.expires_in * 1000;
