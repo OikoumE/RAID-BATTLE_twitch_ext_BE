@@ -173,7 +173,9 @@ ext.version(require("./package.json").version)
 const ownerId = getOption("ownerId", "EXT_OWNER_ID");
 const secret = Buffer.from(getOption("secret", "EXT_SECRET"), "base64");
 const clientId = getOption("clientId", "EXT_CLIENT_ID");
-const EXT_CLIENT_ID = process.env.EXT_CLIENT_ID;
+const EXT_CLIENT_ID = process.env.EXT_CLIENT_ID,
+    EXT_CLIENT_ID = process.env.EXT_CLIENT_ID,
+    EXT_SECRET = process.env.EXT_SECRET;
 
 const serverOptions = {
     host: "0.0.0.0",
@@ -215,7 +217,7 @@ function verifyAndDecode(header) {
     if (header.startsWith(bearerPrefix)) {
         try {
             const token = header.substring(bearerPrefix.length);
-            return jsonwebtoken.verify(token, secret, {
+            return jsonwebtoken.verify(token, EXT_SECRET, {
                 algorithms: ["HS256"],
             });
         } catch (ex) {
@@ -1165,7 +1167,7 @@ function attemptRaidBroadcast(channelId) {
 async function sendRaidBroadcast(channelId) {
     // Set the HTTP headers required by the Twitch API.
     const headers = {
-        "Client-ID": clientId,
+        "Client-ID": EXT_CLIENT_ID,
         "Content-Type": "application/json",
         Authorization: bearerPrefix + makeServerToken(channelId),
     };
@@ -1243,14 +1245,14 @@ function makeServerToken(channelId) {
     // makes a JWT token
     const payload = {
         exp: Math.floor(Date.now() / 1000) + serverTokenDurationSec,
-        user_id: ownerId, // extension owner ID for the call to Twitch PubSub
+        user_id: EXT_CLIENT_ID, // extension owner ID for the call to Twitch PubSub
         role: "external",
         channel_id: channelId,
         pubsub_perms: {
             send: ["broadcast"],
         },
     };
-    return jsonwebtoken.sign(payload, secret, { algorithm: "HS256" });
+    return jsonwebtoken.sign(payload, EXT_SECRET, { algorithm: "HS256" });
 }
 
 function confirmOpaqueUser(channelId, opaqueId) {
