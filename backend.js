@@ -1245,9 +1245,9 @@ function makeServerToken(channelId) {
     // makes a JWT token
     const payload = {
         exp: Math.floor(Date.now() / 1000) + serverTokenDurationSec,
-        user_id: EXT_OWNER_ID, // extension owner ID for the call to Twitch PubSub
+        user_id: EXT_OWNER_ID.toString(), // extension owner ID for the call to Twitch PubSub
         role: "external",
-        channel_id: channelId,
+        channel_id: channelId.toString(),
         pubsub_perms: {
             send: ["broadcast"],
         },
