@@ -1227,10 +1227,15 @@ async function sendChatMessageToChannel(message, channelId) {
         });
     const res = await fetch(url, { method: "POST", headers, body });
     let string;
-    if (res.status < 300) {
+    if (res.status == 200) {
         string = "Broadcast chat message result: SUCCESS!";
+<<<<<<< HEAD
     } else if (res.status >= 300) {
         string = "Broadcast chat message result: ERROR!";
+=======
+    } else if (res.status > 200) {
+        string = "ERROR:";
+>>>>>>> parent of d168ae2 (Update backend.js)
         console.log("[backend:1395]: res.status;", res.status);
         console.log("[backend:1396]: res.statusText;", res.statusText);
         console.log("[backend:1397]: res.body;", await res.json);
