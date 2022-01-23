@@ -72,8 +72,8 @@ const ObjectId = require("mongodb").ObjectId;
 const mongoUri = process.env.MONGODB_URL;
 
 //* twitch api auth
-const APP_CLIENT_ID = process.env.APP_CLIENT_ID || "epcjd8cqin8efwuwgs9m8ubpjnbw90",
-    APP_CLIENT_SECRET = process.env.APP_CLIENT_SECRET || "",
+const APP_CLIENT_ID = process.env.APP_CLIENT_ID,
+    APP_CLIENT_SECRET = process.env.APP_CLIENT_SECRET,
     CURRENT_VERSION = process.env.CURRENT_VERSION;
 // CURRENT_VERSION = "0.0.4";
 
@@ -1227,10 +1227,10 @@ async function sendChatMessageToChannel(message, channelId) {
     if (res.status < 300) {
         string = "Broadcast chat message result: SUCCESS!";
     } else if (res.status >= 300) {
-        string = "ERROR:";
+        string = "Broadcast chat message result: ERROR!";
         console.log("[backend:1395]: res.status;", res.status);
         console.log("[backend:1396]: res.statusText;", res.statusText);
-        console.log("[backend:1397]: res.body;", await res.json());
+        console.log("[backend:1397]: res.body;", await res.json);
     }
     console.log(`[backend:1338]: ${string}`);
 }
