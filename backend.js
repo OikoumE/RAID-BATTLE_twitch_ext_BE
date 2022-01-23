@@ -174,7 +174,7 @@ const ownerId = getOption("ownerId", "EXT_OWNER_ID");
 const secret = Buffer.from(getOption("secret", "EXT_SECRET"), "base64");
 const clientId = getOption("clientId", "EXT_CLIENT_ID");
 const EXT_CLIENT_ID = process.env.EXT_CLIENT_ID,
-    EXT_CLIENT_ID = process.env.EXT_CLIENT_ID,
+    EXT_OWNER_ID = process.env.EXT_OWNER_ID,
     EXT_SECRET = process.env.EXT_SECRET;
 
 const serverOptions = {
@@ -1245,7 +1245,7 @@ function makeServerToken(channelId) {
     // makes a JWT token
     const payload = {
         exp: Math.floor(Date.now() / 1000) + serverTokenDurationSec,
-        user_id: EXT_CLIENT_ID, // extension owner ID for the call to Twitch PubSub
+        user_id: EXT_OWNER_ID, // extension owner ID for the call to Twitch PubSub
         role: "external",
         channel_id: channelId,
         pubsub_perms: {
