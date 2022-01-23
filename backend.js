@@ -1231,7 +1231,7 @@ async function sendChatMessageToChannel(message, channelId) {
         string = "ERROR:";
         console.log("[backend:1395]: res.status;", res.status);
         console.log("[backend:1396]: res.statusText;", res.statusText);
-        console.log("[backend:1397]: res.body;", res.body);
+        console.log("[backend:1397]: res.body;", await res.json());
     }
     console.log(`[backend:1338]: ${string}`);
 }
