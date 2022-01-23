@@ -173,6 +173,7 @@ ext.version(require("./package.json").version)
 const ownerId = getOption("ownerId", "EXT_OWNER_ID");
 const secret = Buffer.from(getOption("secret", "EXT_SECRET"), "base64");
 const clientId = getOption("clientId", "EXT_CLIENT_ID");
+const EXT_CLIENT_ID = process.env.EXT_CLIENT_ID;
 
 const serverOptions = {
     host: "0.0.0.0",
@@ -1212,14 +1213,14 @@ async function sendChatMessageToChannel(message, channelId) {
     const jwtToken = makeServerToken(channelId);
     const url = `https://api.twitch.tv/helix/extensions/chat?broadcaster_id=${channelId}`,
         headers = {
-            "Client-ID": clientId,
+            "Client-ID": EXT_CLIENT_ID,
             Authorization: "Bearer " + jwtToken,
             "Content-Type": "application/json",
         },
         body = JSON.stringify({
             // text: message,
             text: message,
-            extension_id: clientId,
+            extension_id: EXT_CLIENT_ID,
             extension_version: CURRENT_VERSION,
         });
     const res = await fetch(url, { method: "POST", headers, body });
