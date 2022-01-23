@@ -1,6 +1,6 @@
 {
     "name": "raid_battle",
-    "version": "0.0.4",
+    "version": "0.0.3",
     "description": "Itsoik's RAID BATTLE twitch extension",
     "main": "backend.js",
     "scripts": {
