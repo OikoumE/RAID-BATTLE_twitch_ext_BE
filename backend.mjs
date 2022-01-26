@@ -331,7 +331,6 @@ async function ongoingRaidGameQueryHandler(req, res) {
     const { channelId, opaqueUserId } = res.locals;
     const result = await dataBase.findOne({ channelId });
     const { userConfig } = result;
-    console.log("[backend:332]: result", result);
     if (!result) {
         addNewStreamer(channelId);
     }
