@@ -358,9 +358,12 @@ async function ongoingRaidGameQueryHandler(req) {
     // Verify all requests.
     const payload = verifyAndDecode(req.headers.authorization);
     const { channel_id: channelId, opaque_user_id: opaqueUserId } = payload;
-    // console.log("[backend:406]: payload", payload);
-    // Bot abuse prevention:  don't allow a user to spam the button.
+    if (opaqueUserId == "UO9JDGAyeEIgjI962_xEt") {
+        throw Boom.tooManyRequests(STRINGS.cooldown);
+    }
     if (userIsInCooldown(opaqueUserId)) {
+        // console.log("[backend:406]: payload", payload);
+        // Bot abuse prevention:  don't allow a user to spam the button.
         throw Boom.tooManyRequests(STRINGS.cooldown);
     }
     const result = await dataBase.findOne({ channelId });
