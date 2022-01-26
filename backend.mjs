@@ -1318,6 +1318,7 @@ async function sendChatMessageToChannel(message, channelId) {
     const res = await fetch(url, { method: "POST", headers, body });
     console.log(`[backend:1337]: Broadcast chat message result: ${res.status}: ${res.statusText}`);
 }
+
 //! --------------------------------------------------------- //
 //*                   -- AUTHORIZATION --                    //
 //! ------------------------------------------------------- //
