@@ -72,13 +72,13 @@ const ObjectId = require("mongodb").ObjectId;
 const mongoUri = process.env.MONGODB_URL;
 
 //* twitch api auth
-const APP_CLIENT_ID = process.env.APP_CLIENT_ID,
-    APP_CLIENT_SECRET = process.env.APP_CLIENT_SECRET,
+const APP_CLIENT_ID = process.env.APP_CLIENT_ID || "epcjd8cqin8efwuwgs9m8ubpjnbw90",
+    APP_CLIENT_SECRET = process.env.APP_CLIENT_SECRET || "",
     CURRENT_VERSION = process.env.CURRENT_VERSION;
 // CURRENT_VERSION = "0.0.4";
 
-let APP_ACCESS_TOKEN = process.env.APP_ACCESS_TOKEN || null,
-    TOKEN_EXPIRE_DATE = process.env.TOKEN_EXPIRE_DATE || null;
+let APP_ACCESS_TOKEN = null,
+    TOKEN_EXPIRE_DATE = null;
 
 const initialSupport = 50,
     channelRaiders = {},
@@ -173,9 +173,6 @@ ext.version(require("./package.json").version)
 const ownerId = getOption("ownerId", "EXT_OWNER_ID");
 const secret = Buffer.from(getOption("secret", "EXT_SECRET"), "base64");
 const clientId = getOption("clientId", "EXT_CLIENT_ID");
-const EXT_CLIENT_ID = process.env.EXT_CLIENT_ID,
-    EXT_OWNER_ID = process.env.EXT_OWNER_ID,
-    EXT_SECRET = process.env.EXT_SECRET;
 
 const serverOptions = {
     host: "0.0.0.0",
@@ -217,7 +214,7 @@ function verifyAndDecode(header) {
     if (header.startsWith(bearerPrefix)) {
         try {
             const token = header.substring(bearerPrefix.length);
-            return jsonwebtoken.verify(token, EXT_SECRET, {
+            return jsonwebtoken.verify(token, secret, {
                 algorithms: ["HS256"],
             });
         } catch (ex) {
@@ -358,12 +355,9 @@ async function ongoingRaidGameQueryHandler(req) {
     // Verify all requests.
     const payload = verifyAndDecode(req.headers.authorization);
     const { channel_id: channelId, opaque_user_id: opaqueUserId } = payload;
-    // if (opaqueUserId == "UO9JDGAyeEIgjI962_xEt") {
-    //     throw Boom.tooManyRequests(STRINGS.cooldown);
-    // }
+    // console.log("[backend:406]: payload", payload);
+    // Bot abuse prevention:  don't allow a user to spam the button.
     if (userIsInCooldown(opaqueUserId)) {
-        // console.log("[backend:406]: payload", payload);
-        // Bot abuse prevention:  don't allow a user to spam the button.
         throw Boom.tooManyRequests(STRINGS.cooldown);
     }
     const result = await dataBase.findOne({ channelId });
@@ -1170,7 +1164,7 @@ function attemptRaidBroadcast(channelId) {
 async function sendRaidBroadcast(channelId) {
     // Set the HTTP headers required by the Twitch API.
     const headers = {
-        "Client-ID": EXT_CLIENT_ID,
+        "Client-ID": clientId,
         "Content-Type": "application/json",
         Authorization: bearerPrefix + makeServerToken(channelId),
     };
@@ -1218,25 +1212,25 @@ async function sendChatMessageToChannel(message, channelId) {
     const jwtToken = makeServerToken(channelId);
     const url = `https://api.twitch.tv/helix/extensions/chat?broadcaster_id=${channelId}`,
         headers = {
-            "Client-ID": EXT_CLIENT_ID,
+            "Client-ID": clientId,
             Authorization: "Bearer " + jwtToken,
             "Content-Type": "application/json",
         },
         body = JSON.stringify({
             // text: message,
             text: message,
-            extension_id: EXT_CLIENT_ID,
+            extension_id: clientId,
             extension_version: CURRENT_VERSION,
         });
     const res = await fetch(url, { method: "POST", headers, body });
     let string;
-    if (res.status == 200) {
+    if (res.status < 300) {
         string = "Broadcast chat message result: SUCCESS!";
     } else if (res.status >= 300) {
-        string = "Broadcast chat message result: ERROR!";
+        string = "ERROR:";
         console.log("[backend:1395]: res.status;", res.status);
         console.log("[backend:1396]: res.statusText;", res.statusText);
-        console.log("[backend:1397]: res.body;", await res.json);
+        console.log("[backend:1397]: res.body;", res.body);
     }
     console.log(`[backend:1338]: ${string}`);
 }
@@ -1248,14 +1242,14 @@ function makeServerToken(channelId) {
     // makes a JWT token
     const payload = {
         exp: Math.floor(Date.now() / 1000) + serverTokenDurationSec,
-        user_id: EXT_OWNER_ID.toString(), // extension owner ID for the call to Twitch PubSub
+        user_id: ownerId, // extension owner ID for the call to Twitch PubSub
         role: "external",
-        channel_id: channelId.toString(),
+        channel_id: channelId,
         pubsub_perms: {
             send: ["broadcast"],
         },
     };
-    return jsonwebtoken.sign(payload, EXT_SECRET, { algorithm: "HS256" });
+    return jsonwebtoken.sign(payload, secret, { algorithm: "HS256" });
 }
 
 function confirmOpaqueUser(channelId, opaqueId) {
