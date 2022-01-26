@@ -334,16 +334,20 @@ async function ongoingRaidGameQueryHandler(req, res) {
     if (!result) {
         addNewStreamer(channelId);
     }
+    const noActiveGameString = `No active games on channel ${
+        result ? result.displayName : null
+    } - ${channelId} (${opaqueUserId})`;
+
     if (typeof channelRaiders[channelId] === "undefined") {
-        console.log(`[backend:415]: No active games on channel ${channelId}`);
+        console.log(`[backend:415]: ${noActiveGameString}`);
         res.json(userConfig);
         return;
     } else if (channelRaiders[channelId] && typeof channelRaiders[channelId]?.data?.games === "undefined") {
-        console.log(`[backend:421]: No active games on channel ${channelId}`);
+        console.log(`[backend:421]: ${noActiveGameString}`);
         res.json(userConfig);
         return;
     } else if (channelRaiders[channelId] && channelRaiders[channelId]?.data?.games.length < 1) {
-        console.log(`[backend:427]: No active games on channel ${channelId}`);
+        console.log(`[backend:427]: ${noActiveGameString}`);
         res.json(userConfig);
         return;
     }
