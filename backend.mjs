@@ -66,7 +66,9 @@ const APP_CLIENT_ID = process.env.APP_CLIENT_ID,
     CURRENT_VERSION = process.env.CURRENT_VERSION,
     EXT_OWNER_ID = process.env.EXT_OWNER_ID,
     EXT_CLIENT_SECRET = process.env.EXT_CLIENT_SECRET,
-    EXT_CLIENT_ID = process.env.EXT_CLIENT_ID,
+    EXT_CLIENT_ID = process.env.EXT_CLIENT_ID;
+
+const EVENTSUB_ENDPOINT = "https://api.twitch.tv/helix/eventsub/subscriptions",
     EVENTSUB_ENDPOINT_PATH = process.env.EVENTSUB_ENDPOINT_PATH;
 
 const ownerId = EXT_OWNER_ID,
