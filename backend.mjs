@@ -159,6 +159,9 @@ async function onLaunch() {
     const dataBaseUserData = await dataBase.find();
     const result = parseTmiChannelListFromDb(dataBaseUserData);
     inserLatestNewsInDb(); //! dev
+
+    await deleteEventSubEndpoint("93645775"); //! DEV ONCE
+
     await setDefaultUserConfigInDatabase();
     startTmi(result);
     // Periodically clear cool-down tracking to prevent unbounded growth due to
@@ -651,7 +654,6 @@ async function checkEventSubUser(userId) {
     throw `unable to getEventSubEndpoint: ${eventSubs}`;
 }
 
-deleteEventSubEndpoint("93645775");
 async function deleteEventSubEndpoint(channelId) {
     const streamerData = await dataBase.findOne({ channelId });
     streamerData.eventSub
