@@ -506,9 +506,12 @@ async function startTestRaidHandler(req, res) {
             await addNewStreamer(channelId);
             const channel = await dataBase.findOne({ channelId });
             const startedRaid = await startRaid(
-                channel.channelName,
-                testRaidPayload.testRaider,
-                testRaidPayload.testAmount
+                {
+                    channel: channel.channelName,
+                    username: testRaidPayload.testRaider,
+                    viewers: testRaidPayload.testAmount,
+                },
+                true
             );
             if (startedRaid) {
                 res.json(formatGameData(channelId));
@@ -589,6 +592,7 @@ async function continueAddingNewStreamer(channelId, registeredEventSub) {
     if (!userExsist) {
         const userData = await getUser(`id=${channelId}`);
         userData["eventSub"] = registeredEventSub;
+        //TODO this MAY add twice to DB... fix with promises
         const result = await addStreamerToDb(userData);
         console.log("[backend:337]: result", result);
         const allChannelList = await dataBase.find();
@@ -861,7 +865,7 @@ function restartTmi(channelList) {
 //! --------------------------------------------------------- //
 //*                  -- GAME CONDITION --                    //
 //! ------------------------------------------------------- //
-async function startRaid(channel, username, viewers) {
+async function startRaid({ channel, username, viewers }, test = false) {
     // starts a raid game
     const streamerData = await dataBase.findOne({
             channelName: channel.toLowerCase(),
@@ -878,6 +882,7 @@ async function startRaid(channel, username, viewers) {
         };
     if (typeof channelRaiders[channelId] !== "object") {
         channelRaiders[channelId] = {
+            test,
             interval: null,
             hasRunningGame: true,
             finalBroadcastTimeout: null,
@@ -966,54 +971,60 @@ async function setGameExpiredResult(channelId) {
             //? streamer win
             defeated = raiders; //.length > 1 ? raiders.join(", ") : raiders[0];
             winner = streamerData.displayName;
-            await setStreamerBattleHistory({
-                channelId,
-                versus: defeated,
-                battleResult: BATTLE_HISTORY.win,
-                score: 1,
-            });
-            await setRaiderBattleHistory({
-                idArray: raidersId,
-                versus: [winner],
-                battleResult: BATTLE_HISTORY.lost,
-                score: 0,
-            });
+            if (!channelRaiders[channelId].test) {
+                await setStreamerBattleHistory({
+                    channelId,
+                    versus: defeated,
+                    battleResult: BATTLE_HISTORY.win,
+                    score: 1,
+                });
+                await setRaiderBattleHistory({
+                    idArray: raidersId,
+                    versus: [winner],
+                    battleResult: BATTLE_HISTORY.lost,
+                    score: 0,
+                });
+            }
         } else if (channelRaidersData.supportState < -5) {
             console.log("[backend:884]: GAME RESULT: raider(s) won!");
             //? raiders win
             winner = raiders; //.length > 1 ? raiders.join(", ") : raiders[0];
             defeated = streamerData.displayName;
             console.log("[backend:1051]: winner", winner);
-            await setStreamerBattleHistory({
-                channelId,
-                versus: winner,
-                battleResult: BATTLE_HISTORY.lost,
-                score: 0,
-            });
-            await setRaiderBattleHistory({
-                idArray: raidersId,
-                versus: [defeated],
-                battleResult: BATTLE_HISTORY.win,
-                score: 1,
-            });
+            if (!channelRaiders[channelId].test) {
+                await setStreamerBattleHistory({
+                    channelId,
+                    versus: winner,
+                    battleResult: BATTLE_HISTORY.lost,
+                    score: 0,
+                });
+                await setRaiderBattleHistory({
+                    idArray: raidersId,
+                    versus: [defeated],
+                    battleResult: BATTLE_HISTORY.win,
+                    score: 1,
+                });
+            }
         } else {
             console.log("[backend:891]: GAME RESULT: draw!");
             //? Draw
             winner = raiders; //.length > 1 ? raiders.join(", ") : raiders[0];
             defeated = streamerData.displayName;
             // raidersId.push(channelId);
-            await setStreamerBattleHistory({
-                channelId,
-                versus: winner,
-                battleResult: BATTLE_HISTORY.draw,
-                score: 1,
-            });
-            await setRaiderBattleHistory({
-                idArray: raidersId,
-                versus: [defeated],
-                battleResult: BATTLE_HISTORY.draw,
-                score: 1,
-            });
+            if (!channelRaiders[channelId].test) {
+                await setStreamerBattleHistory({
+                    channelId,
+                    versus: winner,
+                    battleResult: BATTLE_HISTORY.draw,
+                    score: 1,
+                });
+                await setRaiderBattleHistory({
+                    idArray: raidersId,
+                    versus: [defeated],
+                    battleResult: BATTLE_HISTORY.draw,
+                    score: 1,
+                });
+            }
             draw = true;
         }
         stringToSend = `${winner} Gained more support than ${defeated}`;
@@ -1284,6 +1295,7 @@ function cleanUpChannelRaiderAndDoBroadcast(channelId) {
             channelRaiders[channelId].interval = null;
             channelRaiders[channelId].hasRunningGame = false;
             channelRaiders[channelId].finalBroadcastTimeout = null;
+            channelRaiders[channelId].test = false;
             channelRaiders[channelId].data.games = [];
             channelRaiders[channelId].data.games.push("GAME OVER");
             channelRaiders[channelId].data.gameState = "GAME OVER";

@@ -45,7 +45,7 @@ export async function webhookCallback({ req, res, callbackObj }) {
                 const channel = notification.event.to_broadcaster_user_name,
                     username = notification.event.from_broadcaster_user_name,
                     viewers = notification.event.viewers;
-                await startRaid(channel, username, viewers);
+                await startRaid({ channel, username, viewers });
             } else if (eventType === "user.authorization.revoke") {
                 await deleteEventSubEndpoint(channelId);
             } else if (eventType === "channel.offline" || eventType === "channel.online") {
