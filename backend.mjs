@@ -662,8 +662,8 @@ async function deleteEventSubEndpoint(channelId) {
         .map((subEvent) => {
             return subEvent.id;
         })
-        .forEach((eventId) => {
-            callDeleteEventSubEndpont(eventId);
+        .forEach(async (eventId) => {
+            await callDeleteEventSubEndpont(eventId);
         });
     return;
 }
@@ -684,10 +684,10 @@ async function callDeleteEventSubEndpont(eventId) {
     const result = await fetch(url, data);
     if (result.status === 204) {
         // 204	Successfully deleted the subscription.
-        console.log("[backend:667]: Subcription successfully deleted: ", streamerData.eventSub);
+        console.log("[backend:667]: Subcription successfully deleted: eventId:", eventId);
     } else if (result.status === 404) {
         //404	The subscription was not found.
-        console.log("[backend:667]: Subcription not found: ", streamerData.eventSub);
+        console.log("[backend:667]: Subcription not found: eventId:", eventId);
     } else if (result.status === 401) {
         //401	The caller failed authentication. Verify that your access token and client ID are valid.`;
         console.log("[backend:670]: ERROR: ", await result.json());
