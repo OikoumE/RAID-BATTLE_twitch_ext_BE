@@ -162,7 +162,7 @@ async function onLaunch() {
     const result = parseTmiChannelListFromDb(dataBaseUserData);
     inserLatestNewsInDb(); //! dev
 
-    await deleteEventSubEndpoint("93645775"); //! DEV ONCE
+    // await deleteEventSubEndpoint("93645775"); //! DEV ONCE
 
     await setDefaultUserConfigInDatabase();
     startTmi(result);
@@ -680,7 +680,7 @@ async function callDeleteEventSubEndpont(eventId) {
         headers,
         method: "DELETE",
     };
-    console.log("[backend:143]: deleting sub");
+    console.log("[backend:143]: deleting eventSubId: ", eventId);
     const result = await fetch(url, data);
     if (result.status === 204) {
         // 204	Successfully deleted the subscription.
