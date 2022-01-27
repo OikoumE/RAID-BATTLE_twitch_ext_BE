@@ -135,7 +135,6 @@ async function postEventSubEndpoint(body) {
     };
     const result = await fetch(EVENTSUB_ENDPOINT, data);
     const result_json = await result.json();
-    console.log("[index:144]: result_json", result_json);
     return result_json;
 }
 

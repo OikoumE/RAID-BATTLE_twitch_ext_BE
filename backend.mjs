@@ -582,6 +582,7 @@ async function addNewStreamer(channelId) {
     }
 }
 async function continueAddingNewStreamer(channelId, registeredEventSub) {
+    //TODO queue with promises
     const userExsist = await dataBase.checkIfUserInDb(channelId);
     let returnData;
     if (!userExsist) {
