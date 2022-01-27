@@ -574,7 +574,8 @@ async function addNewStreamer(channelId) {
             }
         } else {
             console.log("[backend:591]: EventSubRegister", channelId);
-            await EventSubRegister(channelId);
+            if (channelId) await EventSubRegister(channelId);
+            else console.trace("[backend:577]: ERROR: INVESTIGATE WHY CHANNELID IS UNDEFINED: channelId:", channelId);
             return;
         }
     } catch (err) {

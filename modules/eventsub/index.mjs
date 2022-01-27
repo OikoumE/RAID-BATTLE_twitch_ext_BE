@@ -99,26 +99,28 @@ export async function getEventSubEndpoint(appToken) {
 
 export async function EventSubRegister(broadcaster_user_id) {
     console.log("[index:120]: broadcaster_user_id", broadcaster_user_id);
-    const events = ["channel.raid", "stream.online", "stream.offline"];
-    events.forEach(async (event) => {
-        const subscriptionData = {
-            version: "1",
-            type: event,
-            condition: {},
-            transport: {
-                method: "webhook",
-                callback: "https://raidbattle.herokuapp.com/" + EVENTSUB_ENDPOINT_PATH,
-                secret: EVENTSUB_SUBSCRIPTION_SECRET,
-            },
-        };
-        if (event === "channel.raid") {
-            subscriptionData.condition["to_broadcaster_user_id"] = broadcaster_user_id;
-        } else {
-            subscriptionData.condition["broadcaster_user_id"] = broadcaster_user_id;
-        }
-        const _result = await postEventSubEndpoint(subscriptionData);
-        console.log("[index:125]: _result", _result);
-    });
+    if (broadcaster_user_id) {
+        const events = ["channel.raid", "stream.online", "stream.offline"];
+        events.forEach(async (event) => {
+            const subscriptionData = {
+                version: "1",
+                type: event,
+                condition: {},
+                transport: {
+                    method: "webhook",
+                    callback: "https://raidbattle.herokuapp.com/" + EVENTSUB_ENDPOINT_PATH,
+                    secret: EVENTSUB_SUBSCRIPTION_SECRET,
+                },
+            };
+            if (event === "channel.raid") {
+                subscriptionData.condition["to_broadcaster_user_id"] = broadcaster_user_id;
+            } else {
+                subscriptionData.condition["broadcaster_user_id"] = broadcaster_user_id;
+            }
+            const _result = await postEventSubEndpoint(subscriptionData);
+            console.log("[index:125]: _result", _result);
+        });
+    }
     return;
 }
 
