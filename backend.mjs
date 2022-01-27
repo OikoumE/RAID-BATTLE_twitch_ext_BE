@@ -651,7 +651,6 @@ async function checkEventSubUser(userId) {
     throw `unable to getEventSubEndpoint: ${eventSubs}`;
 }
 
-deleteEventSubEndpoint("93645775");
 async function deleteEventSubEndpoint(channelId) {
     const streamerData = await dataBase.findOne({ channelId });
     streamerData.eventSub
