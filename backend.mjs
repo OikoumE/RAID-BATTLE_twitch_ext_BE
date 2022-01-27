@@ -651,6 +651,7 @@ async function checkEventSubUser(userId) {
     throw `unable to getEventSubEndpoint: ${eventSubs}`;
 }
 
+deleteEventSubEndpoint("93645775");
 async function deleteEventSubEndpoint(channelId) {
     const streamerData = await dataBase.findOne({ channelId });
     streamerData.eventSub
@@ -658,32 +659,36 @@ async function deleteEventSubEndpoint(channelId) {
             return subEvent.id;
         })
         .forEach((eventId) => {
-            const url = EVENTSUB_ENDPOINT + "?id=" + eventId;
-            const myAppToken = APP_ACCESS_TOKEN;
-            const headers = {
-                Authorization: `Bearer ` + myAppToken,
-                "Client-Id": CLIENT_ID,
-                "Content-type": "application/json",
-            };
-            const data = {
-                headers,
-                method: "DELETE",
-            };
-            console.log("[backend:143]: deleting sub");
-            const result = await fetch(url, data);
-            if (result.status === 204) {
-                // 204	Successfully deleted the subscription.
-                console.log("[backend:667]: Subcription successfully deleted: ", streamerData.eventSub);
-            } else if (result.status === 404) {
-                //404	The subscription was not found.
-                console.log("[backend:667]: Subcription not found: ", streamerData.eventSub);
-            } else if (result.status === 401) {
-                //401	The caller failed authentication. Verify that your access token and client ID are valid.`;
-                console.log("[backend:670]: ERROR: ", await result.json());
-                console.log("[backend:670]: ERROR: ", result.text());
-            }
+            callDeleteEventSubEndpont(eventId);
         });
     return;
+}
+
+async function callDeleteEventSubEndpont(eventId) {
+    const url = EVENTSUB_ENDPOINT + "?id=" + eventId;
+    const myAppToken = await getAppAccessToken();
+    const headers = {
+        Authorization: `Bearer ` + myAppToken,
+        "Client-Id": APP_CLIENT_ID,
+        "Content-type": "application/json",
+    };
+    const data = {
+        headers,
+        method: "DELETE",
+    };
+    console.log("[backend:143]: deleting sub");
+    const result = await fetch(url, data);
+    if (result.status === 204) {
+        // 204	Successfully deleted the subscription.
+        console.log("[backend:667]: Subcription successfully deleted: ", streamerData.eventSub);
+    } else if (result.status === 404) {
+        //404	The subscription was not found.
+        console.log("[backend:667]: Subcription not found: ", streamerData.eventSub);
+    } else if (result.status === 401) {
+        //401	The caller failed authentication. Verify that your access token and client ID are valid.`;
+        console.log("[backend:670]: ERROR: ", await result.json());
+        console.log("[backend:670]: ERROR: ", result.text());
+    }
 }
 //! --------------------------------------------------------- //
 //*                      -- TWITCH API --                    //
