@@ -1231,7 +1231,7 @@ async function sendRaidBroadcast(channelId) {
         if (res.status > 400) {
             console.log("[backend:1287]: ERROR:", res.status);
             // console.log("[backend:1288]: ERROR:", res.body);
-            const jsondata = res.json;
+            const jsondata = await res.json();
             console.log("[backend:1290]: ERROR:", jsondata);
         }
         console.log("[backend:503]: ", `Broadcasting to channelId: ${channelId}`, `Response: ${res.status}`);
