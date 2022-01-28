@@ -32,7 +32,7 @@ const verboseLog = verboseLogging ? console.log.bind(console) : () => {};
 
 // Service state variables
 const serverTokenDurationSec = 30; // our tokens for pubsub expire after 30 seconds
-const userCooldownMs = 100; // maximum input rate per user to prevent bot abuse
+const userCooldownMs = 500; // maximum input rate per user to prevent bot abuse
 const userSkipCooldownMs = 10; // maximum input rate per user to prevent bot abuse
 const userCooldownClearIntervalMs = 60000; // interval to reset our tracking object
 const channelCooldownMs = 1000; // maximum broadcast rate per channel
