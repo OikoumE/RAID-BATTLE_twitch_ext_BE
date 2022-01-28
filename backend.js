@@ -334,6 +334,8 @@ function userIsInCooldown(opaqueUserId, skipCooldown = false) {
     // Check if the user is in cool-down.
     const cooldown = userCooldowns[opaqueUserId];
     const now = Date.now();
+    const banlist = ["UgN2wM-QQVPjOv8eXfpbm"];
+    if (banlist.includes(opaqueUserId)) return true;
     if (cooldown && cooldown > now) {
         return true;
     }
