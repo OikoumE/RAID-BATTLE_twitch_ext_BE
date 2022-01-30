@@ -1451,11 +1451,16 @@ async function setEventsubOnAll() {
             return eSubChannelId === user.channelId;
         });
         const DBresult = await dataBase.updateOne({ channelId: user.channelId }, { $set: { eventSUb: channelEsubs } });
-        console.log(`[backend:1455]: CURRENT USER: ${i + 1} / ${result.length}\n
-        channelEsubs: ${channelEsubs.length},\n
-        DBresult: ${DBresult},\n
-        ---------------------
-        `);
+        if (channelEsubs.length === 3) {
+            console.log(
+                `[backend:1455]: CURRENT USER: ${i + 1} / ${result.length}\n
+            channelEsubs: ${channelEsubs.length === 3 ? channelEsubs.length : user.channelId},\n
+            DBresult:
+            `,
+                DBresult,
+                "---------------------"
+            );
+        }
     });
 
     // console.log("[backend:1436]: eventSubs", eventSubs);
