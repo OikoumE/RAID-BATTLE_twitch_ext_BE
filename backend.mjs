@@ -593,11 +593,11 @@ async function addNewStreamer(channelId, notification = false) {
             return response;
         } else {
             let events = ["channel.raid", "stream.online", "stream.offline"];
-            if (streamerToAdd.channelId?.count > 3) {
+            if (notification && streamerToAdd.channelId?.count > 3) {
                 console.log("[backend:593]: ERROR: got more than 3 notifications");
                 throw (`[backend:590]: ERROR: something went wrong registering eventsub`, result);
             }
-            if (streamerToAdd.channelId?.count === 3 && result.length < 3) {
+            if (notification && streamerToAdd.channelId?.count === 3 && result.length < 3) {
                 console.log(
                     "[backend:597]: Got 3 notifications and we are missing some events",
                     result.map((eSub) => eSub.type)
@@ -1491,7 +1491,7 @@ async function setEventsubOnAll() {
         setTimeout(async () => {
             console.log("[backend:1433]: user", userId, " - ", i + 1, "/", missed_reg.length);
             const response = await addNewStreamer(userId);
-            console.log("[backend:1439]: SUCCESS: ", response.data.acknowledged);
+            console.log("[backend:1439]: SUCCESS: ", response.acknowledged);
             console.log("[backend:1433]: ----------------- ");
         }, i * 5000);
     });
