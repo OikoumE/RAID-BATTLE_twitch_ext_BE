@@ -46,7 +46,7 @@ export async function webhookCallback({ req, res, callbackObj }) {
             console.log(`[index:80]: ${JSON.stringify(notification.event, null, 4)}`);
             if (eventType === "channel.raid") {
                 const channel = notification.event.to_broadcaster_user_name,
-                    username = notification.event.from_broadcaster_user_name,
+                    username = notification.event.from_broadcaster_user_login,
                     viewers = notification.event.viewers;
                 await startRaid({ channel, username, viewers });
             } else if (eventType === "user.authorization.revoke") {

@@ -1439,21 +1439,11 @@ function confirmOpaqueUser(req, res, next) {
 //RUN ONCE:
 
 async function setEventsubOnAll() {
-    // let result = await dataBase.find({});
-    var d = new Date();
-    d.setDate(d.getDate() - 5);
-    console.log("[backend:1444]: date", d);
-    let result = await dataBase.updateMany(
-        {
-            created: {
-                $eq: null,
-            },
-        },
-        { $set: { created: d } }
-    );
+    let result = await dataBase.find({});
+
     console.log("[backend:1452]: result", result);
-    // const appToken = await getAppAccessToken();
-    // const eventSubs = await getEventSubEndpoint(appToken);
+    const appToken = await getAppAccessToken();
+    const eventSubs = await getEventSubEndpoint(appToken);
 
     // console.log("[backend:1436]: eventSubs", eventSubs);
     // console.log("[backend:1436]: eventSubs", eventSubs.length);
