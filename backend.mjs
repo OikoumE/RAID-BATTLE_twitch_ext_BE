@@ -1440,6 +1440,7 @@ async function setEventsubOnAll() {
 
     const eventSubs = await paginated_fetch(EVENTSUB_ENDPOINT);
     console.log("[backend:1436]: eventSubs", eventSubs.data.length);
+    console.log("[backend:1436]: eventSubs", eventSubs.length);
     // eventSubs.data.forEach((eSub) => {
     //     if (eSub) {
     //     }
