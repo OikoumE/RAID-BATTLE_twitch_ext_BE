@@ -88,7 +88,7 @@ function verifyMessage(hmac, verifySignature) {
 
 export async function getEventSubEndpoint(url, appToken, page = null, previousResponse = []) {
     const headers = {
-        Authorization: `Bearer ` + appToken,
+        Authorization: `Bearer ${appToken}`,
         "Client-Id": APP_CLIENT_ID,
     };
     // const result = await fetch(EVENTSUB_ENDPOINT, { headers });

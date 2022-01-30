@@ -641,10 +641,8 @@ function parseTmiChannelListFromDb(result) {
 }
 //! -------------------- EVENTSUB HANDLERS -------------------- //
 async function checkEventSubUser(userId) {
-    // const appToken = await getAppAccessToken();
-    // const eventSubs = await getEventSubEndpoint(appToken);
-
-    const eventSubs = await paginated_fetch(EVENTSUB_ENDPOINT);
+    const appToken = await getAppAccessToken();
+    const eventSubs = await getEventSubEndpoint(appToken);
 
     if (eventSubs) {
         const enabledEventSubs = eventSubs.filter((eSub) => {
