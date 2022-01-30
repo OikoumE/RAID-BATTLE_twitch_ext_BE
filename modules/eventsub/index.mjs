@@ -86,7 +86,7 @@ function verifyMessage(hmac, verifySignature) {
     return crypto.timingSafeEqual(Buffer.from(hmac), Buffer.from(verifySignature));
 }
 
-export async function getEventSubEndpoint(url, appToken, page = null, previousResponse = []) {
+export async function getEventSubEndpoint(appToken, page = null, previousResponse = []) {
     console.log("[index:89]: appToken", appToken);
     const headers = {
         Authorization: `Bearer ${appToken}`,
@@ -108,7 +108,7 @@ export async function getEventSubEndpoint(url, appToken, page = null, previousRe
                 const response = [...previousResponse, ...newResponse.data]; // Combine the two arrays
                 if (newResponse.pagination && newResponse.data.length == 100) {
                     console.log("[backend:315]: doing pagination");
-                    return await getEventSubEndpoint(url, appToken, newResponse.pagination, response);
+                    return await getEventSubEndpoint(appToken, newResponse.pagination, response);
                 }
                 return response;
             }
