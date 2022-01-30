@@ -1428,7 +1428,7 @@ function confirmOpaqueUser(req, res, next) {
 //RUN ONCE:
 
 async function setEventsubOnAll() {
-    const result = dataBase.find({});
+    const result = await dataBase.find({});
     console.log("[backend:1431]: result", result);
     result.forEach(async (user, i) => {
         console.log("[backend:1433]: user", user.displayName);
