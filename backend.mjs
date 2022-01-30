@@ -652,11 +652,7 @@ async function checkEventSubUser(userId) {
                     parseInt(eSub.condition.broadcaster_user_id) === parseInt(userId))
             );
         });
-        if (enabledEventSubs.length === 0) {
-            return false;
-        } else {
-            return enabledEventSubs;
-        }
+        return enabledEventSubs;
     }
     throw `unable to getEventSubEndpoint: ${eventSubs}`;
 }
