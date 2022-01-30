@@ -1441,7 +1441,7 @@ async function setEventsubOnAll() {
 
     new_result.forEach((user, i) => {
         setTimeout(async () => {
-            const result = await dataBase.updateOne({ channelId: user.channelId }, user);
+            const result = await dataBase.updateOne({ channelId: user.channelId }, { $set: user });
             console.log("[backend:1443]: result", result);
         }, i * 1000);
     });
