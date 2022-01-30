@@ -1428,7 +1428,7 @@ function confirmOpaqueUser(req, res, next) {
 //RUN ONCE:
 
 async function setEventsubOnAll() {
-    const result = dataBase.find();
+    const result = dataBase.find({});
 
     result.forEach(async (user, i) => {
         if (!user.eventSub || (user.eventSub && user.eventSub.length < 3)) {
