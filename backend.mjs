@@ -605,7 +605,7 @@ async function continueAddingNewStreamer(channelId, registeredEventSub) {
             const result = await dataBase.updateOne(
                 { channelId },
                 {
-                    $push: { eventSub: { registeredEventSub } },
+                    $push: { eventSub: registeredEventSub },
                 }
             );
             console.log("[backend:612]: result", result);
@@ -1429,15 +1429,30 @@ function confirmOpaqueUser(req, res, next) {
 
 async function setEventsubOnAll() {
     const result = await dataBase.find({});
-    console.log("[backend:1431]: result", result);
-    result.forEach(async (user, i) => {
-        console.log("[backend:1433]: user", user.displayName);
-        if (!user.eventSub || (user.eventSub && user.eventSub.length < 3)) {
-            setTimeout(async () => {
-                response = await addNewStreamer(user.channelId);
-                console.log("[backend:1439]: response", response);
-            }, i * 5000);
-        }
-        console.log("[backend:1433]: ----------------- ");
+
+    const new_result = result.map((user) => {
+        const { channelName, displayName, channelId, profilePicUrl, userConfig, eventSub } = user;
+        eventSub.forEach((eSub) => {
+            if (eSub.registeredEventSub.length === 3) eventSub = eSub;
+        });
+        return { channelName, displayName, channelId, profilePicUrl, userConfig, eventSub };
     });
+
+    new_result.forEach((user, i) => {
+        setTimeout(async () => {
+            await dataBase.updateOne({ channelId: user.channelId }, user);
+        }, i * 1000);
+    });
+
+    // console.log("[backend:1431]: result", result);
+    // result.forEach(async (user, i) => {
+    //     console.log("[backend:1433]: user", user.displayName);
+    //     if (!user.eventSub || (user.eventSub && user.eventSub.length < 3)) {
+    //         setTimeout(async () => {
+    //             const response = await addNewStreamer(user.channelId);
+    //             console.log("[backend:1439]: response", response);
+    //         }, i * 5000);
+    //     }
+    //     console.log("[backend:1433]: ----------------- ");
+    // });
 }
