@@ -1436,8 +1436,8 @@ async function setEventsubOnAll() {
 
         console.log("[backend:1436]: eventSub", eventSub);
 
-        eventSub.forEach((eSub) => {
-            if (eSub.registeredEventSub.length === 3) newSub = eSub;
+        eventSub?.forEach((eSub) => {
+            if (eSub.registeredEventSub.length === 3) newSub = eSub[0];
         });
         return { channelName, displayName, channelId, profilePicUrl, userConfig, eventSub: newSub };
     });
