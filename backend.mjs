@@ -648,7 +648,7 @@ async function checkEventSubUser(userId) {
     const eventSubs = await paginated_fetch(EVENTSUB_ENDPOINT);
 
     if (eventSubs) {
-        const enabledEventSubs = eventSubs.data.filter((eSub) => {
+        const enabledEventSubs = eventSubs.filter((eSub) => {
             return (
                 eSub.status === "enabled" &&
                 (parseInt(eSub.condition.to_broadcaster_user_id) === parseInt(userId) ||
