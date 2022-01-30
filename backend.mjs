@@ -165,8 +165,8 @@ async function onLaunch() {
     await setDefaultUserConfigInDatabase();
     startTmi(result);
 
-    await deleteEventSubEndpoint("93645775"); //! DEV ONCE
-    // await setEventsubOnAll(); //! DEV ONCE
+    // await deleteEventSubEndpoint("93645775"); //! DEV ONCE
+    await setEventsubOnAll(); //! DEV ONCE
 
     setInterval(() => {
         // Periodically clear cool-down tracking to prevent unbounded growth due to
@@ -648,11 +648,19 @@ async function continueAddingNewStreamer(channelId, registeredEventSub) {
         if (!userExsist.eventSub || (userExsist.eventSub && userExsist.eventSub.length < 3)) {
             const result = await dataBase.updateOne(
                 { channelId },
-                {
-                    $push: { eventSub: registeredEventSub },
-                }
+                { $addToSet: { eventSub: { $each: registeredEventSub } } }
             );
-            console.log("[backend:612]: result", result);
+            if (result.acknowledged) {
+                console.log(
+                    "[backend:612]: User: ",
+                    channelId,
+                    " already in DB, adding",
+                    registeredEventSub.map((eSub) => eSub.type),
+                    " to eventSub"
+                );
+            } else {
+                console.log("[backend:663]: ERROR: unknown error", result, registeredEventSub);
+            }
         }
         returnData = {
             result: "Already in the list of channels to monitor for raid",
@@ -1496,6 +1504,10 @@ function confirmOpaqueUser(req, res, next) {
 //RUN ONCE:
 
 // async function setEventsubOnAll() {
+    const result = await dataBase.find({ channelId });
+
+    console.log("[backend:1511]: result", result);
+}
 //     // let result = await dataBase.find({});
 
 //     //try again
