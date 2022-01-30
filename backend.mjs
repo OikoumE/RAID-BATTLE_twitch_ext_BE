@@ -299,7 +299,6 @@ async function paginated_fetch(url, page = null, previousResponse = []) {
             "Content-type": "application/json",
         };
     return fetch(`${url}${page ? `&after={page}` : ""}`, {
-        //! dev CHANGE TO CORRECT EXT_CLIENT_ID when prod
         headers,
     })
         .then((response) => response.json())
@@ -1435,10 +1434,10 @@ function confirmOpaqueUser(req, res, next) {
 
 async function setEventsubOnAll() {
     let result = await dataBase.find({});
-    // const appToken = await getAppAccessToken();
-    // const eventSubs = await getEventSubEndpoint(appToken);
+    const appToken = await getAppAccessToken();
+    const eventSubs = await getEventSubEndpoint(appToken);
 
-    const eventSubs = await paginated_fetch(EVENTSUB_ENDPOINT);
+    // const eventSubs = await paginated_fetch(EVENTSUB_ENDPOINT);
     console.log("[backend:1436]: eventSubs", eventSubs);
     console.log("[backend:1436]: eventSubs", eventSubs.length);
 
