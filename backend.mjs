@@ -1445,9 +1445,9 @@ async function setEventsubOnAll() {
     //     }
     // });
 
-    let result = await dataBase.updateMany({}, { userConfig: { enableOverlayButton: true } });
+    let result = await dataBase.updateMany({}, { $set: { userConfig: { enableOverlayButton: true } } });
     console.log("[backend:1448]: result", result);
-    result = await dataBase.updateMany({}, { score: 0 });
+    result = await dataBase.updateMany({}, { $set: { score: 0 } });
     console.log("[backend:1448]: result", result);
 
     // const new_result = result.map((user) => {
