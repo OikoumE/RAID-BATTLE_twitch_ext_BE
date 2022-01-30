@@ -87,24 +87,24 @@ function verifyMessage(hmac, verifySignature) {
 }
 
 export async function getEventSubEndpoint(appToken) {
-    const result = await paginated_fetch(EVENTSUB_ENDPOINT);
-    return result;
+    //     const result = await paginated_fetch(EVENTSUB_ENDPOINT);
+    //     return result;
+    // }
+
+    const headers = {
+        Authorization: `Bearer ` + appToken,
+        "Client-Id": APP_CLIENT_ID,
+    };
+    const result = await fetch(EVENTSUB_ENDPOINT, { headers });
+    const result_json = await result.json();
+
+    if (result_json.status > 200) {
+        const error = `[index:97]: ERROR: ${result_json}`;
+        console.log("[index:95]: ERROR:", error);
+        throw error;
+    }
+    return result_json;
 }
-
-// const headers = {
-//     Authorization: `Bearer ` + appToken,
-//     "Client-Id": APP_CLIENT_ID,
-// };
-// const result = await fetch(EVENTSUB_ENDPOINT, { headers });
-// const result_json = await result.json();
-
-// if (result_json.status > 200) {
-//     const error = `[index:97]: ERROR: ${result_json}`;
-//     console.log("[index:95]: ERROR:", error);
-//     throw error;
-// }
-// return result_json;
-// }
 
 export async function EventSubRegister(broadcaster_user_id) {
     console.log("[index:120]: broadcaster_user_id", broadcaster_user_id);
