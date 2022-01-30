@@ -1449,10 +1449,10 @@ async function setEventsubOnAll() {
 
     //TODO set created
     let result = await dataBase.updateMany(
-        {},
+        { battleHistory: { $exists: false } },
         {
             $set: {
-                created: Date.now(),
+                battleHistory: [],
             },
         }
     );
