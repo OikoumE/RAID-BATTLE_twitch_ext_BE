@@ -578,7 +578,7 @@ async function addNewStreamer(channelId) {
     try {
         const result = await checkEventSubUser(channelId);
         console.log("[backend:579]: result", result);
-        if (result) {
+        if (result.length > 0) {
             // we are happy
             const response = await continueAddingNewStreamer(channelId, result);
             return response;
@@ -589,7 +589,7 @@ async function addNewStreamer(channelId) {
             return;
         }
     } catch (err) {
-        console.log("[backend:578]: ERROR: ", err);
+        console.log("[backend:578]: ERROR in adding new streamer: ", err);
     }
 }
 async function continueAddingNewStreamer(channelId, registeredEventSub) {
@@ -662,7 +662,7 @@ async function checkEventSubUser(userId) {
             );
         });
         if (enabledEventSubs.length === 0) {
-            console.log("[backend:655]: userId", userId, "enabledEventSubs", enabledEventSubs);
+            console.log("[backend:655]: NOT REGISTERED userId", userId, "enabledEventSubs", enabledEventSubs);
             return enabledEventSubs;
         } else {
             return enabledEventSubs;
