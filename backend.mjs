@@ -1430,53 +1430,35 @@ function confirmOpaqueUser(req, res, next) {
 //RUN ONCE:
 
 async function setEventsubOnAll() {
-    // let result = await dataBase.find({});
-
+    let result = await dataBase.find({});
     // const appToken = await getAppAccessToken();
     // const eventSubs = await getEventSubEndpoint(appToken);
 
-    // result.forEach(async (user) => {
-    //     try {
-    //         const repsonse = await checkEventSubUser(user.channelId);
-    //         const result = await dataBase.updateOne({ channelId: user.channelId }, { $set: { eventSub: repsonse } });
-    //         console.log("[backend:1439]: result", result);
-    //     } catch (err) {
-    //         console.log("[backend:1439]: err:", err);
-    //     }
-    // });
-    const userConfig = {
-        gameDuration: 120,
-        extendGameDuration: 60,
-        extendGameDurationEnabled: true,
-        introDuration: 30,
-        gameResultDuration: 15,
-        enableChatOutput: true,
-        enableChatCommands: true,
-        gameInfoDuration: 10,
-        enableOverlayButton: true,
-    };
-    let result = await dataBase.updateMany({}, { $set: { userConfig } });
-    console.log("[backend:1448]: result", result);
+    result.forEach(async (user) => {
+        try {
+            const repsonse = await checkEventSubUser(user.channelId);
+            const result = await dataBase.updateOne({ channelId: user.channelId }, { $set: { eventSub: repsonse } });
+            console.log("[backend:1439]: result", result);
+        } catch (err) {
+            console.log("[backend:1439]: err:", err);
+        }
+    });
 
     // const new_result = result.map((user) => {
     //     const { channelName, displayName, channelId, profilePicUrl, userConfig, eventSub } = user;
     //     let newSub;
-
     //     console.log("[backend:1436]: eventSub", eventSub);
-
     //     eventSub?.forEach((eSub) => {
     //         if (eSub.registeredEventSub.length === 3) newSub = eSub[0];
     //     });
     //     return { channelName, displayName, channelId, profilePicUrl, userConfig, eventSub: newSub };
     // });
-
     // new_result.forEach((user, i) => {
     //     setTimeout(async () => {
     //         const result = await dataBase.updateOne({ channelId: user.channelId }, { $set: user });
     //         console.log("[backend:1443]: result", result);
     //     }, i * 1000);
     // });
-
     // console.log("[backend:1431]: result", result);
     // result.forEach(async (user, i) => {
     //     console.log("[backend:1433]: user", user.displayName);
