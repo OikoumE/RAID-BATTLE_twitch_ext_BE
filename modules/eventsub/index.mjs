@@ -2,6 +2,7 @@
 // Author: itsOiK
 // Date: 07/01-22
 
+import { URL, URLSearchParams } from "url";
 import fetch from "node-fetch";
 import crypto from "crypto";
 import dotenv from "dotenv";
@@ -86,7 +87,6 @@ function verifyMessage(hmac, verifySignature) {
     return crypto.timingSafeEqual(Buffer.from(hmac), Buffer.from(verifySignature));
 }
 
-const { URL, URLSearchParams } = require("url");
 export async function getEventSubEndpoint(appToken, page = null, previousResponse = []) {
     const headers = {
         Authorization: `Bearer ${appToken}`,
