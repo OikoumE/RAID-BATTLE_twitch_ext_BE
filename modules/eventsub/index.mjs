@@ -37,7 +37,9 @@ export async function webhookCallback({ req, res, callbackObj }) {
         console.log("[index:74]: signatures match");
         // Get JSON object from body, so you can process the message.
         let notification = JSON.parse(req.body);
-        const channelId = notification.subscription.condition.broadcaster_user_id,
+        const channelId =
+                notification.subscription.condition.broadcaster_user_id ||
+                notification.subscription.condition.to_broadcaster_user_id,
             eventType = notification.subscription.type;
         if (MESSAGE_TYPE_NOTIFICATION === req.headers[MESSAGE_TYPE]) {
             console.log(`[index:79]: Event type: ${eventType}`);

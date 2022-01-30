@@ -367,19 +367,27 @@ async function addStreamerToChannelsHandler(req, res) {
 //! ---- REQUESTCONFIG ---- //
 async function requestUserConfigHandler(req, res) {
     const { channelId, opaqueUserId } = res.locals;
-    const result = await dataBase.findOne({ channelId });
-    if (result && result.userConfig) {
+    try {
+        const result = await dataBase.findOne({ channelId });
+        if (result && result.userConfig) {
+            res.json({
+                result: "Loaded user config",
+                data: { result: result.userConfig, defaults: DEFAULTS },
+            });
+            return;
+        }
         res.json({
-            result: "Loaded user config",
-            data: { result: result.userConfig, defaults: DEFAULTS },
+            result: "Did not find config, hit save to store config",
+            data: { result: null, defaults: DEFAULTS },
         });
         return;
+    } catch (err) {
+        console.log("[backend:383]: ERROR:", err);
+        res.json({
+            result: "Did not find config, hit save to store config",
+            data: { result: null, defaults: DEFAULTS },
+        });
     }
-    res.json({
-        result: "Did not find config, hit save to store config",
-        data: { result: null, defaults: DEFAULTS },
-    });
-    return;
 }
 //! ---- UPDATECONFIG ---- //
 async function updateUserConfigHandler(req, res) {
