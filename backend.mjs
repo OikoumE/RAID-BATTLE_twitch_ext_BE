@@ -652,7 +652,12 @@ async function checkEventSubUser(userId) {
                     parseInt(eSub.condition.broadcaster_user_id) === parseInt(userId))
             );
         });
-        return enabledEventSubs;
+        if (enabledEventSubs.length === 0) {
+            console.log("[backend:655]: userId", userId, "enabledEventSubs", enabledEventSubs);
+            return enabledEventSubs;
+        } else {
+            return enabledEventSubs;
+        }
     }
     throw `unable to getEventSubEndpoint: ${eventSubs}`;
 }
