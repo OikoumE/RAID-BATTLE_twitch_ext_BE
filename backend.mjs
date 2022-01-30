@@ -165,7 +165,7 @@ async function onLaunch() {
     await setDefaultUserConfigInDatabase();
     startTmi(result);
 
-    await deleteEventSubEndpoint("93645775"); //! DEV ONCE
+    // await deleteEventSubEndpoint("93645775"); //! DEV ONCE
     // await setEventsubOnAll(); //! DEV ONCE
 
     setInterval(() => {
@@ -597,7 +597,7 @@ async function addNewStreamer(channelId, notification = false) {
                 console.log("[backend:593]: ERROR: got more than 3 notifications");
                 throw (`[backend:590]: ERROR: something went wrong registering eventsub`, result);
             }
-            if (notification && streamerToAdd.channelId === 3 && result.length < 3) {
+            if ((notification && streamerToAdd.channelId === 3) || result.length < 3) {
                 console.log(
                     "[backend:597]: Got 3 notifications and we are missing some events",
                     result.map((eSub) => eSub.type)
@@ -932,6 +932,7 @@ function restartTmi(channelList) {
 //*                  -- GAME CONDITION --                    //
 //! ------------------------------------------------------- //
 async function startRaid({ channel, username, viewers }, test = false) {
+    //TODO check if live EXT..
     // starts a raid game
     const streamerData = await dataBase.findOne({
             channelName: channel.toLowerCase(),
