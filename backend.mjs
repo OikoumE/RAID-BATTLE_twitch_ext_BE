@@ -287,7 +287,7 @@ async function streamStatusHandler(eventNotification) {
     await sendGlobalBroadcast(dataTosend);
 }
 async function getExtLiveStreams() {
-    const url = `https://api.twitch.tv/helix/extensions/live?extension_id=${process.env.EXT_CLIENT_ID}`;
+    const url = `https://api.twitch.tv/helix/extensions/live?extension_id=${process.env.EXT_CLIENT_ID}&first=100`;
     const result = await paginated_fetch(url);
     return result;
 }
@@ -298,7 +298,7 @@ async function paginated_fetch(url, page = null, previousResponse = []) {
             "Client-Id": APP_CLIENT_ID,
             "Content-type": "application/json",
         };
-    return fetch(`${url}&first=100${page ? `&after={page}` : ""}`, {
+    return fetch(`${url}${page ? `&after={page}` : ""}`, {
         //! dev CHANGE TO CORRECT EXT_CLIENT_ID when prod
         headers,
     })
