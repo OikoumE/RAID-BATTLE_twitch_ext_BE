@@ -87,7 +87,6 @@ function verifyMessage(hmac, verifySignature) {
 }
 
 export async function getEventSubEndpoint(appToken, page = null, previousResponse = []) {
-    console.log("[index:89]: appToken", appToken);
     const headers = {
         Authorization: `Bearer ${appToken}`,
         "Client-Id": APP_CLIENT_ID,
@@ -101,7 +100,13 @@ export async function getEventSubEndpoint(appToken, page = null, previousRespons
     //     throw error;
     // }
     // return result_json;
-    return fetch(EVENTSUB_ENDPOINT + `${page ? `&after={page}` : ""}`, { headers })
+    return fetch(EVENTSUB_ENDPOINT, {
+        headers,
+        body: JSON.stringify({
+            status: "enabled",
+            after: `${page ? `&after={page}` : ""}`,
+        }),
+    })
         .then((response) => response.json())
         .then(async (newResponse) => {
             if (newResponse.data) {
