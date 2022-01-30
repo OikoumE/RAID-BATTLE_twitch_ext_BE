@@ -1442,14 +1442,16 @@ async function setEventsubOnAll() {
     // let result = await dataBase.find({});
     var d = new Date();
     d.setDate(d.getDate() - 5);
+    console.log("[backend:1444]: date", d);
     let result = await dataBase.updateMany(
         {
             created: {
-                $ne: null,
+                $eq: null,
             },
         },
         { $set: { created: d } }
     );
+    console.log("[backend:1452]: result", result);
     // const appToken = await getAppAccessToken();
     // const eventSubs = await getEventSubEndpoint(appToken);
 
