@@ -54,19 +54,19 @@ export async function webhookCallback({ req, res, callbackObj }) {
             res.sendStatus(204);
         } else if (MESSAGE_TYPE_VERIFICATION === req.headers[MESSAGE_TYPE]) {
             // here
-            res.status(200).send(notification.challenge);
             await addNewStreamer(channelId);
+            res.status(200).send(notification.challenge);
         } else if (MESSAGE_TYPE_REVOCATION === req.headers[MESSAGE_TYPE]) {
+            console.log(`[index:60]: ${eventType} notifications revoked!`);
+            console.log(`[index:60]: reason: ${notification.subscription.status}`);
+            console.log(`[index:60]: condition: ${JSON.stringify(notification.subscription.condition, null, 4)}`);
             res.sendStatus(204);
-            console.log(`${eventType} notifications revoked!`);
-            console.log(`reason: ${notification.subscription.status}`);
-            console.log(`condition: ${JSON.stringify(notification.subscription.condition, null, 4)}`);
         } else {
+            console.log(`[index:65]: Unknown message type: ${req.headers[MESSAGE_TYPE]}`);
             res.sendStatus(204);
-            console.log(`Unknown message type: ${req.headers[MESSAGE_TYPE]}`);
         }
     } else {
-        console.log("403"); // Signatures didn't match.
+        console.log("[index:70]: 403"); // Signatures didn't match.
         res.sendStatus(403);
     }
 }

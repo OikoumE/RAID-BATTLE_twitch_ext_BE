@@ -306,7 +306,7 @@ async function paginated_fetch(url, page = null, previousResponse = []) {
         .then(async (newResponse) => {
             if (newResponse.data) {
                 const response = [...previousResponse, ...newResponse.data]; // Combine the two arrays
-                if (newResponse.pagination && newResponse.data.length === 100) {
+                if (newResponse.pagination && newResponse.data.length == 100) {
                     console.log("[backend:315]: doing pagination");
                     return await paginated_fetch(url, newResponse.pagination, response);
                 }
