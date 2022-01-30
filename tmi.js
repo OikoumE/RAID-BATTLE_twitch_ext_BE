@@ -2876,7 +2876,7 @@
 
                                     _.promiseDelay(delay).then(function () {
                                         return reject(
-                                            "[tmi:1512]: No response from Twitch."
+                                            "No response from Twitch."
                                         );
                                     });
                                 } // Executing a command on a channel..
