@@ -1504,7 +1504,7 @@ function confirmOpaqueUser(req, res, next) {
 //RUN ONCE:
 
 async function setEventsubOnAll() {
-    const result = await dataBase.find({ channelId: 93645775 });
+    const result = await dataBase.find({ channelId: "93645775" });
 
     console.log("[backend:1511]: result", result);
 }
