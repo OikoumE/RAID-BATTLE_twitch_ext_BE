@@ -161,14 +161,14 @@ async function onLaunch() {
     const dataBaseUserData = await dataBase.find();
     const result = parseTmiChannelListFromDb(dataBaseUserData);
     inserLatestNewsInDb(); //! dev
+    await setDefaultUserConfigInDatabase();
+    startTmi(result);
 
     // await deleteEventSubEndpoint("93645775"); //! DEV ONCE
     await setEventsubOnAll(); //! DEV ONCE
-    await setDefaultUserConfigInDatabase();
-    startTmi(result);
-    // Periodically clear cool-down tracking to prevent unbounded growth due to
-    // per-session logged-out user tokens.
     setInterval(() => {
+        // Periodically clear cool-down tracking to prevent unbounded growth due to
+        // per-session logged-out user tokens.
         userCooldowns = {};
     }, userCooldownClearIntervalMs);
 }
