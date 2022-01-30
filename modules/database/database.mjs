@@ -15,7 +15,7 @@ export class DataBase {
             useUnifiedTopology: true,
         });
         this.dataBaseName = "RaidBattle";
-        this.collection = "TEST_COLLECTION"; //! dev CHANGE BEFORE PROD!
+        this.collection = "users";
     }
     async connect() {
         try {

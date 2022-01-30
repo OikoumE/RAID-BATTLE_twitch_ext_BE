@@ -163,7 +163,7 @@ async function onLaunch() {
     inserLatestNewsInDb(); //! dev
 
     // await deleteEventSubEndpoint("93645775"); //! DEV ONCE
-
+    await setEventsubOnAll(); //! DEV ONCE
     await setDefaultUserConfigInDatabase();
     startTmi(result);
     // Periodically clear cool-down tracking to prevent unbounded growth due to
@@ -1423,4 +1423,19 @@ function confirmOpaqueUser(req, res, next) {
         return next();
     }
     throw Boom.unauthorized(STRINGS.invalidAuthHeader);
+}
+
+//RUN ONCE:
+
+async function setEventsubOnAll() {
+    const result = dataBase.find();
+
+    result.forEach(async (user, i) => {
+        if (!user.eventSub || (user.eventSub && user.eventSub.length < 3)) {
+            setTimeout(async () => {
+                response = await addNewStreamer(user.channelId);
+                console.log("[backend:1439]: response", response);
+            }, i * 5000);
+        }
+    });
 }
