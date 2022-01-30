@@ -1437,7 +1437,7 @@ async function setEventsubOnAll() {
     result.forEach(async (user) => {
         try {
             const repsonse = await checkEventSubUser(user.channelId);
-            const result = await dataBase.updateOne({ channelId }, { $set: { eventSub: repsonse } });
+            const result = await dataBase.updateOne({ channelId: user.channelId }, { $set: { eventSub: repsonse } });
             console.log("[backend:1439]: result", result);
         } catch (err) {
             console.log("[backend:1439]: err:", err);
