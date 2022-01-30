@@ -577,6 +577,7 @@ async function addNewStreamer(channelId) {
     // checks if user already in database and adds new streamer to database if user does not already exsist
     try {
         const result = await checkEventSubUser(channelId);
+        console.log("[backend:579]: result", result);
         if (result) {
             // we are happy
             const response = await continueAddingNewStreamer(channelId, result);
@@ -1439,29 +1440,42 @@ function confirmOpaqueUser(req, res, next) {
 //RUN ONCE:
 
 async function setEventsubOnAll() {
-    let result = await dataBase.find({});
+    // let result = await dataBase.find({});
+
+    missed_reg = [766436971, 181462072, 178854251, 223433138];
+    missed_reg.forEach(async (userId, i) => {
+        console.log("[backend:1433]: user", userId);
+
+        setTimeout(async () => {
+            const response = await addNewStreamer(userId);
+            console.log("[backend:1439]: response", response);
+        }, i * 5000);
+
+        console.log("[backend:1433]: ----------------- ");
+    });
+
     // console.log("[backend:1452]: result", result);
 
-    const appToken = await getAppAccessToken();
-    const eventSubs = await getEventSubEndpoint(appToken);
+    // const appToken = await getAppAccessToken();
+    // const eventSubs = await getEventSubEndpoint(appToken);
 
-    result.forEach(async (user, i) => {
-        const channelEsubs = eventSubs.filter((eSub) => {
-            const eSubChannelId = eSub.condition.to_broadcaster_user_id || eSub.condition.broadcaster_user_id;
-            return eSubChannelId === user.channelId;
-        });
-        const DBresult = await dataBase.updateOne({ channelId: user.channelId }, { $set: { eventSUb: channelEsubs } });
-        if (channelEsubs.length < 3) {
-            console.log(
-                `[backend:1455]: CURRENT USER: ${i + 1} / ${result.length}\n
-            channelEsubs: ${channelEsubs.length === 3 ? channelEsubs.length : user.channelId},\n
-            DBresult:
-            `,
-                DBresult,
-                "---------------------"
-            );
-        }
-    });
+    // result.forEach(async (user, i) => {
+    //     const channelEsubs = eventSubs.filter((eSub) => {
+    //         const eSubChannelId = eSub.condition.to_broadcaster_user_id || eSub.condition.broadcaster_user_id;
+    //         return eSubChannelId === user.channelId;
+    //     });
+    //     const DBresult = await dataBase.updateOne({ channelId: user.channelId }, { $set: { eventSUb: channelEsubs } });
+    //     if (channelEsubs.length < 3) {
+    //         console.log(
+    //             `[backend:1455]: CURRENT USER: ${i + 1} / ${result.length}\n
+    //         channelEsubs: ${channelEsubs.length === 3 ? channelEsubs.length : user.channelId},\n
+    //         DBresult:
+    //         `,
+    //             DBresult,
+    //             "---------------------"
+    //         );
+    //     }
+    // });
 
     // console.log("[backend:1436]: eventSubs", eventSubs);
     // console.log("[backend:1436]: eventSubs", eventSubs.length);
@@ -1471,11 +1485,6 @@ async function setEventsubOnAll() {
     //     }
     // });
 
-    // missed_reg = [
-    //     190067460, 58554698, 571911151, 103933755, 731767598, 147516667, 120524051, 141972118, 485518510, 582968218,
-    //     503768162, 567777555, 50866164, 120043547, 433317158, 196799524, 720440903, 152331154, 764702456, 511247619,
-    //     758770618, 503545676, 475724952, 755476286, 413142230, 760598158, 686145144,
-    // ];
     // result.forEach(async (user) => {
     //     try {
     //         // const repsonse = await checkEventSubUser(user.channelId);
@@ -1504,14 +1513,4 @@ async function setEventsubOnAll() {
     //     }, i * 1000);
     // });
     // console.log("[backend:1431]: result", result);
-    // result.forEach(async (user, i) => {
-    //     console.log("[backend:1433]: user", user.displayName);
-    //     if (!user.eventSub || (user.eventSub && user.eventSub.length < 3)) {
-    //         setTimeout(async () => {
-    //             const response = await addNewStreamer(user.channelId);
-    //             console.log("[backend:1439]: response", response);
-    //         }, i * 5000);
-    //     }
-    //     console.log("[backend:1433]: ----------------- ");
-    // });
 }
