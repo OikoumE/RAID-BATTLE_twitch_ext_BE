@@ -86,6 +86,7 @@ function verifyMessage(hmac, verifySignature) {
     return crypto.timingSafeEqual(Buffer.from(hmac), Buffer.from(verifySignature));
 }
 
+const { URL, URLSearchParams } = require("url");
 export async function getEventSubEndpoint(appToken, page = null, previousResponse = []) {
     const headers = {
         Authorization: `Bearer ${appToken}`,
@@ -100,13 +101,10 @@ export async function getEventSubEndpoint(appToken, page = null, previousRespons
     //     throw error;
     // }
     // return result_json;
-    return fetch(EVENTSUB_ENDPOINT, {
-        headers,
-        body: JSON.stringify({
-            status: "enabled",
-            after: `${page ? `&after={page}` : ""}`,
-        }),
-    })
+
+    const url = new URL(EVENTSUB_ENDPOINT);
+    url.search = new URLSearchParams({ status: "enabled", after: `${page ? `&after={page}` : ""}` }).toString();
+    return fetch(url, { headers })
         .then((response) => response.json())
         .then(async (newResponse) => {
             if (newResponse.data) {
