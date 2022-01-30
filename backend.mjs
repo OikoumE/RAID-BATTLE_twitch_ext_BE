@@ -165,7 +165,7 @@ async function onLaunch() {
     await setDefaultUserConfigInDatabase();
     startTmi(result);
 
-    // await deleteEventSubEndpoint("93645775"); //! DEV ONCE
+    await deleteEventSubEndpoint("93645775"); //! DEV ONCE
     // await setEventsubOnAll(); //! DEV ONCE
 
     setInterval(() => {
@@ -729,7 +729,7 @@ async function deleteEventSubFromDb(channelId, eventId) {
         {
             channelId,
         },
-        { $pull: { eventSUb: { id: eventId } } }
+        { $pull: { eventSub: { id: eventId } } }
     );
     if (result.acknowledged) {
         console.log("[backend:734]: Deleted eventSub registered in database: ", channelId, "eventId: ", eventId);
