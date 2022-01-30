@@ -718,9 +718,24 @@ async function deleteEventSubEndpoint(channelId) {
             return subEvent.id;
         })
         .forEach(async (eventId) => {
+            await deleteEventSubFromDb(channelId, eventId);
             await callDeleteEventSubEndpont(eventId);
         });
     return;
+}
+
+async function deleteEventSubFromDb(channelId, eventId) {
+    const result = await dataBase.updateOne(
+        {
+            channelId,
+        },
+        { $pull: { eventSUb: { id: eventId } } }
+    );
+    if (result.acknowledged) {
+        console.log("[backend:734]: Deleted eventSub registered on: ", channelId, "eventId: ", eventId);
+    } else {
+        console.log("[backend:736]: ERROR: unknown error", result);
+    }
 }
 
 async function callDeleteEventSubEndpont(eventId) {
