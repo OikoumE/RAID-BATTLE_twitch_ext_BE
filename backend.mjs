@@ -287,7 +287,7 @@ async function streamStatusHandler(eventNotification) {
     await sendGlobalBroadcast(dataTosend);
 }
 async function getExtLiveStreams() {
-    const url = "https://api.twitch.tv/helix/extensions/live?extension_id=";
+    const url = `https://api.twitch.tv/helix/extensions/live?extension_id=${process.env.EXT_CLIENT_ID}`;
     const result = await paginated_fetch(url);
     return result;
 }
@@ -298,7 +298,7 @@ async function paginated_fetch(url, page = null, previousResponse = []) {
             "Client-Id": APP_CLIENT_ID,
             "Content-type": "application/json",
         };
-    return fetch(`${url}${process.env.EXT_CLIENT_ID}&first=100${page ? `&after={page}` : ""}`, {
+    return fetch(`${url}&first=100${page ? `&after={page}` : ""}`, {
         //! dev CHANGE TO CORRECT EXT_CLIENT_ID when prod
         headers,
     })
@@ -642,8 +642,11 @@ function parseTmiChannelListFromDb(result) {
 }
 //! -------------------- EVENTSUB HANDLERS -------------------- //
 async function checkEventSubUser(userId) {
-    const appToken = await getAppAccessToken();
-    const eventSubs = await getEventSubEndpoint(appToken);
+    // const appToken = await getAppAccessToken();
+    // const eventSubs = await getEventSubEndpoint(appToken);
+
+    const eventSubs = await paginated_fetch(EVENTSUB_ENDPOINT);
+
     if (eventSubs) {
         const enabledEventSubs = eventSubs.data.filter((eSub) => {
             return (
