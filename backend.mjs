@@ -1444,10 +1444,18 @@ async function setEventsubOnAll() {
     //         console.log("[backend:1439]: err:", err);
     //     }
     // });
-
-    let result = await dataBase.updateMany({}, { $set: { userConfig: { enableOverlayButton: true } } });
-    console.log("[backend:1448]: result", result);
-    result = await dataBase.updateMany({}, { $set: { score: 0 } });
+    const userConfig = {
+        gameDuration: 120,
+        extendGameDuration: 60,
+        extendGameDurationEnabled: true,
+        introDuration: 30,
+        gameResultDuration: 15,
+        enableChatOutput: true,
+        enableChatCommands: true,
+        gameInfoDuration: 10,
+        enableOverlayButton: true,
+    };
+    let result = await dataBase.updateMany({}, { $set: { userConfig } });
     console.log("[backend:1448]: result", result);
 
     // const new_result = result.map((user) => {
