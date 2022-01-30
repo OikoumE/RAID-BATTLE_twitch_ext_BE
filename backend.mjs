@@ -1432,10 +1432,11 @@ async function setEventsubOnAll() {
 
     const new_result = result.map((user) => {
         const { channelName, displayName, channelId, profilePicUrl, userConfig, eventSub } = user;
+        let newSub;
         eventSub.forEach((eSub) => {
-            if (eSub.registeredEventSub.length === 3) eventSub = eSub;
+            if (eSub.registeredEventSub.length === 3) newSub = eSub;
         });
-        return { channelName, displayName, channelId, profilePicUrl, userConfig, eventSub };
+        return { channelName, displayName, channelId, profilePicUrl, userConfig, eventSub: newSub };
     });
 
     new_result.forEach((user, i) => {
