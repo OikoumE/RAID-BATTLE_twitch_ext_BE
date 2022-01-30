@@ -1432,21 +1432,33 @@ function confirmOpaqueUser(req, res, next) {
 
 async function setEventsubOnAll() {
     let result = await dataBase.find({});
-    // const appToken = await getAppAccessToken();
-    // const eventSubs = await getEventSubEndpoint(appToken);
+    const appToken = await getAppAccessToken();
+    const eventSubs = await getEventSubEndpoint(appToken);
+    console.log("[backend:1436]: eventSubs", eventSubs);
+    // eventSubs.data.forEach((eSub) => {
+    //     if (eSub) {
+    //     }
+    // });
 
-    result.forEach(async (user) => {
-        try {
-            const repsonse = await checkEventSubUser(user.channelId);
-            const result = await dataBase.updateOne({ channelId: user.channelId }, { $set: { eventSub: repsonse } });
-            console.log("[backend:1439]: result", result);
-        } catch (err) {
-            console.log("[backend:1439]: err:", err);
-        }
-    });
+    // missed_reg = [
+    //     190067460, 58554698, 571911151, 103933755, 731767598, 147516667, 120524051, 141972118, 485518510, 582968218,
+    //     503768162, 567777555, 50866164, 120043547, 433317158, 196799524, 720440903, 152331154, 764702456, 511247619,
+    //     758770618, 503545676, 475724952, 755476286, 413142230, 760598158, 686145144,
+    // ];
+    // result.forEach(async (user) => {
+    //     try {
+    //         // const repsonse = await checkEventSubUser(user.channelId);
+
+    //         const result = await dataBase.updateOne({ channelId: user.channelId }, { $set: { eventSub: repsonse } });
+    //         console.log("[backend:1439]: result", result);
+    //     } catch (err) {
+    //         console.log("[backend:1439]: err:", err);
+    //     }
+    // });
+    //! --------------------  -------------------- //
 
     // const new_result = result.map((user) => {
-    //     const { channelName, displayName, channelId, profilePicUrl, userConfig, eventSub } = user;
+    //     const { channelName, displayName, channelId, profilePicUrl, userConfig, eventSub } = u
     //     let newSub;
     //     console.log("[backend:1436]: eventSub", eventSub);
     //     eventSub?.forEach((eSub) => {
