@@ -1430,24 +1430,33 @@ function confirmOpaqueUser(req, res, next) {
 async function setEventsubOnAll() {
     const result = await dataBase.find({});
 
-    const new_result = result.map((user) => {
-        const { channelName, displayName, channelId, profilePicUrl, userConfig, eventSub } = user;
-        let newSub;
+    // const appToken = await getAppAccessToken();
+    // const eventSubs = await getEventSubEndpoint(appToken);
 
-        console.log("[backend:1436]: eventSub", eventSub);
-
-        eventSub?.forEach((eSub) => {
-            if (eSub.registeredEventSub.length === 3) newSub = eSub[0];
-        });
-        return { channelName, displayName, channelId, profilePicUrl, userConfig, eventSub: newSub };
+    result.forEach(async (user) => {
+        const repsonse = await checkEventSubUser(user.channelId);
+        const result = await dataBase.updateOne({ channelId }, { $set: { eventSub: repsonse } });
+        console.log("[backend:1439]: result", result);
     });
 
-    new_result.forEach((user, i) => {
-        setTimeout(async () => {
-            const result = await dataBase.updateOne({ channelId: user.channelId }, { $set: user });
-            console.log("[backend:1443]: result", result);
-        }, i * 1000);
-    });
+    // const new_result = result.map((user) => {
+    //     const { channelName, displayName, channelId, profilePicUrl, userConfig, eventSub } = user;
+    //     let newSub;
+
+    //     console.log("[backend:1436]: eventSub", eventSub);
+
+    //     eventSub?.forEach((eSub) => {
+    //         if (eSub.registeredEventSub.length === 3) newSub = eSub[0];
+    //     });
+    //     return { channelName, displayName, channelId, profilePicUrl, userConfig, eventSub: newSub };
+    // });
+
+    // new_result.forEach((user, i) => {
+    //     setTimeout(async () => {
+    //         const result = await dataBase.updateOne({ channelId: user.channelId }, { $set: user });
+    //         console.log("[backend:1443]: result", result);
+    //     }, i * 1000);
+    // });
 
     // console.log("[backend:1431]: result", result);
     // result.forEach(async (user, i) => {
