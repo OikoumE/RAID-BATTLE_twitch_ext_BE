@@ -555,7 +555,7 @@ async function requestRaidHistoryHandler(req, res) {
         data = {
             thisStreamData: {
                 displayName: thisStream.displayName,
-                battleHistory: thisStream.battleHistory.slice(-3),
+                battleHistory: thisStream.battleHistory?.slice(-3),
                 score: thisStream.score,
             },
             liveStreamsData: liveExtStreamsData,
