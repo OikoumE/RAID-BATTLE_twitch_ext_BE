@@ -584,28 +584,36 @@ async function addNewStreamer(channelId, notification = false) {
         console.log("[backend:579]: result", result);
         if (result.length === 3) {
             // we are happy
+            console.log("[backend:586]: WE HAVE 3 EVENTSUBS!!!!");
             const response = await continueAddingNewStreamer(channelId, result);
             streamerToAdd[channelId] = null;
             return response;
         } else {
             let events = ["channel.raid", "stream.online", "stream.offline"];
             if (streamerToAdd.channelId?.count > 3) {
+                console.log("[backend:593]: ERROR: got more than 3 notifications");
                 throw (`[backend:590]: ERROR: something went wrong registering eventsub`, result);
             }
             if (streamerToAdd.channelId?.count === 3 && result.length < 3) {
+                console.log(
+                    "[backend:597]: Got 3 notifications and we are missing some events",
+                    result.map((eSub) => eSub.type)
+                );
                 const reggedSubs = result.filter((eSub) => {
                     return (
                         parseInt(eSub.condition.to_broadcaster_user_id || eSub.condition.broadcaster_user_id) ===
                         parseInt(channelId)
                     );
                 });
+                console.log("[backend:607]: reggedSubs", reggedSubs);
                 const events = ["channel.raid", "stream.online", "stream.offline"];
                 const missedEvents = reggedSubs.map((eSub) => eSub.type).filter((eSub) => !events.includes(eSub));
+                console.log("[backend:610]: missedEvents", missedEvents);
                 await EventSubRegister(channelId, missedEvents);
                 streamerToAdd[channelId] = null;
             }
-            //! so we call register
             if (!notification && events.length > 0) {
+                console.log("[backend:616]: WE ARE REGISTERING EVENTS");
                 await EventSubRegister(channelId, events);
             }
             return;
