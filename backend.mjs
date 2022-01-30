@@ -1439,24 +1439,23 @@ function confirmOpaqueUser(req, res, next) {
 //RUN ONCE:
 
 async function setEventsubOnAll() {
-    // let result = await dataBase.find({});
-    // console.log("[backend:1452]: result", result);
-
-    // const appToken = await getAppAccessToken();
-    // const eventSubs = await getEventSubEndpoint(appToken);
-
-    //TODO set raidhistory
-
-    //TODO set created
-    let result = await dataBase.updateMany(
-        { battleHistory: { $exists: false } },
-        {
-            $set: {
-                battleHistory: [],
-            },
-        }
-    );
+    let result = await dataBase.find({});
     console.log("[backend:1452]: result", result);
+
+    const appToken = await getAppAccessToken();
+    const eventSubs = await getEventSubEndpoint(appToken);
+
+    result.forEach(async (user, i) => {
+        console.log(`[backend:1449]: CURRENT USER: ${i + 1} / ${result.length}`);
+        const channelEsubs = eventSubs.filter((eSub) => {
+            const eSubChannelId = eSub.condition.to_broadcaster_user_id || eSub.condition.broadcaster_user_id;
+            return eSubChannelId === user.channelId;
+        });
+        console.log("[backend:1452]: channelEsubs \n", channelEsubs);
+        const result = await dataBase.updateOne({ channelId: user.channelId }, { $set: { eventSUb: channelEsubs } });
+        console.log("[backend:1455]: result \n", result);
+        console.log("[backend:1455]: ---------------------");
+    });
 
     // console.log("[backend:1436]: eventSubs", eventSubs);
     // console.log("[backend:1436]: eventSubs", eventSubs.length);
