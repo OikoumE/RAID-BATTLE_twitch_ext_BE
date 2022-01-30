@@ -1451,8 +1451,10 @@ async function setEventsubOnAll() {
             const eSubChannelId = eSub.condition.to_broadcaster_user_id || eSub.condition.broadcaster_user_id;
             return eSubChannelId === user.channelId;
         });
-        console.log("[backend:1452]: channelEsubs \n", channelEsubs);
+        console.log("[backend:1452]: channelEsubs \n", channelEsubs.length);
         const DBresult = await dataBase.updateOne({ channelId: user.channelId }, { $set: { eventSUb: channelEsubs } });
+        console.log(`[backend:1449]: CURRENT USER: ${i + 1} / ${result.length}`);
+
         console.log("[backend:1455]: DBresult \n", DBresult);
         console.log("[backend:1455]: ---------------------");
     });
