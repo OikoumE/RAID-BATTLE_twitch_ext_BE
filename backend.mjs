@@ -1442,7 +1442,8 @@ function confirmOpaqueUser(req, res, next) {
 async function setEventsubOnAll() {
     // let result = await dataBase.find({});
 
-    const missed_reg = [766436971, 181462072, 178854251, 223433138];
+    // const missed_reg = [766436971, 181462072, 178854251, 223433138];
+    const missed_reg = [766436971];
     missed_reg.forEach(async (userId, i) => {
         console.log("[backend:1433]: user", userId);
         //try again

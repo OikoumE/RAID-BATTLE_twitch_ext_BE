@@ -140,15 +140,15 @@ export async function EventSubRegister(broadcaster_user_id) {
                     secret: EVENTSUB_SUBSCRIPTION_SECRET,
                 },
             };
-            if (event === "channel.raid") {
+            if (i === 0) {
                 subscriptionData.condition["to_broadcaster_user_id"] = broadcaster_user_id;
             } else {
                 subscriptionData.condition["broadcaster_user_id"] = broadcaster_user_id;
             }
             setTimeout(async () => {
+                console.log("[index:125]: subscriptionData", subscriptionData.condition);
                 const _result = await postEventSubEndpoint(subscriptionData);
-                console.log("[index:125]: postEventSubEndpoint:");
-                console.log("[index:125]: _result", _result);
+                console.log("[index:125]: postEventSubEndpoint", _result);
             }, i * 1000);
         });
     }
