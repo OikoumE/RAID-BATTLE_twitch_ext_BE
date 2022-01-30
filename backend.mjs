@@ -1440,23 +1440,22 @@ function confirmOpaqueUser(req, res, next) {
 
 async function setEventsubOnAll() {
     let result = await dataBase.find({});
-    console.log("[backend:1452]: result", result);
+    // console.log("[backend:1452]: result", result);
 
     const appToken = await getAppAccessToken();
     const eventSubs = await getEventSubEndpoint(appToken);
 
     result.forEach(async (user, i) => {
-        console.log(`[backend:1449]: CURRENT USER: ${i + 1} / ${result.length}`);
         const channelEsubs = eventSubs.filter((eSub) => {
             const eSubChannelId = eSub.condition.to_broadcaster_user_id || eSub.condition.broadcaster_user_id;
             return eSubChannelId === user.channelId;
         });
-        console.log("[backend:1452]: channelEsubs \n", channelEsubs.length);
         const DBresult = await dataBase.updateOne({ channelId: user.channelId }, { $set: { eventSUb: channelEsubs } });
-        console.log(`[backend:1449]: CURRENT USER: ${i + 1} / ${result.length}`);
-
-        console.log("[backend:1455]: DBresult \n", DBresult);
-        console.log("[backend:1455]: ---------------------");
+        console.log(`[backend:1455]: CURRENT USER: ${i + 1} / ${result.length}\n
+        channelEsubs: ${channelEsubs.length},\n
+        DBresult: ${DBresult},\n
+        ---------------------
+        `);
     });
 
     // console.log("[backend:1436]: eventSubs", eventSubs);
