@@ -1430,7 +1430,7 @@ function confirmOpaqueUser(req, res, next) {
 //RUN ONCE:
 
 async function setEventsubOnAll() {
-    const result = await dataBase.find({});
+    // let result = await dataBase.find({});
 
     // const appToken = await getAppAccessToken();
     // const eventSubs = await getEventSubEndpoint(appToken);
