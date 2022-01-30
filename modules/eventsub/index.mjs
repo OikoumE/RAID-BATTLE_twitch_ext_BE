@@ -101,9 +101,11 @@ export async function getEventSubEndpoint(appToken, page = null, previousRespons
     //     throw error;
     // }
     // return result_json;
+    const urlSearchParams = { status: "enabled" };
+    if (page) urlSearchParams["after"] = page;
 
     const url = new URL(EVENTSUB_ENDPOINT);
-    url.search = new URLSearchParams({ status: "enabled", after: `${page ? `&after={page}` : ""}` }).toString();
+    url.search = new URLSearchParams(urlSearchParams).toString();
     return fetch(url, { headers })
         .then((response) => response.json())
         .then(async (newResponse) => {
