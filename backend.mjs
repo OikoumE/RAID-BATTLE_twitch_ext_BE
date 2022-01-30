@@ -1445,7 +1445,7 @@ async function setEventsubOnAll() {
     const missed_reg = [766436971, 181462072, 178854251, 223433138];
     missed_reg.forEach(async (userId, i) => {
         console.log("[backend:1433]: user", userId);
-
+        //try again
         setTimeout(async () => {
             const response = await addNewStreamer(userId);
             console.log("[backend:1439]: response", response);
