@@ -117,7 +117,7 @@ export async function EventSubRegister(broadcaster_user_id) {
             } else {
                 subscriptionData.condition["broadcaster_user_id"] = broadcaster_user_id;
             }
-            setTimeout(() => {
+            setTimeout(async () => {
                 const _result = await postEventSubEndpoint(subscriptionData);
                 console.log("[index:125]: postEventSubEndpoint:");
                 console.log("[index:125]: _result", _result);
