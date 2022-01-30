@@ -165,7 +165,6 @@ async function onLaunch() {
     startTmi(result);
 
     // await deleteEventSubEndpoint("93645775"); //! DEV ONCE
-    await setEventsubOnAll(); //! DEV ONCE
     setInterval(() => {
         // Periodically clear cool-down tracking to prevent unbounded growth due to
         // per-session logged-out user tokens.
@@ -368,7 +367,7 @@ async function addStreamerToChannelsHandler(req, res) {
 async function requestUserConfigHandler(req, res) {
     const { channelId, opaqueUserId } = res.locals;
     const result = await dataBase.findOne({ channelId });
-    if (result.userConfig) {
+    if (result && result.userConfig) {
         res.json({
             result: "Loaded user config",
             data: { result: result.userConfig, defaults: DEFAULTS },
@@ -1424,54 +1423,4 @@ function confirmOpaqueUser(req, res, next) {
         return next();
     }
     throw Boom.unauthorized(STRINGS.invalidAuthHeader);
-}
-
-//RUN ONCE:
-
-async function setEventsubOnAll() {
-    const result = await dataBase.find({});
-
-    // const appToken = await getAppAccessToken();
-    // const eventSubs = await getEventSubEndpoint(appToken);
-
-    result.forEach(async (user) => {
-        try {
-            const repsonse = await checkEventSubUser(user.channelId);
-            const result = await dataBase.updateOne({ channelId: user.channelId }, { $set: { eventSub: repsonse } });
-            console.log("[backend:1439]: result", result);
-        } catch (err) {
-            console.log("[backend:1439]: err:", err);
-        }
-    });
-
-    // const new_result = result.map((user) => {
-    //     const { channelName, displayName, channelId, profilePicUrl, userConfig, eventSub } = user;
-    //     let newSub;
-
-    //     console.log("[backend:1436]: eventSub", eventSub);
-
-    //     eventSub?.forEach((eSub) => {
-    //         if (eSub.registeredEventSub.length === 3) newSub = eSub[0];
-    //     });
-    //     return { channelName, displayName, channelId, profilePicUrl, userConfig, eventSub: newSub };
-    // });
-
-    // new_result.forEach((user, i) => {
-    //     setTimeout(async () => {
-    //         const result = await dataBase.updateOne({ channelId: user.channelId }, { $set: user });
-    //         console.log("[backend:1443]: result", result);
-    //     }, i * 1000);
-    // });
-
-    // console.log("[backend:1431]: result", result);
-    // result.forEach(async (user, i) => {
-    //     console.log("[backend:1433]: user", user.displayName);
-    //     if (!user.eventSub || (user.eventSub && user.eventSub.length < 3)) {
-    //         setTimeout(async () => {
-    //             const response = await addNewStreamer(user.channelId);
-    //             console.log("[backend:1439]: response", response);
-    //         }, i * 5000);
-    //     }
-    //     console.log("[backend:1433]: ----------------- ");
-    // });
 }
