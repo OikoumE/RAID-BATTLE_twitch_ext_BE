@@ -33,6 +33,7 @@ dotenv.config();
 
 import { DataBase } from "./modules/database/database.mjs";
 import { webhookCallback, getEventSubEndpoint, EventSubRegister } from "./modules/eventsub/index.mjs";
+import { channel } from "diagnostics_channel";
 
 //TODO potentially request auth on config:
 // -   [channel.raid](https://dev.twitch.tv/docs/eventsub/eventsub-subscription-types#channelraid)
@@ -573,19 +574,40 @@ async function requestRaidHistoryHandler(req, res) {
 }
 
 //! -------------------- DATABASE HANDLERS -------------------- //
-async function addNewStreamer(channelId) {
+const streamerToAdd = {};
+async function addNewStreamer(channelId, notification = false) {
     // checks if user already in database and adds new streamer to database if user does not already exsist
+
     try {
         const result = await checkEventSubUser(channelId);
+        if (notification) streamerToAdd[channelId][count] += 1;
         console.log("[backend:579]: result", result);
-        if (result.length > 0) {
+        if (result.length === 3) {
             // we are happy
             const response = await continueAddingNewStreamer(channelId, result);
+            streamerToAdd[channelId] = null;
             return response;
         } else {
-            console.log("[backend:591]: EventSubRegister", channelId);
-            if (channelId) await EventSubRegister(channelId);
-            else console.trace("[backend:577]: ERROR: INVESTIGATE WHY CHANNELID IS UNDEFINED: channelId:", channelId);
+            let events = ["channel.raid", "stream.online", "stream.offline"];
+            if (streamerToAdd.channelId?.count > 3) {
+                throw (`[backend:590]: ERROR: something went wrong registering eventsub`, result);
+            }
+            if (streamerToAdd.channelId?.count === 3 && result.length < 3) {
+                const reggedSubs = result.filter((eSub) => {
+                    return (
+                        parseInt(eSub.condition.to_broadcaster_user_id || eSub.condition.broadcaster_user_id) ===
+                        parseInt(channelId)
+                    );
+                });
+                const events = ["channel.raid", "stream.online", "stream.offline"];
+                const missedEvents = reggedSubs.map((eSub) => eSub.type).filter((eSub) => !events.includes(eSub));
+                await EventSubRegister(channelId, missedEvents);
+                streamerToAdd[channelId] = null;
+            }
+            //! so we call register
+            if (!notification && events.length > 0) {
+                await EventSubRegister(channelId, events);
+            }
             return;
         }
     } catch (err) {
@@ -593,6 +615,12 @@ async function addNewStreamer(channelId) {
     }
 }
 async function continueAddingNewStreamer(channelId, registeredEventSub) {
+    // TODO store incoming requests
+    // TODO check if incoming requests contain what we need
+    // TODO continue
+    // TODO if incoming requests does not contain everything we need
+    // TODO parse incoming requests to figure out what were missing.
+
     //TODO queue with promises
     const userExsist = await dataBase.checkIfUserInDb(channelId);
     let returnData;
@@ -662,7 +690,7 @@ async function checkEventSubUser(userId) {
             );
         });
         if (enabledEventSubs.length === 0) {
-            console.log("[backend:655]: NOT REGISTERED userId", userId, "enabledEventSubs", enabledEventSubs);
+            console.log("[backend:655]: NOT DONE REGISTERING userId", userId, "enabledEventSubs", enabledEventSubs);
             return enabledEventSubs;
         } else {
             return enabledEventSubs;

@@ -57,8 +57,8 @@ export async function webhookCallback({ req, res, callbackObj }) {
             res.sendStatus(204);
         } else if (MESSAGE_TYPE_VERIFICATION === req.headers[MESSAGE_TYPE]) {
             // here
-            await addNewStreamer(channelId);
             res.status(200).send(notification.challenge);
+            await addNewStreamer(channelId, true);
         } else if (MESSAGE_TYPE_REVOCATION === req.headers[MESSAGE_TYPE]) {
             console.log(`[index:60]: ${eventType} notifications revoked!`);
             console.log(`[index:60]: reason: ${notification.subscription.status}`);
@@ -125,11 +125,10 @@ export async function getEventSubEndpoint(appToken, page = null, previousRespons
     // return result_json;
 }
 
-export async function EventSubRegister(broadcaster_user_id) {
+export async function EventSubRegister(broadcaster_user_id, eventArray) {
     console.log("[index:120]: broadcaster_user_id", broadcaster_user_id);
     if (broadcaster_user_id) {
-        const events = ["channel.raid", "stream.online", "stream.offline"];
-        events.forEach(async (event, i) => {
+        eventArray.forEach(async (event, i) => {
             const subscriptionData = {
                 version: "1",
                 type: event,
