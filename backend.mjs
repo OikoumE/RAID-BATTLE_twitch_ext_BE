@@ -299,6 +299,7 @@ async function paginated_fetch(url, page = null, previousResponse = []) {
             "Client-Id": APP_CLIENT_ID,
             "Content-type": "application/json",
         };
+    console.log("[backend:315]: Getting eventSub's paginated");
     return fetch(`${url}${page ? `&after={page}` : ""}`, {
         headers,
     })
@@ -307,7 +308,6 @@ async function paginated_fetch(url, page = null, previousResponse = []) {
             if (newResponse.data) {
                 const response = [...previousResponse, ...newResponse.data]; // Combine the two arrays
                 if (newResponse.pagination && newResponse.data.length == 100) {
-                    console.log("[backend:315]: doing pagination");
                     return await paginated_fetch(url, newResponse.pagination, response);
                 }
                 return response;
@@ -582,12 +582,12 @@ async function addNewStreamer(channelId, notification = false) {
         const result = await checkEventSubUser(channelId);
         if (notification) streamerToAdd[channelId][count] += 1;
         console.log(
-            "[backend:579]: result",
+            "[backend:579]: checkEventSubUser result",
             result.map((eSub) => eSub.type)
         );
         if (result.length === 3) {
             // we are happy
-            console.log("[backend:586]: WE HAVE 3 EVENTSUBS!!!!");
+            console.log("[backend:586]: Continuing adding New Streamer", channelId);
             const response = await continueAddingNewStreamer(channelId, result);
             streamerToAdd[channelId] = null;
             return response;
@@ -626,19 +626,11 @@ async function addNewStreamer(channelId, notification = false) {
     }
 }
 async function continueAddingNewStreamer(channelId, registeredEventSub) {
-    // TODO store incoming requests
-    // TODO check if incoming requests contain what we need
-    // TODO continue
-    // TODO if incoming requests does not contain everything we need
-    // TODO parse incoming requests to figure out what were missing.
-
-    //TODO queue with promises
     const userExsist = await dataBase.checkIfUserInDb(channelId);
     let returnData;
     if (!userExsist) {
         const userData = await getUser(`id=${channelId}`);
         userData["eventSub"] = registeredEventSub;
-        //TODO this MAY add twice to DB... fix with promises
         const result = await addStreamerToDb(userData);
         if (result.acknowledged) {
             console.log("[backend:641]: User added to DB: ", channelId);
@@ -705,7 +697,12 @@ async function checkEventSubUser(userId) {
             );
         });
         if (enabledEventSubs.length === 0) {
-            console.log("[backend:655]: NOT DONE REGISTERING userId", userId, "enabledEventSubs", enabledEventSubs);
+            console.log(
+                "[backend:655]: checkEventSubUser result = 0, userId",
+                userId,
+                "enabledEventSubs",
+                enabledEventSubs
+            );
             return enabledEventSubs;
         } else {
             return enabledEventSubs;
@@ -835,7 +832,7 @@ function startTmi(channels) {
         channels: channels,
     });
     tmiClient.connect().then(() => {
-        console.log(`[backend:529]: Listening for messages on ${channels.length} channels`);
+        console.log(`[backend:529]: TMI.js Listening for messages on ${channels.length} channels`);
     });
     tmiClient.on(
         "message",
@@ -906,12 +903,13 @@ async function raidRoulette(currentChannel) {
 function restartTmi(channelList) {
     // restarts TMI.js
     if (tmiClient) {
+        console.error("[backend:345]: disconnecting TMI.js");
         tmiClient.disconnect();
     } else {
         console.error("no tmi connected??");
     }
     tmiClient.on("disconnected", (reason) => {
-        console.error("[backend:346]: reason", reason);
+        console.error("[backend:346]: TMI.js disconnected, reason: ", reason);
         startTmi(channelList);
     });
 }
@@ -1102,7 +1100,6 @@ async function setGameExpiredResult(channelId) {
     }
 }
 //! -------------------- HISTORY-DB -------------------- //
-// update all docs with score + history before prod //! DEV
 async function setStreamerBattleHistory(battleHistoryObj) {
     const { channelId, versus, battleResult, score } = battleHistoryObj;
     const result = await dataBase.updateOne(
