@@ -877,7 +877,7 @@ async function startRaid({ channel, username, viewers }, test = false) {
             profilePicUrl,
             score,
             userConfig,
-            battleHistory: battleHistory.slice(-3),
+            battleHistory: battleHistory?.slice(-3),
         };
     if (typeof channelRaiders[channelId] !== "object") {
         channelRaiders[channelId] = {
