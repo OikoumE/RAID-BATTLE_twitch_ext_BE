@@ -1429,7 +1429,7 @@ function confirmOpaqueUser(req, res, next) {
 
 async function setEventsubOnAll() {
     const result = dataBase.find({});
-
+    console.log("[backend:1431]: result", result);
     result.forEach(async (user, i) => {
         console.log("[backend:1433]: user", user.displayName);
         if (!user.eventSub || (user.eventSub && user.eventSub.length < 3)) {
