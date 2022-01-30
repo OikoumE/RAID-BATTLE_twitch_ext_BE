@@ -141,9 +141,9 @@ export async function EventSubRegister(broadcaster_user_id) {
                 },
             };
             if (i === 0) {
-                subscriptionData.condition["to_broadcaster_user_id"] = broadcaster_user_id;
+                subscriptionData.condition["to_broadcaster_user_id"] = `${broadcaster_user_id}`;
             } else {
-                subscriptionData.condition["broadcaster_user_id"] = broadcaster_user_id;
+                subscriptionData.condition["broadcaster_user_id"] = `${broadcaster_user_id}`;
             }
             setTimeout(async () => {
                 console.log("[index:125]: subscriptionData", subscriptionData.condition);
