@@ -1435,15 +1435,20 @@ async function setEventsubOnAll() {
     // const appToken = await getAppAccessToken();
     // const eventSubs = await getEventSubEndpoint(appToken);
 
-    result.forEach(async (user) => {
-        try {
-            const repsonse = await checkEventSubUser(user.channelId);
-            const result = await dataBase.updateOne({ channelId: user.channelId }, { $set: { eventSub: repsonse } });
-            console.log("[backend:1439]: result", result);
-        } catch (err) {
-            console.log("[backend:1439]: err:", err);
-        }
-    });
+    // result.forEach(async (user) => {
+    //     try {
+    //         const repsonse = await checkEventSubUser(user.channelId);
+    //         const result = await dataBase.updateOne({ channelId: user.channelId }, { $set: { eventSub: repsonse } });
+    //         console.log("[backend:1439]: result", result);
+    //     } catch (err) {
+    //         console.log("[backend:1439]: err:", err);
+    //     }
+    // });
+
+    let result = await dataBase.updateMany({}, { userConfig: { enableOverlayButton: true } });
+    console.log("[backend:1448]: result", result);
+    result = await dataBase.updateMany({}, { score: 0 });
+    console.log("[backend:1448]: result", result);
 
     // const new_result = result.map((user) => {
     //     const { channelName, displayName, channelId, profilePicUrl, userConfig, eventSub } = user;
