@@ -1434,7 +1434,7 @@ async function setEventsubOnAll() {
     let result = await dataBase.find({});
     const appToken = await getAppAccessToken();
     const eventSubs = await getEventSubEndpoint(appToken);
-    console.log("[backend:1436]: eventSubs", eventSubs);
+    console.log("[backend:1436]: eventSubs", eventSubs.length);
     // eventSubs.data.forEach((eSub) => {
     //     if (eSub) {
     //     }
