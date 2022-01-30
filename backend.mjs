@@ -581,7 +581,10 @@ async function addNewStreamer(channelId, notification = false) {
     try {
         const result = await checkEventSubUser(channelId);
         if (notification) streamerToAdd[channelId][count] += 1;
-        console.log("[backend:579]: result", result);
+        console.log(
+            "[backend:579]: result",
+            result.map((eSub) => eSub.type)
+        );
         if (result.length === 3) {
             // we are happy
             console.log("[backend:586]: WE HAVE 3 EVENTSUBS!!!!");
@@ -637,7 +640,11 @@ async function continueAddingNewStreamer(channelId, registeredEventSub) {
         userData["eventSub"] = registeredEventSub;
         //TODO this MAY add twice to DB... fix with promises
         const result = await addStreamerToDb(userData);
-        console.log("[backend:337]: result", result);
+        if (result.acknowledged) {
+            console.log("[backend:641]: User added to DB: ", channelId);
+        } else {
+            console.log("[backend:643]: ERROR: something....", channelId);
+        }
         const allChannelList = await dataBase.find();
         const newChannelList = parseTmiChannelListFromDb(allChannelList);
         restartTmi(newChannelList);
@@ -1478,17 +1485,15 @@ function confirmOpaqueUser(req, res, next) {
 async function setEventsubOnAll() {
     // let result = await dataBase.find({});
 
-    // const missed_reg = [766436971, 181462072, 178854251, 223433138];
-    const missed_reg = [766436971];
+    //try again
+    const missed_reg = [181462072, 178854251, 223433138];
     missed_reg.forEach(async (userId, i) => {
-        console.log("[backend:1433]: user", userId);
-        //try again
         setTimeout(async () => {
+            console.log("[backend:1433]: user", userId, " - ", i + 1, "/", missed_reg.length);
             const response = await addNewStreamer(userId);
-            console.log("[backend:1439]: response", response);
+            console.log("[backend:1439]: SUCCESS: ", response.data.acknowledged);
+            console.log("[backend:1433]: ----------------- ");
         }, i * 5000);
-
-        console.log("[backend:1433]: ----------------- ");
     });
 
     // console.log("[backend:1452]: result", result);
