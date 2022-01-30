@@ -1431,11 +1431,13 @@ async function setEventsubOnAll() {
     const result = dataBase.find({});
 
     result.forEach(async (user, i) => {
+        console.log("[backend:1433]: user", user.displayName);
         if (!user.eventSub || (user.eventSub && user.eventSub.length < 3)) {
             setTimeout(async () => {
                 response = await addNewStreamer(user.channelId);
                 console.log("[backend:1439]: response", response);
             }, i * 5000);
         }
+        console.log("[backend:1433]: ----------------- ");
     });
 }
