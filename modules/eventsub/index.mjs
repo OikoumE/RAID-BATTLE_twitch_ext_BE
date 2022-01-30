@@ -94,18 +94,8 @@ export async function getEventSubEndpoint(appToken, page = null, previousRespons
         Authorization: `Bearer ${appToken}`,
         "Client-Id": APP_CLIENT_ID,
     };
-    // const result = await fetch(EVENTSUB_ENDPOINT, { headers });
-    // const result_json = await result.json();
-
-    // if (result_json.status > 200) {
-    //     const error = `[index:97]: ERROR: ${result_json}`;
-    //     console.log("[index:95]: ERROR:", error);
-    //     throw error;
-    // }
-    // return result_json;
     const urlSearchParams = { status: "enabled" };
     if (page) urlSearchParams["after"] = page;
-    console.log("[index:105]: urlSearchParams", urlSearchParams);
     const url = new URL(EVENTSUB_ENDPOINT);
     url.search = new URLSearchParams(urlSearchParams).toString();
     return fetch(url, { headers })
@@ -124,6 +114,15 @@ export async function getEventSubEndpoint(appToken, page = null, previousRespons
         .catch((err) => {
             console.log("[backend:311]: ERROR: ", err);
         });
+    // const result = await fetch(EVENTSUB_ENDPOINT, { headers });
+    // const result_json = await result.json();
+
+    // if (result_json.status > 200) {
+    //     const error = `[index:97]: ERROR: ${result_json}`;
+    //     console.log("[index:95]: ERROR:", error);
+    //     throw error;
+    // }
+    // return result_json;
 }
 
 export async function EventSubRegister(broadcaster_user_id) {
