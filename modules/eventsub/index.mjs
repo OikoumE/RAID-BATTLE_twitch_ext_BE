@@ -103,7 +103,7 @@ export async function getEventSubEndpoint(appToken, page = null, previousRespons
     // return result_json;
     const urlSearchParams = { status: "enabled" };
     if (page) urlSearchParams["after"] = page;
-
+    console.log("[index:105]: urlSearchParams", urlSearchParams);
     const url = new URL(EVENTSUB_ENDPOINT);
     url.search = new URLSearchParams(urlSearchParams).toString();
     return fetch(url, { headers })
