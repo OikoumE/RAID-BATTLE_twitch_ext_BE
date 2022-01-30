@@ -1452,8 +1452,8 @@ async function setEventsubOnAll() {
             return eSubChannelId === user.channelId;
         });
         console.log("[backend:1452]: channelEsubs \n", channelEsubs);
-        const result = await dataBase.updateOne({ channelId: user.channelId }, { $set: { eventSUb: channelEsubs } });
-        console.log("[backend:1455]: result \n", result);
+        const DBresult = await dataBase.updateOne({ channelId: user.channelId }, { $set: { eventSUb: channelEsubs } });
+        console.log("[backend:1455]: DBresult \n", DBresult);
         console.log("[backend:1455]: ---------------------");
     });
 
