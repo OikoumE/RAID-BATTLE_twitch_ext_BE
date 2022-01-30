@@ -571,10 +571,8 @@ async function addNewStreamer(channelId) {
         const result = await checkEventSubUser(channelId);
         if (result) {
             // we are happy
-            if (result) {
-                const response = await continueAddingNewStreamer(channelId, result);
-                return response;
-            }
+            const response = await continueAddingNewStreamer(channelId, result);
+            return response;
         } else {
             console.log("[backend:591]: EventSubRegister", channelId);
             if (channelId) await EventSubRegister(channelId);
@@ -603,11 +601,11 @@ async function continueAddingNewStreamer(channelId, registeredEventSub) {
             data: result,
         };
     } else {
-        if (!userExsist.eventSub) {
+        if (!userExsist.eventSub || (userExsist.eventSub && userExsist.eventSub.length < 3)) {
             const result = await dataBase.updateOne(
                 { channelId },
                 {
-                    $set: { eventSub: { registeredEventSub } },
+                    $push: { eventSub: { registeredEventSub } },
                 }
             );
             console.log("[backend:612]: result", result);
