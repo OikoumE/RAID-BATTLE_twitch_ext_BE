@@ -113,7 +113,7 @@ export async function getEventSubEndpoint(appToken, page = null, previousRespons
                 const response = [...previousResponse, ...newResponse.data]; // Combine the two arrays
                 if (newResponse.pagination && newResponse.data.length == 100) {
                     console.log("[backend:315]: doing pagination");
-                    return await getEventSubEndpoint(appToken, newResponse.pagination, response);
+                    return await getEventSubEndpoint(appToken, newResponse.pagination.cursor, response);
                 }
                 return response;
             }
