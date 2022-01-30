@@ -1451,7 +1451,7 @@ async function setEventsubOnAll() {
             return eSubChannelId === user.channelId;
         });
         const DBresult = await dataBase.updateOne({ channelId: user.channelId }, { $set: { eventSUb: channelEsubs } });
-        if (channelEsubs.length === 3) {
+        if (channelEsubs.length < 3) {
             console.log(
                 `[backend:1455]: CURRENT USER: ${i + 1} / ${result.length}\n
             channelEsubs: ${channelEsubs.length === 3 ? channelEsubs.length : user.channelId},\n
