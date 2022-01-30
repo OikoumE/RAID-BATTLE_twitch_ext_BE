@@ -165,7 +165,7 @@ async function onLaunch() {
     await setDefaultUserConfigInDatabase();
     startTmi(result);
 
-    // await deleteEventSubEndpoint("93645775"); //! DEV ONCE
+    await deleteEventSubEndpoint("93645775"); //! DEV ONCE
     // await setEventsubOnAll(); //! DEV ONCE
 
     setInterval(() => {
@@ -580,7 +580,7 @@ async function addNewStreamer(channelId, notification = false) {
 
     try {
         const result = await checkEventSubUser(channelId);
-        if (notification) streamerToAdd[channelId][count] += 1;
+        if (notification) streamerToAdd[channelId] += 1;
         console.log(
             "[backend:579]: checkEventSubUser result",
             result.map((eSub) => eSub.type)
@@ -593,11 +593,11 @@ async function addNewStreamer(channelId, notification = false) {
             return response;
         } else {
             let events = ["channel.raid", "stream.online", "stream.offline"];
-            if (notification && streamerToAdd.channelId?.count > 3) {
+            if (notification && streamerToAdd.channelId > 3) {
                 console.log("[backend:593]: ERROR: got more than 3 notifications");
                 throw (`[backend:590]: ERROR: something went wrong registering eventsub`, result);
             }
-            if (notification && streamerToAdd.channelId?.count === 3 && result.length < 3) {
+            if (notification && streamerToAdd.channelId === 3 && result.length < 3) {
                 console.log(
                     "[backend:597]: Got 3 notifications and we are missing some events",
                     result.map((eSub) => eSub.type)
@@ -732,7 +732,7 @@ async function deleteEventSubFromDb(channelId, eventId) {
         { $pull: { eventSUb: { id: eventId } } }
     );
     if (result.acknowledged) {
-        console.log("[backend:734]: Deleted eventSub registered on: ", channelId, "eventId: ", eventId);
+        console.log("[backend:734]: Deleted eventSub registered in database: ", channelId, "eventId: ", eventId);
     } else {
         console.log("[backend:736]: ERROR: unknown error", result);
     }
