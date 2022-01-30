@@ -165,7 +165,7 @@ async function onLaunch() {
     await setDefaultUserConfigInDatabase();
     startTmi(result);
 
-    // await deleteEventSubEndpoint("93645775"); //! DEV ONCE
+    await deleteEventSubEndpoint("93645775"); //! DEV ONCE
     // await setEventsubOnAll(); //! DEV ONCE
 
     setInterval(() => {
