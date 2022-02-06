@@ -147,6 +147,7 @@ export async function EventSubRegister(broadcaster_user_id, eventArray) {
             setTimeout(async () => {
                 console.log("[index:125]: subscriptionData", subscriptionData.condition);
                 const _result = await postEventSubEndpoint(subscriptionData);
+                console.log("[index:149]: _result", _result);
                 console.log(
                     "[index:125]: postEventSubEndpoint request added: ",
                     _result.data[0].status === "webhook_callback_verification_pending",
