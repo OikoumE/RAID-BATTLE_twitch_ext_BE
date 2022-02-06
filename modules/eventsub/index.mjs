@@ -148,11 +148,13 @@ export async function EventSubRegister(broadcaster_user_id, eventArray) {
                 console.log("[index:125]: subscriptionData", subscriptionData.condition);
                 const _result = await postEventSubEndpoint(subscriptionData);
                 console.log("[index:149]: _result", _result);
-                console.log(
-                    "[index:125]: postEventSubEndpoint request added: ",
-                    _result.data[0].status === "webhook_callback_verification_pending",
-                    _result.data[0].type
-                );
+                if (Object.keys(_result).includes(data)) {
+                    console.log(
+                        "[index:125]: postEventSubEndpoint request added: ",
+                        _result.data[0].status === "webhook_callback_verification_pending",
+                        _result.data[0].type
+                    );
+                }
             }, i * 1000);
         });
     }
