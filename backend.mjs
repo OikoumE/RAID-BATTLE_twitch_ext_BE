@@ -165,7 +165,7 @@ async function onLaunch() {
     await setDefaultUserConfigInDatabase();
     startTmi(result);
 
-    // await deleteEventSubEndpoint("93645775"); //! DEV ONCE
+    await deleteEventSubEndpoint("468106723"); //! DEV ONCE
     await setEventsubOnAll(); //! DEV ONCE
 
     setInterval(() => {
@@ -1504,11 +1504,11 @@ function confirmOpaqueUser(req, res, next) {
 
 //RUN ONCE:
 
-async function setEventsubOnAll() {
-    const result = await dataBase.find({ channelId: "93645775" });
+// async function setEventsubOnAll() {
+//     const result = await dataBase.find({ channelId: "93645775" });
 
-    console.log("[backend:1511]: result", result);
-}
+//     console.log("[backend:1511]: result", result);
+// }
 //     // let result = await dataBase.find({});
 
 //     //try again
