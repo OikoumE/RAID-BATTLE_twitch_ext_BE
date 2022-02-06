@@ -166,7 +166,7 @@ async function onLaunch() {
     startTmi(result);
 
     await deleteEventSubEndpoint("468106723"); //! DEV ONCE
-    await setEventsubOnAll(); //! DEV ONCE
+    // await setEventsubOnAll(); //! DEV ONCE
 
     setInterval(() => {
         // Periodically clear cool-down tracking to prevent unbounded growth due to
