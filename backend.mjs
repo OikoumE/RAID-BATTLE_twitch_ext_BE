@@ -880,7 +880,7 @@ async function chatCommandHandler(channel, userstate, message, self) {
                 return;
             }
             attemptSendChatMessageToChannel(streamerData, strings.RAIDBATTLE_CHAT_INFO_TEXT);
-        } else if (message.toLowerCase().startsWith("!raid")) {
+        } else if (message.toLowerCase() == "!raid") {
             if (
                 userstate.badges &&
                 (Object.keys(userstate.badges).includes("broadcaster") ||
