@@ -581,6 +581,7 @@ async function addNewStreamer(channelId, notification = false) {
     try {
         const result = await checkEventSubUser(channelId);
         if (notification) streamerToAdd[channelId] += 1;
+        //TODO filter only enabled
         console.log(
             "[backend:579]: checkEventSubUser result",
             result.map((eSub) => eSub.type)
