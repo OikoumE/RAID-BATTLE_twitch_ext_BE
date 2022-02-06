@@ -746,7 +746,6 @@ async function deleteEventSubFromDb(channelId, eventId) {
         console.log("[backend:736]: ERROR: unknown error", result);
     }
 }
-
 async function callDeleteEventSubEndpont(eventId) {
     const url = EVENTSUB_ENDPOINT + "?id=" + eventId;
     const myAppToken = await getAppAccessToken();
