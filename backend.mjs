@@ -945,16 +945,8 @@ async function startRaid({ channel, username, viewers }, test = false) {
     const streamerData = await dataBase.findOne({
             channelName: channel.toLowerCase(),
         }),
-        { channelName, displayName, channelId, profilePicUrl, score, userConfig, battleHistory } = streamerData,
-        mappedStreamer = {
-            channelName,
-            displayName,
-            channelId,
-            profilePicUrl,
-            score,
-            userConfig,
-            battleHistory: battleHistory?.slice(-3),
-        };
+        { battleHistory } = streamerData;
+    streamerData.battleHistory = battleHistory?.slice(-3);
     if (typeof channelRaiders[channelId] !== "object") {
         channelRaiders[channelId] = {
             test,
@@ -968,7 +960,7 @@ async function startRaid({ channel, username, viewers }, test = false) {
                     streamer: { clicks: 0, clickers: [] },
                     raider: { clicks: 0, clickers: [] },
                 },
-                streamerData: mappedStreamer,
+                streamerData,
             },
         };
     }
