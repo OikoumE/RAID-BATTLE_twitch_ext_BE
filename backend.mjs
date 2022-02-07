@@ -1007,14 +1007,16 @@ async function constructGamePackage(raiderUserName, raiderAmount, streamerData, 
     const streamData = await getStreamsById(streamerData.channelId);
     if (streamData && streamData.type == "live") {
         const raiderUserData = await getUser(`login=${raiderUserName}`),
-            raiderData = {
-                channel_id: raiderUserData.id,
-                display_name: raiderUserData.display_name,
-                profile_image_url: raiderUserData.profile_image_url,
-                viewers: raiderAmount,
-            },
-            gameTimeObj = await constructGameTimeObject(streamerData),
-            gameResult = [];
+            { channel_id, display_name, login_name, profile_image_url } = raiderUserData;
+        (raiderData = {
+            channel_id,
+            display_name,
+            login_name,
+            profile_image_url,
+            viewers: raiderAmount,
+        }),
+            (gameTimeObj = await constructGameTimeObject(streamerData)),
+            (gameResult = []);
         return {
             gameState: "running",
             raiderData,
@@ -1035,7 +1037,7 @@ async function setGameExpiredResult(channelId) {
     if (gameExpired(gamesArray) && channelRaiders[channelId].hasRunningGame) {
         channelRaiders[channelId].hasRunningGame = false;
         channelRaiders[channelId].data.games.forEach((game) => (game.gameState = "result"));
-        const raiders = gamesArray.map((game) => game.raiderData.display_name),
+        const raiders = gamesArray.map((game) => game.raiderData.login_name),
             raidersId = gamesArray.map((game) => game.raiderData.channel_id);
         let winner,
             defeated,
