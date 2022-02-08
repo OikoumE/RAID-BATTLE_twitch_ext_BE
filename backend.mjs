@@ -945,7 +945,7 @@ async function startRaid({ channel, username, viewers }, test = false) {
     const streamerData = await dataBase.findOne({
             channelName: channel.toLowerCase(),
         }),
-        { battleHistory } = streamerData;
+        { battleHistory, channelId } = streamerData;
     streamerData.battleHistory = battleHistory?.slice(-3);
     if (typeof channelRaiders[channelId] !== "object") {
         channelRaiders[channelId] = {
