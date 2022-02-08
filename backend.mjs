@@ -1000,15 +1000,15 @@ async function constructGamePackage(raiderUserName, raiderAmount, streamerData, 
     if (streamData && streamData.type == "live") {
         const raiderUserData = await getUser(`login=${raiderUserName}`),
             { channel_id, display_name, login_name, profile_image_url } = raiderUserData;
-        (raiderData = {
-            channel_id,
-            display_name,
-            login_name,
-            profile_image_url,
-            viewers: raiderAmount,
-        }),
-            (gameTimeObj = await constructGameTimeObject(streamerData)),
-            (gameResult = []);
+        const raiderData = {
+                channel_id,
+                display_name,
+                login_name,
+                profile_image_url,
+                viewers: raiderAmount,
+            },
+            gameTimeObj = await constructGameTimeObject(streamerData),
+            gameResult = [];
         return {
             gameState: "running",
             raiderData,
