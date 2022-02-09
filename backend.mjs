@@ -1029,7 +1029,7 @@ async function setGameExpiredResult(channelId) {
     if (gameExpired(gamesArray) && channelRaiders[channelId].hasRunningGame) {
         channelRaiders[channelId].hasRunningGame = false;
         channelRaiders[channelId].data.games.forEach((game) => (game.gameState = "result"));
-        const raiders = gamesArray.map((game) => game.raiderData.login_name),
+        const raiders = gamesArray.map((game) => game.raiderData.display_name),
             raidersId = gamesArray.map((game) => game.raiderData.channel_id);
         let winner,
             defeated,
@@ -1484,7 +1484,7 @@ function userIsInCooldown(opaqueUserId, skipCooldown = false) {
         return true;
     }
     // Voting extensions must also track per-user votes to prevent skew.
-    userCooldowns[opaqueUserId] = now + skipCooldown ? userSkipCooldownMs : userCooldownMs;
+    userCooldowns[opaqueUserId] = now + (skipCooldown ? userSkipCooldownMs : userCooldownMs);
     return false;
 }
 //! ------ confirm user ------ //
@@ -1494,6 +1494,11 @@ function confirmOpaqueUser(req, res, next) {
     }
     throw Boom.unauthorized(STRINGS.invalidAuthHeader);
 }
+
+
+req ---> req.data
+req.data ----> yourself
+
 
 //RUN ONCE:
 
