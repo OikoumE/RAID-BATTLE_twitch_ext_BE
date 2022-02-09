@@ -1495,11 +1495,6 @@ function confirmOpaqueUser(req, res, next) {
     throw Boom.unauthorized(STRINGS.invalidAuthHeader);
 }
 
-
-req ---> req.data
-req.data ----> yourself
-
-
 //RUN ONCE:
 
 // async function setEventsubOnAll() {
