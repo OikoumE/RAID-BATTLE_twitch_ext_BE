@@ -344,7 +344,7 @@ async function ongoingRaidGameQueryHandler(req, res) {
         result ? result.displayName : null
     } - ${channelId} (${opaqueUserId})`;
 
-    if (typeof channelRaiders[channelId] === "undefined") {
+    if (typeof channelRaiders[channelId] === "undefined" && channelRaiders[channelId] == null) {
         console.log(`[backend:415]: ${noActiveGameString}`);
         res.json(userConfig);
         return;
@@ -1369,7 +1369,7 @@ function cleanUpChannelRaiderAndDoBroadcast(channelId) {
             channelRaiders[channelId].data.gameState = "GAME OVER";
             attemptRaidBroadcast(channelId);
             setTimeout(() => {
-                channelRaiders[channelId] = "null";
+                channelRaiders[channelId] = null;
             }, 2000);
         }
     } catch (err) {
@@ -1464,7 +1464,7 @@ function makeGlobalToken() {
 }
 function verifyAndDecode(header) {
     // Verify the header and the enclosed JWT.
-    if (header.startsWith(bearerPrefix)) {
+    if (header?.startsWith(bearerPrefix)) {
         try {
             const token = header.substring(bearerPrefix.length);
             return jsonwebtoken.verify(token, secret, {
