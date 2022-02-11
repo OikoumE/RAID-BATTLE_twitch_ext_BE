@@ -344,7 +344,7 @@ async function ongoingRaidGameQueryHandler(req, res) {
         result ? result.displayName : null
     } - ${channelId} (${opaqueUserId})`;
 
-    if (typeof channelRaiders[channelId] === "undefined" && channelRaiders[channelId] == null) {
+    if (typeof channelRaiders[channelId] === "undefined" || channelRaiders[channelId] == null) {
         console.log(`[backend:415]: ${noActiveGameString}`);
         res.json(userConfig);
         return;
