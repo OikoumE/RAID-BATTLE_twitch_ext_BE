@@ -965,7 +965,7 @@ async function startRaid({ channel, username, viewers }, test = false) {
         };
     }
     if (
-        !channelRaiders[channelId].data.games.some((game) => {
+        !channelRaiders[channelId]?.data.games.some((game) => {
             return game.raiderData.display_name.toLowerCase() === username.toLowerCase();
         })
     ) {
