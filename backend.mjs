@@ -14,6 +14,7 @@
  *    limitations under the License.
  */
 import fs from "fs";
+
 import path from "path";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -340,9 +341,8 @@ async function ongoingRaidGameQueryHandler(req, res) {
     if (!result) {
         addNewStreamer(channelId);
     }
-    const noActiveGameString = `No active games on channel ${
-        result ? result.displayName : null
-    } - ${channelId} (${opaqueUserId})`;
+    const noActiveGameString = `No active games on channel ${result ? result.displayName : null
+        } - ${channelId} (${opaqueUserId})`;
 
     if (typeof channelRaiders[channelId] === "undefined" || channelRaiders[channelId] == null) {
         console.log(`[backend:415]: ${noActiveGameString}`);
@@ -943,8 +943,8 @@ async function startRaid({ channel, username, viewers }, test = false) {
     //TODO check if live EXT..
     // starts a raid game
     const streamerData = await dataBase.findOne({
-            channelName: channel.toLowerCase(),
-        }),
+        channelName: channel.toLowerCase(),
+    }),
         { battleHistory, channelId } = streamerData;
     streamerData.battleHistory = battleHistory?.slice(-3);
     if (typeof channelRaiders[channelId] !== "object") {
@@ -977,10 +977,9 @@ async function startRaid({ channel, username, viewers }, test = false) {
             setResult(channelId, username, parseString(strings.intro1, username), "introDuration");
             attemptSendChatMessageToChannel(
                 streamerData,
-                `Incoming raid from ${username} - get ready for RAID-BATTLE ${
-                    (await getUserConfigOrDefaultValue(channelId, "enableChatCommands"))
-                        ? "(type !RAIDBATTLE for info)"
-                        : ""
+                `Incoming raid from ${username} - get ready for RAID-BATTLE ${(await getUserConfigOrDefaultValue(channelId, "enableChatCommands"))
+                    ? "(type !RAIDBATTLE for info)"
+                    : ""
                 }`
             );
             handleBroadcastInterval(channelId);
@@ -1001,12 +1000,12 @@ async function constructGamePackage(raiderUserName, raiderAmount, streamerData, 
         const raiderUserData = await getUser(`login=${raiderUserName}`),
             { channel_id, display_name, login_name, profile_image_url } = raiderUserData;
         const raiderData = {
-                channel_id,
-                display_name,
-                login_name,
-                profile_image_url,
-                viewers: raiderAmount,
-            },
+            channel_id,
+            display_name,
+            login_name,
+            profile_image_url,
+            viewers: raiderAmount,
+        },
             gameTimeObj = await constructGameTimeObject(streamerData),
             gameResult = [];
         return {
