@@ -338,7 +338,7 @@ function return200() {
 async function ongoingRaidGameQueryHandler(req, res) {
     const { channelId, opaqueUserId } = res.locals;
     const result = await dataBase.findOne({ channelId });
-    const { userConfig } = result;
+    const userConfig = result?.userConfig;
     if (!result) {
         addNewStreamer(channelId);
     }
