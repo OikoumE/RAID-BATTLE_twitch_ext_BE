@@ -8,6 +8,7 @@ services:
     env_file: .env
     environment:
       MONGODB_URL: mongodb://root:supers3cret@mongo:27017/RaidBattle
+      PORT: 8085
 
   mongo:
     image: mongo
