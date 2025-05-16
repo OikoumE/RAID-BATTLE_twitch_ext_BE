@@ -144,6 +144,10 @@ function missingValue(name, variable) {
 const app = express();
 const port = parseInt(process.env.PORT || '8085');
 const ip = "0.0.0.0";
+
+import morgan from 'morgan';
+
+app.use(morgan(process.env.LOG_FORMAT || 'tiny'));
 app.use(cors());
 app.use(
     express.raw({
