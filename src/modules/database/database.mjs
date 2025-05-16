@@ -27,7 +27,7 @@ export class DataBase {
     }
     async connect() {
         try {
-            const res = await this.client.connect();
+            await this.client.connect();
         } catch (e) {
             console.log("[database:276]: e", e);
         }
