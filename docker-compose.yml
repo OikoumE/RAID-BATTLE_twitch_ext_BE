@@ -1,0 +1,50 @@
+services:
+
+  # Basic mongo db, so we don't have to manually bootstrap one
+  mongo:
+    image: mongo
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: supers3cret
+      MONGO_INITDB_DATABASE: RaidBattle
+    volumes:
+      - mongodata:/data/db
+      - ./docker/mongo/initdb.d:/docker-entrypoint-initdb.d:ro
+    networks: # Same as default/fallback, just explicitly written down
+      - default
+
+  # Interface to explore mongo and see what's happening in there
+  mongo-express:
+    image: mongo-express
+    restart: unless-stopped
+    ports:
+      - 8081:8081 # outer:inner
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: root
+      ME_CONFIG_MONGODB_ADMINPASSWORD: supers3cret
+      ME_CONFIG_MONGODB_URL: mongodb://root:supers3cret@mongo:27017/
+      ME_CONFIG_BASICAUTH: false
+    networks:
+      - default
+
+  # The code in this repository to be build
+  backend:
+    build:
+      dockerfile: docker/backend/Dockerfile # Build steps for the image
+      context: .                            # Outer working directory when running the build steps
+    restart: unless-stopped
+    ports:
+      - 8085:8085
+    env_file: .env
+    environment:
+      MONGODB_URL: mongodb://root:supers3cret@mongo:27017/RaidBattle
+      PORT: 8085
+    networks:
+      - default
+
+volumes:
+  mongodata:
+
+networks:
+  default:

@@ -142,8 +142,12 @@ function missingValue(name, variable) {
 //*                      -- EXPRESS --                       //
 //! ------------------------------------------------------- //
 const app = express();
-const port = process.env.PORT || 8085;
+const port = parseInt(process.env.PORT || '8085');
 const ip = "0.0.0.0";
+
+import morgan from 'morgan';
+
+app.use(morgan(process.env.LOG_FORMAT || 'tiny'));
 app.use(cors());
 app.use(
     express.raw({
@@ -211,7 +215,7 @@ async function getUserConfigOrDefaultValue(channelId, configName) {
 //! ------------------------------------------------------- //
 const confirmUser = [isUserConfirmed, confirmOpaqueUser];
 // Handle an attempt to load a route in browser.
-app.get("/", return404);
+app.get("/", returnCat(404));
 
 // Handle adding new streamers to channels to watch for raids
 app.post("/addStreamerToChannels/", confirmUser, addStreamerToChannelsHandler);
@@ -256,10 +260,14 @@ app.post("/" + EVENTSUB_ENDPOINT_PATH, async (req, res) => {
         },
     });
 });
+
+app.get('/.well-known/health', returnCat(200));
+
 //! --------------------------------------------------------- //
 //*                       -- SERVER --                       //
 //! ------------------------------------------------------- //
-const server = app.listen(port, ip, () => {
+const server = app.listen(port, ip, (err) => {
+    if (err) throw err;
     const time = new Date();
     console.log(`[backend:254]: ${time} - HTTP - server running at ${ip}:${port}/`);
 });
@@ -325,14 +333,11 @@ async function paginated_fetch(url, page = null, previousResponse = []) {
 //*                   -- ROUTE HANDLERS --                   //
 //! ------------------------------------------------------- //
 //! ---- STATUSCAT ---- //
-function return404() {
-    return "<style> html { background-color: #000000;} </style><img src='https://http.cat/404.jpg' />";
-}
-function return400() {
-    return "<style> html { background-color: #000000;} </style><img src='https://http.cat/400.jpg' />";
-}
-function return200() {
-    return "<style> html { background-color: #000000;} </style><img src='https://http.cat/200.jpg' />";
+function returnCat(statusCode) {
+  return (_, res) => {
+    res.status(statusCode);
+    return res.end(`<style> html { background-color: #000000;} </style><img src='https://http.cat/${statusCode}.jpg' />`);
+  };
 }
 //! ---- ONGOING ---- //
 async function ongoingRaidGameQueryHandler(req, res) {
@@ -795,6 +800,7 @@ async function getAppAccessToken() {
     }
     return APP_ACCESS_TOKEN;
 }
+
 async function getUser(path) {
     // Query Twitch for user details.
     const url = "https://api.twitch.tv/helix/users?" + path,

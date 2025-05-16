@@ -1,3 +1,5 @@
 streamers.json
-node_modules
+node_modules/
 .env
+.DS_Store
+._.DS_Store
