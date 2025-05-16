@@ -211,7 +211,7 @@ async function getUserConfigOrDefaultValue(channelId, configName) {
 //! ------------------------------------------------------- //
 const confirmUser = [isUserConfirmed, confirmOpaqueUser];
 // Handle an attempt to load a route in browser.
-app.get("/", return404);
+app.get("/", returnCat(404));
 
 // Handle adding new streamers to channels to watch for raids
 app.post("/addStreamerToChannels/", confirmUser, addStreamerToChannelsHandler);
@@ -327,14 +327,11 @@ async function paginated_fetch(url, page = null, previousResponse = []) {
 //*                   -- ROUTE HANDLERS --                   //
 //! ------------------------------------------------------- //
 //! ---- STATUSCAT ---- //
-function return404(_, res) {
-    return res.end("<style> html { background-color: #000000;} </style><img src='https://http.cat/404.jpg' />");
-}
-function return400(_, res) {
-    return res.end("<style> html { background-color: #000000;} </style><img src='https://http.cat/400.jpg' />");
-}
-function return200(_, res) {
-    return res.end("<style> html { background-color: #000000;} </style><img src='https://http.cat/200.jpg' />");
+function returnCat(statusCode) {
+  return (_, res) => {
+    res.status(statusCode);
+    return res.end(`<style> html { background-color: #000000;} </style><img src='https://http.cat/${statusCode}.jpg' />`);
+  };
 }
 //! ---- ONGOING ---- //
 async function ongoingRaidGameQueryHandler(req, res) {
