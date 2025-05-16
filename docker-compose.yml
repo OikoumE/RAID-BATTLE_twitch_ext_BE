@@ -1,13 +1,13 @@
 services:
 
-  # backend:
-  #   build: .
-  #   restart: unless-stopped
-  #   ports:
-  #     - 8085:8085
-  #   env_file: .env
-  #   environment:
-  #     MONGODB_URL: mongodb://root:supers3cret@mongo:27017/RaidBattle
+  backend:
+    build: .
+    restart: unless-stopped
+    ports:
+      - 8085:8085
+    env_file: .env
+    environment:
+      MONGODB_URL: mongodb://root:supers3cret@mongo:27017/RaidBattle
 
   mongo:
     image: mongo

@@ -795,6 +795,7 @@ async function getAppAccessToken() {
     }
     return APP_ACCESS_TOKEN;
 }
+
 async function getUser(path) {
     // Query Twitch for user details.
     const url = "https://api.twitch.tv/helix/users?" + path,

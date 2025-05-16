@@ -3,23 +3,31 @@
 // Date: 09/01-22
 import { MongoClient } from "mongodb";
 import { ObjectId } from "mongodb";
+import { URL } from 'node:url';
+
 //! --------------------------------------------------------- //
 //*                       -- DATABASE --                     //
 //! ------------------------------------------------------- //
 export class DataBase {
     // class for handling all database functions
     constructor() {
+        this.collection = "users";
+
+        const parsedUrl = URL.parse(process.env.MONGODB_URL);
+
+        this.databaseName = parsedUrl.pathname.slice(1) || 'RaidBattle';
+        parsedUrl.pathname = '/';
+
         console.log("[database:11]: Database init");
-        this.client = new MongoClient(process.env.MONGODB_URL, {
+        this.client = new MongoClient(parsedUrl.toString(), {
             useNewUrlParser: true,
             useUnifiedTopology: true,
         });
-        this.dataBaseName = "RaidBattle";
-        this.collection = "users";
+
     }
     async connect() {
         try {
-            await this.client.connect();
+            const res = await this.client.connect();
         } catch (e) {
             console.log("[database:276]: e", e);
         }
