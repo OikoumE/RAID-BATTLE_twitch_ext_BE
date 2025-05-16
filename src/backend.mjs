@@ -142,7 +142,7 @@ function missingValue(name, variable) {
 //*                      -- EXPRESS --                       //
 //! ------------------------------------------------------- //
 const app = express();
-const port = process.env.PORT || 8085;
+const port = parseInt(process.env.PORT || '8085');
 const ip = "0.0.0.0";
 app.use(cors());
 app.use(
@@ -256,10 +256,12 @@ app.post("/" + EVENTSUB_ENDPOINT_PATH, async (req, res) => {
         },
     });
 });
+
 //! --------------------------------------------------------- //
 //*                       -- SERVER --                       //
 //! ------------------------------------------------------- //
-const server = app.listen(port, ip, () => {
+const server = app.listen(port, ip, (err) => {
+    if (err) throw err;
     const time = new Date();
     console.log(`[backend:254]: ${time} - HTTP - server running at ${ip}:${port}/`);
 });
@@ -325,14 +327,14 @@ async function paginated_fetch(url, page = null, previousResponse = []) {
 //*                   -- ROUTE HANDLERS --                   //
 //! ------------------------------------------------------- //
 //! ---- STATUSCAT ---- //
-function return404() {
-    return "<style> html { background-color: #000000;} </style><img src='https://http.cat/404.jpg' />";
+function return404(_, res) {
+    return res.end("<style> html { background-color: #000000;} </style><img src='https://http.cat/404.jpg' />");
 }
-function return400() {
-    return "<style> html { background-color: #000000;} </style><img src='https://http.cat/400.jpg' />";
+function return400(_, res) {
+    return res.end("<style> html { background-color: #000000;} </style><img src='https://http.cat/400.jpg' />");
 }
-function return200() {
-    return "<style> html { background-color: #000000;} </style><img src='https://http.cat/200.jpg' />";
+function return200(_, res) {
+    return res.end("<style> html { background-color: #000000;} </style><img src='https://http.cat/200.jpg' />");
 }
 //! ---- ONGOING ---- //
 async function ongoingRaidGameQueryHandler(req, res) {
